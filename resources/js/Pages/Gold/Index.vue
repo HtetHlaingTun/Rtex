@@ -157,9 +157,11 @@ onUnmounted(() => {
                                     Global Spot Value (USD)
                                 </span>
                             </div>
-                            <div v-if="snapshot" :class="snapshot.change >= 0 ? 'text-emerald-400' : 'text-rose-400'"
+                            <div v-if="snapshot"
+                                :class="(snapshot?.change ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'"
                                 class="text-[11px] font-black px-3 py-1 bg-white/5 rounded-lg border border-white/10">
-                                {{ snapshot.change >= 0 ? '▲' : '▼' }} {{ Math.abs(snapshot.change_percent) }}%
+                                {{ (snapshot?.change ?? 0) >= 0 ? '▲' : '▼' }} {{ Math.abs(snapshot?.change_percent ??
+                                    0) }}%
                             </div>
                         </div>
 
@@ -167,7 +169,7 @@ onUnmounted(() => {
                             <p class="text-[10px] text-slate-500 font-bold uppercase mb-2 tracking-widest">Price Per
                                 Troy Ounce</p>
                             <span class="text-5xl font-mono font-black text-white italic tracking-tighter">
-                                ${{ $formatNumber(snapshot.usd_price) }}
+                                ${{ $formatNumber(snapshot?.usd_price ?? 0) }}
                             </span>
                         </div>
 
@@ -224,8 +226,9 @@ onUnmounted(() => {
                         </div>
 
                         <div class="mt-8 pt-4 flex items-center justify-between opacity-30 border-t border-white/5">
-                            <span class="text-[8px] font-bold uppercase">Updated: {{
-                                $formatDateTime(snapshot.fetched_at) }}</span>
+                            <span class="text-[8px] font-bold uppercase">
+                                Updated: {{ $formatDateTime(snapshot?.fetched_at ?? now) }}
+                            </span>
                             <span class="text-[8px] font-bold uppercase tracking-widest">1oz = 31.1035g</span>
                         </div>
                     </div>
@@ -296,7 +299,7 @@ onUnmounted(() => {
                                         class="flex items-center gap-2 px-2.5 py-1 rounded-lg text-[10px] font-black border">
                                         <span>{{ type.latest_verified_price.trend === 'up' ? '▲' : '▼' }}</span>
                                         <span>{{ $formatNumber(type.latest_verified_price.change_percentage || '0')
-                                            }}%</span>
+                                        }}%</span>
                                     </div>
                                 </div>
                             </div>
@@ -400,7 +403,7 @@ onUnmounted(() => {
                                         class="flex items-center gap-2 px-2.5 py-1 rounded-lg text-[10px] font-black border">
                                         <span>{{ type.latest_verified_price.trend === 'up' ? '▲' : '▼' }}</span>
                                         <span>{{ $formatNumber(type.latest_verified_price.change_percentage || '0')
-                                            }}%</span>
+                                        }}%</span>
                                     </div>
                                 </div>
                             </div>
@@ -458,7 +461,7 @@ onUnmounted(() => {
                             class="group/item block px-8 py-6 hover:bg-slate-800/40 transition-all">
                             <span class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">{{
                                 type.name
-                                }}</span>
+                            }}</span>
                             <div class="flex items-baseline gap-2">
                                 <span
                                     class="text-3xl font-mono font-black italic group-hover/item:text-amber-400 transition-colors">
