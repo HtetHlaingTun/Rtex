@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+    /* Stop the bounce/wobble on mobile and hide horizontal overflow */
+    
+    /* Ensure the height is at least the full screen */
+    min-height: 100%;
+    /* Use 'scroll' to prevent layout shift when content loads */
+    overflow-y: scroll; 
+}
+
+body {
+    
+    width: 100%;
+  
+    margin: 0;
+    padding: 0;
+}
+
+#app {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+
+    min-height: 100vh;
+}
+
+
+@layer base {
+  body {
+    @apply transition-colors duration-500 ease-in-out;
+  }
+  
+  /* Apply to all common UI elements to prevent "jumping" */
+  div, header, nav, section, main, footer, button, span, h1, p, a, input, select, textarea {
+    @apply transition-colors duration-300 ease-in-out;
+  }
+}
