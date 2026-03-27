@@ -99,22 +99,7 @@ const isAdmin = computed(() => user.value?.role === 'admin');
                             <span class="text-[10px] font-bold mt-1">Live Rates</span>
                         </Link>
 
-                        <Link v-if="isAdmin && $page.props.pending_gold_count" :href="route('currencies.pending')"
-                            class="relative flex flex-col items-center justify-center flex-1 py-1"
-                            :class="$page.component === 'Currency/Pending' ? 'text-indigo-600' : 'text-slate-400'">
 
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-
-                            <span v-if="$page.props.pendingCount > 0"
-                                class="absolute top-1 right-1/4 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] font-black text-white ring-2 ring-white animate-pulse">
-                                {{ $page.props.pendingCount }}
-                            </span>
-
-                            <span class="text-[10px] font-bold mt-1">Queue</span>
-                        </Link>
 
 
                     </div>
