@@ -1,9 +1,14 @@
 <template>
-    <div class="p-3 text-center">
-        <span class="block text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+    <div class="flex flex-col p-3 sm:p-4">
+        <span class="text-[10px] font-medium text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">
             {{ label }}
         </span>
-        <span class="text-xs font-bold tabular-nums" :class="valueClass || 'text-slate-600 dark:text-zinc-300'">
+
+        <span :class="[
+            valueClass || 'text-slate-900 dark:text-zinc-100',
+            'font-mono font-bold leading-tight break-all',
+            formattedValue.length > 10 ? 'text-[11px]' : 'text-xs sm:text-sm'
+        ]">
             {{ formattedValue }}
         </span>
     </div>
@@ -13,14 +18,14 @@
 import { computed } from 'vue'
 
 const props = defineProps({
-    label: { type: String, required: true },
-    value: { type: [Number, null], default: null },
-    formatter: { type: Function, required: true },
-    valueClass: { type: String, default: '' }
+    label: String,
+    value: [Number, String],
+    formatter: Function,
+    valueClass: String
 })
 
 const formattedValue = computed(() => {
-    if (props.value == null) return '—'
+    if (props.value === null || props.value === undefined) return '—'
     return props.formatter(props.value)
 })
 </script>

@@ -1,43 +1,42 @@
 <template>
     <div
-        class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm transition-colors duration-300">
-        <!-- Header -->
-        <div class="flex flex-wrap justify-between items-center gap-3 px-5 pt-5 pb-0">
+        class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm transition-all duration-300">
+        <div class="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-3 px-4 sm:px-6 pt-5 pb-2">
             <div class="flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ background: chartColor }"></span>
-                <span class="text-xs font-medium text-slate-500 dark:text-zinc-400">
+                <span class="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
                     {{ priceLabel }}
                 </span>
-                <span v-if="dataContext"
-                    class="text-[10px] text-slate-300 dark:text-zinc-600 border-l border-slate-200 dark:border-zinc-800 pl-2 ml-1 italic">
-                    {{ dataContext }}
-                </span>
             </div>
 
-            <!-- Period Selector -->
-            <PeriodSelector :periods="periods" :active="activePeriod" :disabled="loading" @select="selectPeriod" />
+            <PeriodSelector :periods="periods" :active="activePeriod" :disabled="loading" @select="selectPeriod"
+                class="w-full xs:w-auto" />
         </div>
 
-        <!-- Chart Area -->
-        <div class="relative min-h-[240px] px-5 pt-4">
-            <LoadingSpinner v-if="loading" :color="chartColor" />
+        <div class="relative px-2 sm:px-4 pt-4">
+            <div :class="[
+                'w-full transition-all duration-500',
+                isMobile ? 'h-[240px]' : 'xs:h-[300px] sm:h-[400px]'
+            ]">
+                <LoadingSpinner v-if="loading" :color="chartColor" />
 
-            <div v-if="error" class="h-60 flex items-center justify-center text-sm text-rose-500 italic">
-                {{ error }}
-            </div>
+                <div v-if="error"
+                    class="h-full flex items-center justify-center text-sm text-rose-500 italic px-10 text-center">
+                    {{ error }}
+                </div>
 
-            <div v-else-if="chartPoints.length"
-                class="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800">
-                <div :style="{ width: canvasWidth }" class="h-60">
+                <div v-else-if="chartPoints.length" class="h-full w-full">
                     <canvas ref="chartCanvas"></canvas>
                 </div>
-            </div>
 
-            <EmptyState v-else />
+                <EmptyState v-else />
+            </div>
         </div>
 
-        <!-- Stats Footer -->
-        <ChartStats v-if="!loading && chartPoints.length" :stats="stats" :formatter="formatPrice" />
+        <div class="px-4 sm:px-6 pb-5 mt-2">
+            <ChartStats v-if="!loading && chartPoints.length" :stats="stats" :formatter="formatPrice"
+                :compact="isMobile" />
+        </div>
     </div>
 </template>
 
@@ -79,7 +78,11 @@ const props = defineProps({
     enableZoom: {
         type: Boolean,
         default: false
-    }
+    },
+    isMobile: {
+        type: Boolean,
+        default: false
+    },
 })
 
 // ── Constants ──────────────────────────────────────────
@@ -95,6 +98,26 @@ const periods = Object.entries(PERIODS).map(([value, config]) => ({
     value,
     label: config.label
 }))
+
+const chartOptions = computed(() => ({
+    maintainAspectRatio: false,
+    scales: {
+        x: {
+            // Only show labels if we aren't on the smallest screen
+            display: !props.isMobile,
+            ticks: { maxTicksLimit: props.isMobile ? 3 : 8 }
+        },
+        y: {
+            // Move labels inside or hide them to give the line more room
+            ticks: { display: !props.isMobile }
+        }
+    },
+    elements: {
+        point: {
+            radius: props.isMobile ? 0 : 3 // Hide points on mobile for a smoother line
+        }
+    }
+}));
 
 // ── State ────────────────────────────────────────────
 const rawData = ref([])
@@ -196,17 +219,18 @@ const dataContext = computed(() => {
     const points = chartPoints.value
     if (!points.length) return null
 
-    if (activePeriod.value === '7d' && props.type === 'world_oz') {
-        return `${points.length} snapshots`
+    // If mobile, return shorter strings
+    if (props.isMobile) {
+        return `${points.length} pts`
     }
 
     if (activePeriod.value === 'all') {
         const firstDate = points[0].date
         return `since ${firstDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`
     }
-
     return null
 })
+
 
 const isScrollable = computed(() => {
     const points = chartPoints.value.length
@@ -291,49 +315,40 @@ const fetchData = async () => {
 
 // ── Chart Configuration ───────────────────────────────
 const getChartOptions = () => {
-    const options = {
+    return {
         responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 300 },
+        maintainAspectRatio: false, // Essential for our responsive height classes
+        animation: { duration: 400, easing: 'easeOutQuart' },
         plugins: {
             legend: { display: false },
             tooltip: {
-                mode: 'index',
+                enabled: true,
+                position: 'nearest',
+                external: props.isMobile ? null : undefined, // Potential for custom mobile tooltips
                 intersect: false,
-                backgroundColor: '#fff',
-                titleColor: '#111',
-                titleFont: { size: 11, weight: '600' },
-                bodyColor: '#555',
-                bodyFont: { size: 12 },
-                borderColor: '#EBEBEA',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                titleColor: '#18181b',
+                bodyColor: '#27272a',
+                borderColor: '#e4e4e7',
                 borderWidth: 1,
-                padding: 10,
+                padding: props.isMobile ? 8 : 12,
                 displayColors: false,
-                callbacks: {
-                    title: (items) => {
-                        const point = chartPoints.value[items[0].dataIndex]
-                        if (!point || !point.date) return ''
-                        return point.date.toLocaleDateString('en-GB', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        })
-                    },
-                    label: (ctx) => `Price: ${formatPrice(ctx.raw.y)}`
-                }
             }
         },
         scales: {
             y: {
+                // On mobile, show labels inside or reduce count
+                position: props.isMobile ? 'right' : 'left',
                 beginAtZero: false,
-                grid: { color: '#F0F0EE' },
+                grid: {
+                    display: !props.isMobile, // Hide horizontal lines on small screens for clarity
+                    color: 'rgba(240, 240, 238, 0.5)'
+                },
                 border: { display: false },
                 ticks: {
-                    color: '#C0C0BC',
-                    font: { size: 11 },
-                    maxTicksLimit: 6,
+                    color: '#a1a1aa',
+                    font: { size: props.isMobile ? 9 : 11 },
+                    maxTicksLimit: props.isMobile ? 4 : 6,
                     callback: (v) => formatYAxisTick(v)
                 }
             },
@@ -342,56 +357,31 @@ const getChartOptions = () => {
                 time: {
                     unit: getTimeUnit(),
                     displayFormats: getTimeFormats(),
-                    tooltipFormat: 'PPpp'
                 },
                 grid: { display: false },
                 border: { display: false },
                 ticks: {
-                    color: '#C0C0BC',
+                    display: !props.isMobile, // Hide X labels on mobile, rely on tooltip
+                    color: '#a1a1aa',
                     font: { size: 10 },
                     maxRotation: 0,
                     autoSkip: true,
-                    maxTicksLimit: activePeriod.value === 'all' ? 24 : 8
+                    maxTicksLimit: props.isMobile ? 3 : 8
                 }
             }
         },
-        interaction: {
-            mode: 'nearest',
-            axis: 'x',
-            intersect: false
-        },
         elements: {
+            line: {
+                tension: 0.4, // Curvier lines look better on mobile
+                borderWidth: props.isMobile ? 2 : 3,
+            },
             point: {
-                radius: 0,
-                hoverRadius: 5,
-                hoverBorderWidth: 2
+                radius: 0, // Keep it clean
+                hoverRadius: props.isMobile ? 6 : 4,
             }
         }
     }
-
-    // Add zoom if enabled
-    if (props.enableZoom) {
-        options.plugins.zoom = {
-            zoom: {
-                wheel: { enabled: true },
-                pinch: { enabled: true },
-                mode: 'x',
-                speed: 0.1
-            },
-            pan: {
-                enabled: true,
-                mode: 'x',
-                speed: 0.1
-            },
-            limits: {
-                x: { min: 'original', max: 'original' }
-            }
-        }
-    }
-
-    return options
 }
-
 const getTimeUnit = () => {
     switch (activePeriod.value) {
         case '7d': return 'hour'

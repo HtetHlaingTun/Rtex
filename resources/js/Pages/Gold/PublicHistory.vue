@@ -62,6 +62,8 @@
                     </Link>
                 </div>
 
+
+                <!-- chart  -->
                 <div
                     class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-sm">
                     <UserGoldChart :key="selectedType" :id="history.data[0]?.gold_type_id || 'world'"
@@ -70,6 +72,10 @@
                         :symbol="selectedType === 'world_oz' ? '$' : ''" />
                 </div>
 
+
+
+
+                <!-- table  -->
                 <div
                     class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
                     <div v-if="historyData.length">
@@ -93,13 +99,19 @@
                                             formatTime(entry.created_at) }}</span>
                                 </div>
 
-                                <div class="text-right">
+                                <div class="text-right flex flex-col items-end gap-1">
                                     <span class="text-sm font-mono tabular-nums"
                                         :class="getTextColor(pageInfo.colorClass)">
                                         {{ pageInfo.symbol }}{{ $formatDecimal(entry.price) }}
-                                        <span class="text-[10px] font-monoal text-slate-400 ml-0.5">{{ pageInfo.currency
-                                            }}</span>
+                                        <span class="text-[10px] font-medium text-slate-400 ml-0.5">
+                                            {{ pageInfo.currency }}
+                                        </span>
                                     </span>
+
+                                    <div class="flex justify-end">
+                                        <TrendIcon :current="entry.price" :previous="historyData[index + 1]?.price"
+                                            :show-amount="true" />
+                                    </div>
                                 </div>
 
                                 <div class="text-right hidden sm:block">
@@ -110,6 +122,8 @@
                                     </span>
                                     <span v-else class="text-slate-300 dark:text-zinc-700">—</span>
                                 </div>
+
+
                             </div>
                         </div>
 
@@ -145,10 +159,11 @@
 
 <script setup>
 import UserGoldChart from '@/Components/Charts/UserGoldChart.vue'
+import TrendIcon from '@/Components/TrendIcon.vue'
 import PublicBackButton from '@/Components/UI/PublicBackButton.vue'
 import GuestLayout from '@/Layouts/GuestLayout.vue'
 import { Head, Link } from '@inertiajs/vue3'
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 
 const props = defineProps({
@@ -158,6 +173,19 @@ const props = defineProps({
     stats: Object, // Contains trend, diff, percent, etc.
     latestPrice: Number // Change from Object to Number
 })
+
+const currentBreakpoint = ref('default');
+
+const updateBreakpoint = () => {
+    const width = window.innerWidth;
+    if (width >= 758) {
+        currentBreakpoint.value = 'sm';
+    } else if (width >= 471) {
+        currentBreakpoint.value = 'xs';
+    } else {
+        currentBreakpoint.value = 'default';
+    }
+};
 
 // ── Config ───────────────────────────────────────────
 const tabs = [
@@ -247,4 +275,11 @@ const getBadgeClass = (dir) => {
     if (dir === 'dn') return 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
     return 'text-slate-400'
 }
+onMounted(() => {
+    updateBreakpoint();
+    window.addEventListener('resize', updateBreakpoint);
+})
+onUnmounted(() => {
+    window.removeEventListener('resize', updateBreakpoint);
+})
 </script>
