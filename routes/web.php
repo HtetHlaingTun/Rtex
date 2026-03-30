@@ -6,9 +6,13 @@ use App\Http\Controllers\GoldPriceController;
 use App\Http\Controllers\GoldTypeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WelcomeController;
+use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Symfony\Component\DomCrawler\Crawler;
+
+
 
 
 
@@ -93,56 +97,40 @@ Route::fallback(function () {
 
 
 
-Route::get('/debug-uob-raw', function () {
-    $response = Http::withHeaders([
-        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36',
-        'Accept' => 'text/html',
-    ])->get('https://www.uob.com.sg/personal/invest/gold-and-precious-metals/gold-and-silver-prices.page');
+Route::get('/test-scraper', function () {
+    $client = new \GuzzleHttp\Client([
+        'headers' => [
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        ],
+        'timeout' => 10, // Good practice so your page doesn't hang forever
+        'verify' => false, // Only if you have SSL certificate issues on localhost
+    ]);
 
-    // If this says 403 or 429, you are being blocked by their Firewall.
-    if ($response->failed()) {
-        return "Status: " . $response->status() . " - You are blocked by the bank's firewall.";
-    }
-
-    $html = $response->body();
-
-    // Check if the word 'Gold' even exists in the HTML they sent you
-    $exists = str_contains($html, 'Gold Bullion') ? 'YES' : 'NO';
-
-    return [
-        'contains_data' => $exists,
-        'html_length' => strlen($html),
-        'preview' => substr(e($html), 0, 1000) // Look at this in your browser
-    ];
-});
-Route::get('/test-sgd-final', function () {
     try {
-        // 1. Get Gold USD (The one you said runs smoothly)
-        $goldResponse = Http::withHeaders(['User-Agent' => 'Mozilla/5.0...'])
-            ->get('https://query1.finance.yahoo.com/v8/finance/chart/GC=F');
+        $response = $client->request('GET', 'https://www.cbbank.com.mm/en/online-trading-platform');
+        $html = $response->getBody()->getContents();
 
-        // 2. Get USD/SGD Rate (Standard Forex is usually 200 OK)
-        $rateResponse = Http::withHeaders(['User-Agent' => 'Mozilla/5.0...'])
-            ->get('https://query1.finance.yahoo.com/v8/finance/chart/USDSGD=X');
+        $crawler = new \Symfony\Component\DomCrawler\Crawler($html);
 
-        if (!$goldResponse->successful() || !$rateResponse->successful()) {
-            return "One source failed. Gold: " . $goldResponse->status() . " Rate: " . $rateResponse->status();
-        }
+        // 1. Get all TD texts so you can find the right index
+        $allData = $crawler->filter('td')->each(function ($node, $i) {
+            return "Index {$i}: " . trim($node->text());
+        });
 
-        $priceUsd = $goldResponse->json('chart.result.0.meta.regularMarketPrice');
-        $usdSgd = $rateResponse->json('chart.result.0.meta.regularMarketPrice');
-
-        $priceSgd = $priceUsd * $usdSgd;
-
-        return [
+        // 2. Return the data to the browser
+        return response()->json([
             'status' => 'Success',
-            'gold_usd' => $priceUsd,
-            'exchange_rate' => $usdSgd,
-            'calculated_gold_sgd' => round($priceSgd, 2),
-            'per_gram_sgd' => round($priceSgd / 31.1035, 2)
-        ];
+            'instruction' => 'Check preview_data to find the correct index, then update eq()',
+            'preview_data' => $allData,
+            'test_rate_at_index_2' => $crawler->filter('td')->count() > 2
+                ? $crawler->filter('td')->eq(2)->text()
+                : 'Index 2 not found'
+        ]);
     } catch (\Exception $e) {
-        return $e->getMessage();
+        return response()->json([
+            'status' => 'Error',
+            'message' => $e->getMessage()
+        ], 500);
     }
 });
 require __DIR__ . '/auth.php';

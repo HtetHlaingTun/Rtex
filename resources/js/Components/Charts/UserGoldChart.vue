@@ -445,9 +445,13 @@ const buildChart = () => {
         chartInstance.destroy();
     }
 
+
+    // Base dataset (MMK or main price)
+
+
     const datasets = [
         {
-            label: 'USD Price',
+            label: props.type === 'world_oz' ? 'USD Price' : 'MMK Price',
             data: points.map(p => ({ x: p.date, y: p.price })),
             borderColor: primaryColor,
             backgroundColor: 'transparent',
@@ -471,7 +475,10 @@ const buildChart = () => {
             pointRadius: 0,
             pointHoverRadius: 5
         });
+
     }
+
+
 
     chartInstance = new Chart(ctx, {
         type: 'line',

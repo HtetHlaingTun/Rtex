@@ -9,7 +9,7 @@
                 {{ formatter(value) }}
             </span>
 
-            <div v-if="secondaryValue !== undefined" class="mt-0.5">
+            <div v-if="secondaryValue && secondaryValue !== undefined" class="mt-0.5">
                 <span v-if="isRecordCount" class="text-sm font-sans font-bold text-black dark:text-white">
                     {{ secondaryValue }}
                 </span>
