@@ -86,136 +86,168 @@
                         </h2>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Link :href="route('public.gold.history', { type: 'new_system' })"
-                            class="group block bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 rounded-2xl p-5 transition-all duration-300 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/5">
+                    <div
+                        class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 rounded-3xl overflow-hidden">
+                        <div
+                            class="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-slate-50/50 dark:bg-zinc-800/30 border-b border-slate-100 dark:border-zinc-800">
+                            <div class="col-span-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                Market System</div>
+                            <div
+                                class="col-span-3 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                Price (MMK)</div>
+                            <div
+                                class="col-span-3 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                1 Pe (၁ ပဲ)</div>
+                            <div
+                                class="col-span-2 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                USD Equiv.</div>
+                        </div>
 
-                            <div class="flex justify-between items-start mb-5 ">
-                                <div class="space-y-1">
-                                    <div class="flex items-center gap-2">
-                                        <TrendIcon :current="gold.mmk_price_new" :previous="gold.prev_mmk_price_new"
-                                            class="scale-110" />
-                                        <span class="text-sm font-sans text-slate-900 dark:text-white">New
-                                            System</span>
+                        <div class="divide-y divide-slate-100 dark:divide-zinc-800">
+                            <Link :href="route('public.gold.history', { type: 'new_system' })"
+                                class="group grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-amber-500/[0.02] transition-colors">
+
+                                <div class="col-span-4 flex items-center gap-4">
+                                    <div>
+                                        <h4
+                                            class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-amber-600 transition-colors">
+                                            New System</h4>
+                                        <p class="text-[10px] font-mono text-slate-400 uppercase tracking-tight">16.329g
+                                            / ကျပ်သား</p>
                                     </div>
-                                    <span
-                                        class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20">
-                                        16.329 g / ကျပ်သား
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div class="space-y-2">
-                                <p
-                                    class="text-2xl font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
-                                    {{ $formatMoney(gold.mmk_price_new) }}
-                                    <span class="text-xs font-mono text-slate-400 uppercase">MMK</span>
-                                </p>
-
-                                <div
-                                    class="flex items-center justify-between py-1.5 border-y border-amber-50 dark:border-amber-900/20">
-                                    <span class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">1 Pe (၁
-                                        ပဲ)</span>
-                                    <span class="text-sm font-mono text-amber-600 dark:text-amber-500 tabular-nums">
-                                        {{ $formatMoney(gold.mmk_price_new / 16) }} <span
-                                            class="text-[10px] font-mono">MMK</span>
-                                    </span>
                                 </div>
 
-                                <p class="text-[11px] font-mono text-slate-400 flex items-center gap-1">
-                                    <span class="opacity-50 text-slate-300">≈</span>
-                                    ${{ $formatDecimal(calculateUsdPrice(gold.mmk_price_new, gold.usd_mmk_rate)) }} USD
-                                </p>
-                            </div>
-                        </Link>
+                                <div class="col-span-3 md:text-right flex md:block justify-between items-center">
+                                    <span class="md:hidden text-[9px] font-bold text-slate-400 uppercase">Price</span>
 
-                        <Link :href="route('public.gold.history', { type: 'traditional' })"
-                            class="group block bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 rounded-2xl p-5 transition-all duration-300 hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/5">
-
-                            <div class="flex justify-between items-start mb-5">
-                                <div class="space-y-1">
-                                    <div class="flex items-center gap-2">
-                                        <TrendIcon :current="gold.mmk_price_old" :previous="gold.prev_mmk_price_old"
-                                            class="scale-110" />
+                                    <div class="flex flex-col md:items-end items-end">
                                         <span
-                                            class="text-sm font-sans text-slate-900 dark:text-white">Traditional</span>
+                                            class="text-[9px] font-black font-sans text-amber-600/60 dark:text-amber-500/40 uppercase tracking-tighter mb-0.5">
+                                            MMK
+                                        </span>
+
+                                        <span
+                                            class="text-xl font-mono font-black text-slate-900 dark:text-white tabular-nums leading-none">
+                                            {{ $formatMoney(gold.mmk_price_new) }}
+                                        </span>
+
+                                        <div class="mt-1.5 flex items-center gap-1 opacity-80">
+                                            <TrendIcon :current="gold.mmk_price_new" :previous="gold.prev_mmk_price_new"
+                                                class="scale-90" />
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-span-3 md:text-right flex md:block justify-between items-center">
+                                    <span class="md:hidden text-[9px] font-bold text-slate-400 uppercase">1 Pe</span>
+                                    <span class="text-base font-mono font-bold text-amber-600 tabular-nums">
+                                        {{ $formatMoney(gold.mmk_price_new / 16) }}
+                                    </span>
+                                </div>
+
+                                <div class="col-span-2 md:text-right flex md:block justify-between items-center">
+                                    <span class="md:hidden text-[9px] font-bold text-slate-400 uppercase">USD</span>
+                                    <span class="text-sm font-mono text-slate-500 tabular-nums">
+                                        ${{ $formatDecimal(calculateUsdPrice(gold.mmk_price_new, gold.usd_mmk_rate)) }}
+                                    </span>
+                                </div>
+                            </Link>
+
+                            <Link :href="route('public.gold.history', { type: 'traditional' })"
+                                class="group grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-indigo-500/[0.02] transition-colors">
+
+                                <div class="col-span-4 flex items-center gap-4">
+                                    <div>
+                                        <h4
+                                            class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                                            Traditional</h4>
+                                        <p class="text-[10px] font-mono text-slate-400 uppercase tracking-tight">16.606g
+                                            / ကျပ်သား</p>
+                                    </div>
+                                </div>
+
+                                <div class="col-span-3 md:text-right flex md:block justify-between items-center">
+                                    <span class="md:hidden text-[9px] font-bold text-slate-400 uppercase">Price</span>
+
+                                    <div class="flex flex-col md:items-end items-end">
+                                        <span
+                                            class="text-[9px] font-sans font-black text-amber-600/60 dark:text-amber-500/40 uppercase tracking-tighter mb-0.5">
+                                            MMK
+                                        </span>
+
+                                        <span
+                                            class="text-xl font-mono font-black text-slate-900 dark:text-white tabular-nums leading-none">
+                                            {{ $formatMoney(gold.mmk_price_old) }}
+                                        </span>
+
+                                        <div class="mt-1.5 flex items-center gap-1 opacity-80">
+                                            <TrendIcon :current="gold.mmk_price_old" :previous="gold.prev_mmk_price_old"
+                                                class="scale-90" />
+
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div class="col-span-3 md:text-right flex md:block justify-between items-center">
+                                    <span class="md:hidden text-[9px] font-bold text-slate-400 uppercase">1 Pe</span>
+                                    <span class="text-base font-mono font-bold text-indigo-600 tabular-nums">
+                                        {{ $formatMoney(gold.mmk_price_old / 16) }}
+                                    </span>
+                                </div>
+
+                                <div class="col-span-2 md:text-right flex md:block justify-between items-center">
+                                    <span class="md:hidden text-[9px] font-bold text-slate-400 uppercase">USD</span>
+                                    <span class="text-sm font-mono text-slate-500 tabular-nums">
+                                        ${{ $formatDecimal(calculateUsdPrice(gold.mmk_price_old, gold.usd_mmk_rate)) }}
+                                    </span>
+                                </div>
+                            </Link>
+                        </div>
+
+                        <div class="bg-emerald-500/5 dark:bg-emerald-500/10 px-6 py-4 border-t border-emerald-500/20">
+                            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="relative flex h-2 w-2">
+                                        <span
+                                            class="animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                                     </div>
                                     <span
-                                        class="inline-block px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20">
-                                        16.606 g / ကျပ်သား
-                                    </span>
+                                        class="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">World
+                                        Reference</span>
                                 </div>
-                            </div>
-
-                            <div class="space-y-2">
-                                <p
-                                    class="text-2xl font-monok tabular-nums text-slate-900 dark:text-white tracking-tight">
-                                    {{ $formatMoney(gold.mmk_price_old) }}
-                                    <span class="text-xs font-mono text-slate-400 uppercase">MMK</span>
-                                </p>
 
                                 <div
-                                    class="flex items-center justify-between py-1.5 border-y border-indigo-50 dark:border-indigo-900/20">
-                                    <span class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">1 Pe (၁
-                                        ပဲ)</span>
-                                    <span class="text-sm font-monok text-indigo-600 dark:text-indigo-400 tabular-nums">
-                                        {{ $formatMoney(gold.mmk_price_old / 16) }} <span
-                                            class="text-[10px] font-mono">MMK</span>
-                                    </span>
-                                </div>
-
-                                <p class="text-[11px] font-monobold text-slate-400 flex items-center gap-1">
-                                    <span class="opacity-50 text-slate-300">≈</span>
-                                    ${{ $formatDecimal(calculateUsdPrice(gold.mmk_price_old, gold.usd_mmk_rate)) }} USD
-                                </p>
-                            </div>
-                        </Link>
-
-                        <Link :href="route('public.gold.history', { type: 'world_oz' })"
-                            class="group block bg-white dark:bg-zinc-900 border border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl p-5 transition-all duration-300 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/5">
-
-                            <div class="flex justify-between items-start mb-5">
-                                <div class="space-y-1">
+                                    class="flex flex-wrap justify-center md:justify-end items-center gap-x-6 gap-y-2 md:gap-8 font-mono text-xs">
                                     <div class="flex items-center gap-2">
-                                        <TrendIcon :current="gold.world_gold_price"
-                                            :previous="gold.prev_world_gold_price" class="scale-110" />
-                                        <span class="text-sm font-sans text-slate-900 dark:text-white">World
-                                            Spot</span>
+                                        <span class="text-slate-400 uppercase text-[9px] font-bold">Spot</span>
+                                        <span class="text-emerald-600 font-bold">${{
+                                            $formatDecimal(gold.world_gold_price) }} <span
+                                                class="text-[9px] opacity-60">/oz</span></span>
                                     </div>
-                                    <span
-                                        class="inline-block px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20">
-                                        1 oz ≈ 31.1035 g
-                                    </span>
+
+                                    <div class="hidden sm:block w-px h-3 bg-slate-200 dark:bg-zinc-700"></div>
+
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-slate-400 uppercase text-[9px] font-bold">Gram</span>
+                                        <span class="text-emerald-600 font-bold">${{
+                                            $formatDecimal(gold.world_gold_price / 31.1035) }} <span
+                                                class="text-[9px] opacity-60">/g</span></span>
+                                    </div>
+
+                                    <div class="hidden sm:block w-px h-3 bg-slate-200 dark:bg-zinc-700"></div>
+
+                                    <!-- <div class="flex items-center gap-2">
+                                        <span class="text-slate-400 uppercase text-[9px] font-bold">FX Rate</span>
+                                        <span class="text-slate-700 dark:text-zinc-300 font-bold">
+                                            {{ $formatDecimal(gold.usd_mmk_rate) }} <span class="text-[9px]">MMK</span>
+                                        </span>
+                                    </div> -->
                                 </div>
                             </div>
-
-                            <div class="space-y-1.5">
-                                <p
-                                    class="text-2xl font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
-                                    ${{ $formatDecimal(gold.world_gold_price || gold.usd_price) }}
-                                    <span class="text-xs font-mono text-slate-400">USD/oz</span>
-                                </p>
-
-                                <div
-                                    class="flex items-center gap-2 py-1.5 border-y border-emerald-50 dark:border-emerald-900/20">
-                                    <span
-                                        class="text-[10px] font-mono text-emerald-600 dark:text-emerald-500 uppercase tracking-wider">1g
-                                        Price</span>
-                                    <span class="text-sm font-monok text-slate-700 dark:text-zinc-300 tabular-nums">
-                                        ${{ $formatDecimal((gold.world_gold_price || gold.usd_price) / 31.1035) }}
-                                    </span>
-                                    <span class="text-[10px] font-monoum text-slate-400">USD</span>
-                                </div>
-
-                                <div
-                                    class="flex items-center gap-2 text-[10px] font-mono text-slate-400 uppercase tracking-tight pt-1">
-                                    <span
-                                        class="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded text-[9px]">Ref
-                                        Rate</span>
-                                    1 USD = {{ $formatDecimal(gold.usd_mmk_rate) }} MMK
-                                </div>
-                            </div>
-                        </Link>
+                        </div>
                     </div>
                 </section>
 

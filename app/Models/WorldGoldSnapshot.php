@@ -75,7 +75,9 @@ class WorldGoldSnapshot extends Model
     // Helper: get latest USD/MMK rate from exchange_rates
     public static function getUsdMmkRate(): ?float
     {
-        $rate = ExchangeRate::where('currency_id', 1) // USD
+        $rate = ExchangeRate::whereHas('currency', function ($query) {
+            $query->where('code', 'USD'); // Search by code instead of ID
+        })
             ->where('status', 'verified')
             ->whereNotNull('mid_rate')
             ->latest('rate_date')

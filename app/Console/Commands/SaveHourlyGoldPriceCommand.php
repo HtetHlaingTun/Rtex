@@ -66,17 +66,33 @@ class SaveHourlyGoldPriceCommand extends Command
                     continue;
                 }
 
+                // 1. Get the last ever record for this type
                 $lastRecord = GoldPrice::where('gold_type_id', $type->id)
                     ->where('source_type', 'auto')
                     ->latest('created_at')
                     ->first();
 
-                // Skip if price hasn't changed AND last record was within last 10 minutes
+                // 2. Check specifically if we have a record for TODAY (Singapore time)
+                $hasRecordToday = GoldPrice::where('gold_type_id', $type->id)
+                    ->where('source_type', 'auto')
+                    ->whereDate('created_at', $now->toDateString())
+                    ->exists();
+
+                // 3. Logic: Should we skip?
                 if ($lastRecord && (float)$lastRecord->price === (float)$currentPrice) {
-                    $minutesSinceLast = $now->diffInMinutes($lastRecord->created_at);
-                    if ($minutesSinceLast < 10) {
-                        $this->line("<fg=gray>Skipping {$type->name}: No price change in last {$minutesSinceLast} minutes.</>");
-                        continue;
+
+                    // If it's a new day (no record today yet), we DO NOT skip. 
+                    // This creates your Saturday/Sunday heartbeat.
+                    if (!$hasRecordToday) {
+                        $this->line("<fg=blue>💎 Creating Daily Heartbeat for {$type->name} (Price stable since yesterday).</>");
+                    } else {
+                        // If we already have a record today and the price is still the same,
+                        // we only save a new one if 10+ minutes have passed (or just continue to skip).
+                        $minutesSinceLast = $now->diffInMinutes($lastRecord->created_at);
+                        if ($minutesSinceLast < 10) {
+                            $this->line("<fg=gray>Skipping {$type->name}: Stable price & record exists for today.</>");
+                            continue;
+                        }
                     }
                 }
 

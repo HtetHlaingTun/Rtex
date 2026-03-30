@@ -1,23 +1,27 @@
 <template>
-    <div class="rate-history-chart">
-        <!-- Chart Header -->
+    <div class="rate-history-chart w-full bg-white dark:bg-zinc-900 rounded-3xl p-1 sm:p-2">
         <ChartHeader :chart-info="chartInfo" :periods="periods" :active-period="activePeriod" :loading="loading"
             @period-change="setPeriod" />
 
-        <!-- Chart Container -->
-        <ChartContainer :loading="loading" :error="error" :has-data="chartPoints.length > 0"
-            :is-scrollable="isScrollable" :canvas-width="canvasWidth" :chart-points="chartPoints" @retry="retry">
-            <canvas ref="chartCanvas" class="w-full h-full"></canvas>
-        </ChartContainer>
+        <div class="relative w-full mt-4 px-2 sm:px-0">
+            <div class="relative w-full h-[320px] sm:h-[400px] lg:h-[450px]">
+                <ChartContainer :loading="loading" :error="error" :has-data="chartPoints.length > 0"
+                    :is-scrollable="isScrollable" :canvas-width="canvasWidth" :chart-points="chartPoints"
+                    @retry="retry">
+                    <canvas ref="chartCanvas" class="w-full h-full"></canvas>
+                </ChartContainer>
+            </div>
+        </div>
 
-        <!-- Chart Stats -->
-        <ChartStats v-if="!loading && chartPoints.length && chartStats" :stats="chartStats"
-            :points-count="chartPoints.length" />
+        <div class="mt-6">
+            <ChartStats v-if="!loading && chartPoints.length && chartStats" :stats="chartStats"
+                :points-count="chartPoints.length" />
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick, getCurrentInstance } from 'vue'
 import Chart from 'chart.js/auto'
 import ChartHeader from './ChartHeader.vue'
 import ChartContainer from './ChartContainer.vue'
@@ -60,6 +64,7 @@ const props = defineProps({
 // ── Emits ──────────────────────────────────────────────
 const emit = defineEmits(['period-change', 'retry'])
 
+const { proxy } = getCurrentInstance();
 // ── Constants ──────────────────────────────────────────
 const periods = [
     { value: 'week', label: '7D', days: 7 },
@@ -160,93 +165,58 @@ const buildChart = () => {
     if (!chartCanvas.value || !displayPoints.value.length) return
 
     const ctx = chartCanvas.value.getContext('2d')
-
-    // Get grouped data for better label display
     const points = displayPoints.value
-    const labels = points.map((point, index) => {
-        const date = new Date(point.created_at)
-        const total = points.length
 
-        // Smart label spacing for large datasets
-        if (activePeriod.value === 'all' || activePeriod.value === 'year') {
-            const shouldShowLabel = index === 0 ||
-                index === total - 1 ||
-                index % Math.ceil(total / 10) === 0
-            if (!shouldShowLabel) return ''
-
-            if (activePeriod.value === 'all') {
-                return date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
-            }
-            return date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })
-        }
-
-        // For other periods
-        switch (activePeriod.value) {
-            case 'week':
-                return date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' })
-            case 'month':
-            case 'quarter':
-                return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-            default:
-                return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-        }
-    })
-
-    const buyRates = points.map(p => Number(p.buy_rate))
-    const sellRates = points.map(p => Number(p.sell_rate))
-
-    // Destroy existing chart
+    // Destroy existing
     if (chartInstance) {
         chartInstance.destroy()
-        chartInstance = null
     }
 
-    // Create gradients
-    const buyGradient = ctx.createLinearGradient(0, 0, 0, 220)
-    buyGradient.addColorStop(0, 'rgba(22, 163, 74, 0.1)')
-    buyGradient.addColorStop(1, 'rgba(22, 163, 74, 0.01)')
+    // Gradients (Responsive height)
+    const buyGradient = ctx.createLinearGradient(0, 0, 0, 400)
+    buyGradient.addColorStop(0, 'rgba(22, 163, 74, 0.15)')
+    buyGradient.addColorStop(1, 'rgba(22, 163, 74, 0)')
 
-    const sellGradient = ctx.createLinearGradient(0, 0, 0, 220)
-    sellGradient.addColorStop(0, 'rgba(220, 38, 38, 0.08)')
-    sellGradient.addColorStop(1, 'rgba(220, 38, 38, 0.01)')
+    const sellGradient = ctx.createLinearGradient(0, 0, 0, 400)
+    sellGradient.addColorStop(0, 'rgba(220, 38, 38, 0.12)')
+    sellGradient.addColorStop(1, 'rgba(220, 38, 38, 0)')
 
-    // Create new chart
     chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-            labels,
+            labels: getChartLabels(),
             datasets: [
                 {
                     label: 'Buy Rate',
-                    data: buyRates,
+                    data: points.map(p => p.buy_rate),
                     borderColor: '#16A34A',
                     backgroundColor: buyGradient,
                     borderWidth: 2,
                     fill: true,
-                    tension: 0.35,
+                    tension: 0.4,
                     pointRadius: 0,
-                    pointHoverRadius: 5,
+                    pointHoverRadius: 6,
                     pointHoverBackgroundColor: '#16A34A',
+                    pointHoverBorderWidth: 3,
                     pointHoverBorderColor: '#fff',
-                    pointHoverBorderWidth: 2,
                 },
                 {
                     label: 'Sell Rate',
-                    data: sellRates,
+                    data: points.map(p => p.sell_rate),
                     borderColor: '#DC2626',
                     backgroundColor: sellGradient,
                     borderWidth: 2,
                     fill: true,
-                    tension: 0.35,
+                    tension: 0.4,
                     pointRadius: 0,
-                    pointHoverRadius: 5,
+                    pointHoverRadius: 6,
                     pointHoverBackgroundColor: '#DC2626',
+                    pointHoverBorderWidth: 3,
                     pointHoverBorderColor: '#fff',
-                    pointHoverBorderWidth: 2,
                 }
             ]
         },
-        options: getChartOptions()
+        options: getResponsiveOptions()
     })
 }
 
@@ -300,6 +270,71 @@ watch([chartPoints, () => props.loading], async () => {
     }
 })
 
+const getResponsiveOptions = () => {
+    const isMobile = window.innerWidth < 640;
+
+    return {
+        responsive: true,
+        maintainAspectRatio: false, // Allows the CSS height to take over
+        interaction: {
+            mode: 'index',
+            intersect: false,
+        },
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top',
+                align: 'end',
+                labels: {
+                    usePointStyle: true,
+                    pointStyle: 'circle',
+                    padding: isMobile ? 10 : 20,
+                    font: { size: 11, weight: '600', family: 'sans-serif' }
+                }
+            },
+            tooltip: {
+                enabled: true,
+                padding: 12,
+                backgroundColor: 'rgba(24, 24, 27, 0.95)', // Zinc-900
+                titleFont: { size: 13, weight: '700' },
+                bodyFont: { size: 12, family: 'monospace' },
+                cornerRadius: 12,
+                // Full precision in tooltip, compact on axis
+                callbacks: {
+                    label: (context) => {
+                        return ` ${context.dataset.label}: ${proxy.$formatMoney(context.parsed.y, 2)} ${props.options.currency || 'MMK'}`;
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: { display: false },
+                ticks: {
+                    maxRotation: 0,
+                    autoSkip: true,
+                    maxTicksLimit: isMobile ? 4 : 8, // Reduce labels on mobile
+                    font: { size: 10, weight: '500' },
+                    color: '#94a3b8'
+                }
+            },
+            y: {
+                position: 'right', // Standard for financial charts
+                grid: {
+                    color: 'rgba(226, 232, 240, 0.1)',
+                    drawBorder: false
+                },
+                ticks: {
+                    font: { size: 10, family: 'monospace', weight: '600' },
+                    color: '#94a3b8',
+                    // COMPACT MMK ON Y-AXIS (Saves 40px+ of width)
+                    callback: (value) => proxy.$formatMoney(value, 0, true)
+                }
+            }
+        }
+    }
+}
+
 // ── Lifecycle ────────────────────────────────────────
 onMounted(() => {
     // Setup theme observer
@@ -315,10 +350,13 @@ onMounted(() => {
     // Setup resize handler
     const handleResize = () => {
         if (chartInstance) {
-            chartInstance.resize()
+            const isMobile = window.innerWidth < 640;
+            chartInstance.options.scales.x.ticks.maxTicksLimit = isMobile ? 4 : 8;
+            chartInstance.options.plugins.legend.labels.padding = isMobile ? 10 : 20;
+            chartInstance.update('none'); // Update without heavy animation
         }
     }
-    window.addEventListener('resize', handleResize)
+    window.addEventListener('resize', handleResize);
 
     onUnmounted(() => {
         observer.disconnect()

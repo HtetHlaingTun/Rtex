@@ -159,6 +159,10 @@ class GoldPriceController extends Controller
             ['path' => request()->url(), 'query' => request()->query()]
         );
 
+        if (!$history) {
+            // Redirect back to home with a flash message
+            return redirect('/')->with('error', 'History record not found.');
+        }
 
 
         // Chart data — last 30 days, 1 point per day

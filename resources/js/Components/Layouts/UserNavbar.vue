@@ -21,10 +21,10 @@ const activeComponent = computed(() => page.component);
             <div class="flex justify-between h-16">
                 <div class="flex items-center gap-10">
                     <h1 class="flex items-center gap-3">
-                        <img src="/favicon.ico" class="h-10 w-10">
+                        <!-- <img src="/favicon.ico" class="h-10 w-10"> -->
                         <span
                             class="text-xl font-black tracking-tighter text-orange-600 transition-colors duration-500">
-                            RT<span class="text-slate-900 dark:text-white">Ex</span>
+                            MM<span class="text-slate-900 dark:text-white">RatePro</span>
                         </span>
                     </h1>
 

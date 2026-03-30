@@ -39,7 +39,7 @@ Route::get('/debug-gold', function () {
 
 // admin side 
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // Main rates display
     Route::get('/currencies', [CurrencyExchangeRate::class, 'index'])->name('currencies.index');
     Route::get('/currencies/refresh', [CurrencyExchangeRate::class, 'refresh'])->name('currencies.refresh');
@@ -61,7 +61,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/settings/currencies/{currency}', [CurrencyExchangeRate::class, 'destroy'])->name('currencies.destroy');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('/gold/index', [GoldPriceController::class, 'index'])->name('gold.index');
     Route::get('/gold/history/{id}', [GoldPriceController::class, 'history'])->name('gold.history');
     Route::get('/gold/create', [GoldPriceController::class, 'create'])->name('gold.create');
@@ -79,10 +79,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 
-Route::middleware('auth')->group(function () {
+Route::middleware('auth', 'admin')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+Route::fallback(function () {
+    return redirect('/');
 });
 
 require __DIR__ . '/auth.php';

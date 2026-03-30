@@ -20,9 +20,9 @@ const isAdmin = computed(() => user.value?.role === 'admin');
 
                 <div class="flex items-center gap-10">
                     <h1 class="flex-shrink-0 flex items-center gap-3">
-                        <img src="../../../../public/favicon.ico" class="h-10 w-10 ">
+                        <!-- <img src="../../../../public/favicon.ico" class="h-10 w-10 "> -->
                         <span class="text-xl font-black tracking-tighter text-orange-600">
-                            RT<span class="text-slate-900">Ex</span>
+                            MM<span class="text-slate-900">RatePro</span>
                         </span>
 
                     </h1>

@@ -11,31 +11,52 @@
             class="min-h-screen bg-[#F7F7F5] dark:bg-zinc-950 font-mono text-[#111] dark:text-zinc-100 transition-colors duration-300">
             <!-- Header -->
             <header
-                class="bg-white dark:bg-zinc-900 border-b border-[#EBEBEA] dark:border-zinc-800 py-[22px] sticky top-0 z-10 transition-colors duration-300">
-                <div class="max-w-[960px] mx-auto px-4 sm:px-8">
-                    <div class="flex items-center justify-between gap-4 flex-wrap">
-                        <div class="flex items-center gap-[14px]">
+                class="sticky top-0 z-40 w-full bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-slate-100 dark:border-zinc-800 transition-all duration-300">
+                <div class="max-w-[960px] mx-auto px-5 sm:px-8 py-4 sm:py-5">
+                    <div class="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-y-3 gap-x-6">
+
+                        <div class="flex items-center gap-4">
                             <PublicBackButton backUrl="/"
-                                class="text-[13px] font-mono text-[#999] dark:text-zinc-500 hover:text-[#111] dark:hover:text-zinc-300 transition-colors whitespace-nowrap"
-                                position="inline" backText="Back" />
-                            <div class="w-px h-6 bg-[#EBEBEA] dark:bg-zinc-800"></div>
+                                class="p-2 -ml-2 rounded-full hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors group"
+                                position="inline" backText="" />
+                            <div class="w-px h-6 bg-slate-200 dark:bg-zinc-800 hidden xs:block"></div>
                             <div>
-                                <h1 class="text-lg font-sans tracking-[-0.01em] text-[#111] dark:text-zinc-100">{{
-                                    currency.code }}</h1>
-                                <p class="text-xs text-[#bbb] font-sans dark:text-zinc-500 mt-0.5">{{ currency.name }} ·
-                                    Rate
-                                    History</p>
+                                <h1
+                                    class="text-xl font-black tracking-tight text-slate-900 dark:text-zinc-100 leading-none">
+                                    {{ currency.code }}
+                                </h1>
+                                <p
+                                    class="text-[11px] font-medium text-slate-400 dark:text-zinc-500 mt-1 uppercase tracking-wider">
+                                    {{ currency.name }} <span class="opacity-40">/</span> Rate History
+                                </p>
                             </div>
                         </div>
-                        <div class="flex items-baseline gap-1 flex-shrink-0">
-                            <span
-                                class="text-[11px] font-mono uppercase tracking-[0.07em] text-[#C0C0BC] dark:text-zinc-600">Latest</span>
-                            <span
-                                class="text-xl font-monobold tabular-nums tracking-[-0.02em] text-[#111] dark:text-zinc-100">
-                                {{ formatMoney(getLatestRate()) }}
-                            </span>
-                            <span class="text-xs text-[#bbb] dark:text-zinc-500">MMK</span>
+
+                        <div
+                            class="flex flex-row xs:flex-col items-baseline xs:items-end gap-2 xs:gap-0.5 w-full xs:w-auto pt-3 xs:pt-0 border-t xs:border-t-0 border-slate-50 dark:border-zinc-800/50">
+                            <div class="flex items-center gap-1.5">
+                                <span class="relative flex h-1.5 w-1.5">
+                                    <span
+                                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                                </span>
+                                <span
+                                    class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-zinc-600">
+                                    Latest Rate
+                                </span>
+                            </div>
+
+                            <div class="flex items-baseline gap-1.5 ml-auto xs:ml-0">
+                                <span
+                                    class="text-2xl font-mono font-black tabular-nums tracking-tighter text-slate-900 dark:text-zinc-100">
+                                    {{ formatMoney(getLatestRate(), 2, currency.code === 'MMK') }}
+                                </span>
+                                <span class="text-[10px] font-bold text-slate-400 dark:text-zinc-600 uppercase">
+                                    MMK
+                                </span>
+                            </div>
                         </div>
+
                     </div>
                 </div>
             </header>
