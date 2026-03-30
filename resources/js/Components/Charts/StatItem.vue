@@ -1,31 +1,36 @@
 <template>
-    <div class="flex flex-col p-3 sm:p-4">
-        <span class="text-[10px] font-medium text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">
+    <div class="px-4 py-3 flex flex-col items-center sm:items-start">
+        <span class="text-[10px] font-sans uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1">
             {{ label }}
         </span>
 
-        <span :class="[
-            valueClass || 'text-slate-900 dark:text-zinc-100',
-            'font-mono font-bold leading-tight break-all',
-            formattedValue.length > 10 ? 'text-[11px]' : 'text-xs sm:text-sm'
-        ]">
-            {{ formattedValue }}
-        </span>
+        <div class="flex flex-col items-center sm:items-start leading-tight">
+            <span :class="['text-sm font-mono font-black tabular-nums', valueClass]">
+                {{ formatter(value) }}
+            </span>
+
+            <div v-if="secondaryValue !== undefined" class="mt-0.5">
+                <span v-if="isRecordCount" class="text-sm font-sans font-bold text-black dark:text-white">
+                    {{ secondaryValue }}
+                </span>
+
+                <span v-else :class="['text-sm font-mono font-black tabular-nums', valueClass]">
+                    S$ {{ (secondaryValue.toLocaleString(undefined, {
+                        minimumFractionDigits: 0, maximumFractionDigits: 0
+                    })) }}
+                </span>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-
-const props = defineProps({
+defineProps({
     label: String,
     value: [Number, String],
+    secondaryValue: Number,
+    isRecordCount: { type: Boolean, default: false },
     formatter: Function,
-    valueClass: String
-})
-
-const formattedValue = computed(() => {
-    if (props.value === null || props.value === undefined) return '—'
-    return props.formatter(props.value)
+    valueClass: { type: String, default: 'text-slate-900 dark:text-zinc-100' }
 })
 </script>

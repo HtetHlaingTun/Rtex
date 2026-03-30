@@ -7,55 +7,77 @@
             class="min-h-screen bg-[#F7F7F5] dark:bg-zinc-950 font-mono text-slate-900 dark:text-zinc-100 transition-colors duration-300">
 
             <header
-                class="sticky top-0 z-40 w-full bg-white/80 dark:bg-zinc-900/80 border-b border-slate-200 dark:border-zinc-800 backdrop-blur-md py-4 sm:py-5">
-                <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                class="sticky top-[100px] z-50 w-full bg-white/90 dark:bg-zinc-900/90 border-b border-slate-200 dark:border-zinc-800 backdrop-blur-md">
 
-                        <div class="flex items-center gap-3">
-                            <PublicBackButton backUrl="/"
-                                class="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
-                                position="inline" backText="" />
-                            <div class="w-[1px] h-6 bg-slate-200 dark:bg-zinc-800 hidden xs:block"></div>
-                            <div>
+                <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-5">
+
+                        <!-- Page Title & Description -->
+                        <div class="flex items-start gap-4">
+                            <div class="flex flex-col">
                                 <h1
-                                    class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-tight">
+                                    class="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
                                     {{ pageInfo.title }}
                                 </h1>
-                                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-500 font-medium">
-                                    {{ pageInfo.description }}
-                                </p>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <p
+                                        class="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-500 font-bold uppercase tracking-wider">
+                                        {{ pageInfo.description }}
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
-                        <div
-                            class="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100 dark:border-zinc-800">
-
-                            <div v-if="latestPrice" class="text-left sm:text-right">
+                        <!-- Price & Stats -->
+                        <div class="flex items-center justify-between gap-2">
+                            <div v-if="latestPrice" class="flex flex-col md:items-end">
                                 <span
-                                    class="block text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-zinc-500 mb-0.5">
-                                    Latest Price
+                                    class="text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500 mb-0.5 md:mb-1">
+                                    Live Market Price
                                 </span>
                                 <div class="flex items-baseline gap-1" :class="getTextColor(pageInfo.colorClass)">
-                                    <span class="text-sm font-bold opacity-70">{{ pageInfo.symbol }}</span>
+                                    <span class="text-xs font-bold opacity-60 self-center">{{ pageInfo.symbol }}</span>
                                     <span
-                                        class="text-xl sm:text-2xl font-mono font-black tracking-tighter tabular-nums">
+                                        class="text-xl md:text-3xl font-mono font-black tracking-tighter tabular-nums leading-none">
                                         {{ $formatMoney(latestPrice, 2, pageInfo.currency === 'MMK') }}
                                     </span>
                                     <span v-if="pageInfo.currency === 'MMK'"
-                                        class="text-[10px] font-bold opacity-50 ml-0.5">MMK</span>
+                                        class="text-[10px] font-black opacity-40 ml-0.5">MMK</span>
+                                </div>
+
+                                <div v-if="selectedType === 'world_oz' && stats?.current_sgd"
+                                    class="flex items-center gap-1 mt-1 text-blue-600 dark:text-blue-400 opacity-80">
+                                    <span class="text-[10px] font-bold">S$</span>
+                                    <span class="text-xs md:text-xl font-mono font-bold tabular-nums">
+                                        {{ $formatMoney(stats.current_sgd, 2) }}
+                                    </span>
                                 </div>
                             </div>
 
+
+                            <!-- Stats Pill -->
                             <div v-if="stats"
-                                class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-bold shadow-sm border transition-all duration-300"
+                                class="flex items-center gap-2.5  rounded-xl text-[10px] md:text-[11px] font-black shadow-sm border transition-all duration-500"
                                 :class="getPillClass(stats.trend)">
-                                <span class="text-xs">{{ stats.trend === 'up' ? '▲' : stats.trend === 'down' ? '▼' : '—'
-                                }}</span>
-                                <div class="flex flex-col sm:flex-row sm:items-center gap-x-2">
-                                    <span class="whitespace-nowrap">
+
+                                <div
+                                    class="flex items-center justify-center w-5 h-5 rounded-full bg-white/20 dark:bg-black/20 flex-shrink-0">
+                                    <span class="text-[10px]">{{ stats.trend === 'up' ? '▲' : stats.trend === 'down' ?
+                                        '▼' : '—' }}</span>
+                                </div>
+
+                                <div class="flex flex-col leading-tight">
+                                    <span class="whitespace-nowrap tabular-nums">
                                         {{ stats.symbol }}{{ $formatMoney(stats.diff, 0) }}
+                                        <span class="opacity-70 text-[8px] font-medium ml-1">({{ stats.percent
+                                        }}%)</span>
                                     </span>
-                                    <span class="opacity-70 text-[10px]">({{ stats.percent }}%)</span>
+
+                                    <span v-if="selectedType === 'world_oz' && stats.diff_sgd"
+                                        class="whitespace-nowrap tabular-nums text-[9px] opacity-80 mt-0.5 border-t border-current/10 pt-0.5">
+                                        S$ {{ $formatMoney(stats.diff_sgd, 0) }}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -64,16 +86,20 @@
                 </div>
             </header>
 
+
             <main class="max-w-4xl mx-auto px-8 sm:px-4 lg:px-8 pt-9 pb-20 flex flex-col gap-6">
 
-                <div class="flex gap-2 flex-wrap">
-                    <Link v-for="tab in tabs" :key="tab.value" :href="route('public.gold.history', { type: tab.value })"
-                        class="px-4 py-2 text-sm font-sans border rounded-lg transition-all duration-200"
-                        :class="selectedType === tab.value
-                            ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-zinc-950 dark:border-white'
-                            : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-800 dark:hover:bg-zinc-800'">
-                        {{ tab.label }}
-                    </Link>
+                <div class="overflow-x-auto">
+                    <div class="flex gap-2 min-w-max">
+                        <Link v-for="tab in tabs" :key="tab.value"
+                            :href="route('public.gold.history', { type: tab.value })"
+                            class="px-3 sm:px-4 py-1.5 sm:py-2 text-sm font-sans border rounded-lg transition-all duration-200 whitespace-nowrap text-center"
+                            :class="selectedType === tab.value
+                                ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-zinc-950 dark:border-white'
+                                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-800 dark:hover:bg-zinc-800'">
+                            {{ tab.label }}
+                        </Link>
+                    </div>
                 </div>
 
 
@@ -125,10 +151,21 @@
                                         <span class="text-sm font-mono font-black tabular-nums">
                                             {{ $formatMoney(entry.price, 2, pageInfo.currency === 'MMK') }}
                                         </span>
+                                        <TrendIcon :current="entry.price" :previous="historyData[index + 1]?.price"
+                                            :show-amount="true" />
                                     </div>
 
-                                    <TrendIcon :current="entry.price" :previous="historyData[index + 1]?.price"
-                                        :show-amount="true" />
+                                    <div v-if="selectedType === 'world_oz' && entry.sgd_price"
+                                        class="flex items-baseline gap-1 ">
+                                        <span class="text-[10px] font-bold opacity-60">S$</span>
+                                        <span class="text-sm font-mono font-bold tabular-nums">
+                                            {{ $formatMoney(entry.sgd_price, 2) }}
+                                        </span>
+                                        <TrendIcon :current="entry.sgd_price"
+                                            :previous="historyData[index + 1]?.sgd_price" :show-amount="true" />
+                                    </div>
+
+
                                 </div>
 
                                 <div class="text-right hidden sm:block">
@@ -171,7 +208,7 @@
 
                 <p class="text-center text-[11px] text-slate-400 dark:text-zinc-600 px-10">
                     {{ isWorldGold ? 'World gold sourced from Yahoo Finance. Snapshots taken throughout the day.' :
-                        'Local gold prices sourced from Central Bank of Myanmar. Updated daily.' }}
+                        'Local gold prices and world gold prices are updated daily.' }}
                 </p>
 
             </main>
@@ -217,7 +254,17 @@ const tabs = [
 ]
 
 const typeMap = {
-    world_oz: { title: 'World Gold Spot', description: 'USD / Troy oz · 31.1 g', currency: '', symbol: '$', colorClass: 'blue', chartColor: '#2563EB' },
+    world_oz: {
+        title: 'World Gold Spot',
+        description: 'USD & SGD / Troy oz · 31.1 g',
+        currency: 'USD', // Primary currency
+        symbol: '$',
+        secondaryCurrency: 'SGD',
+        secondarySymbol: 'S$',
+        colorClass: 'blue',
+        chartColor: '#2563EB',
+        secondaryChartColor: '#10b981' // Emerald color for the SGD line
+    },
     new_system: { title: 'New System Gold', description: 'MMK / Kyatthar · 16.329 g', currency: 'MMK', symbol: '', colorClass: 'green', chartColor: '#16A34A' },
     traditional: { title: 'Traditional Gold', description: 'MMK / Kyatthar · 16.606 g', currency: 'MMK', symbol: '', colorClass: 'amber', chartColor: '#D97706' },
 }
@@ -287,9 +334,9 @@ const getTextColor = (color) => {
 }
 
 const getPillClass = (trend) => {
-    if (trend === 'up') return 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
-    if (trend === 'down') return 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'
-    return 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700'
+    if (trend === 'up') return ' text-emerald-700   dark:text-emerald-400 dark:border-emerald-500/20'
+    if (trend === 'down') return 'text-rose-700   dark:text-rose-400 dark:border-rose-500/20'
+    return ' text-slate-600  dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700'
 }
 
 const getBadgeClass = (dir) => {

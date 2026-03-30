@@ -3,167 +3,230 @@
 
         <Head title="Live Market Rates" />
 
+
+
         <div
             class="min-h-screen bg-[#F7F7F5] dark:bg-zinc-950 font-mono text-[#111] dark:text-zinc-100 transition-colors duration-300">
             <!-- Page Header -->
-            <header class="sticky top-[64px] z-40 w-full transition-all duration-300 border-b" :class="[
-                isScrolled
-                    ? 'py-2 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border-slate-200/80 dark:border-zinc-800'
-                    : 'py-4 sm:py-6 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl border-slate-200/50 dark:border-zinc-800/50'
-            ]">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="flex items-center justify-between px-2">
-                        <div class="flex flex-col gap-0.5">
-                            <div class="flex items-center gap-2">
-                                <h1 :class="isScrolled ? 'text-lg' : 'text-xl sm:text-2xl'"
-                                    class="font-sans tracking-tight text-slate-900 dark:text-white transition-all duration-300">
-                                    Market Rates
-                                </h1>
-                                <span
-                                    class="hidden sm:inline-block px-1.5 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider bg-orange-100 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400">
-                                    Live
-                                </span>
-                            </div>
-                            <p
-                                class="text-[10px] sm:text-xs font-monobold text-slate-400 tabular-nums uppercase tracking-wide flex items-center gap-1.5">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                Last Update: {{ lastRefreshedTime }}
-                            </p>
-                        </div>
 
-                        <div
-                            class="group flex items-center gap-3 pl-2 pr-4 py-1 bg-white dark:bg-zinc-900 shadow-sm border-slate-200 dark:border-zinc-800">
-                            <div class="flex -space-x-1">
-                                <div
-                                    class="w-5 h-5 rounded-full border-2 border-white dark:border-zinc-900 bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-[10px]">
-                                    🇺🇸
-                                </div>
-                                <div
-                                    class="w-5 h-5 rounded-full border-2 border-white dark:border-zinc-900 bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-[10px]">
-                                    🇲🇲
-                                </div>
-                            </div>
-
-                            <div class="h-4 w-[1px] bg-slate-200 dark:border-zinc-800"></div>
-
-                            <div class="flex items-center gap-2.5 px-3 py-1 transition-all duration-500 shadow-sm"
-                                :class="isOnline
-                                    ? 'bg-emerald-50/40 border-emerald-100 dark:bg-emerald-500/5 dark:border-emerald-500/20'
-                                    : 'bg-rose-50/40 border-rose-100 dark:bg-rose-500/5 dark:border-rose-500/20'
-                                    ">
-                                <div class="relative flex h-2 w-2 flex-shrink-0">
-                                    <span v-if="isOnline"
-                                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span class="relative inline-flex rounded-full h-2 w-2"
-                                        :class="isOnline ? 'bg-emerald-500' : 'bg-rose-500'"></span>
-                                </div>
-
-                                <span
-                                    class="hidden sm:block text-[10px] font-mono uppercase tracking-wider leading-none"
-                                    :class="isOnline
-                                        ? 'text-emerald-700 dark:text-emerald-400'
-                                        : 'text-rose-600 dark:text-rose-400'
-                                        ">
-                                    {{ isOnline ? 'Online' : 'Offline' }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </header>
 
             <main class="max-w-[960px] mx-auto px-6 pb-20 pt-8 flex flex-col gap-10">
+
+
+
                 <!-- Gold Prices -->
                 <section v-if="gold" class="mt-8">
+
+                    <!-- HEADER -->
                     <div class="flex items-center justify-between mb-4 px-1">
                         <h2
-                            class="text-[11px] font-bold tracking-[0.12em] uppercase text-slate-400 dark:text-zinc-500 flex items-center gap-2">
-                            <span class="w-1.5 h-3 bg-amber-500 rounded-full"></span>
+                            class="text-[11px] font-black tracking-[0.15em] uppercase text-slate-400 dark:text-zinc-500 flex items-center gap-2">
+                            <span class="relative flex h-2 w-2">
+                                <span
+                                    class="animate-ping absolute h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                            </span>
                             Gold Market
                         </h2>
+
+                        <!-- NEW: mini badge -->
+                        <span class="text-[9px] font-mono text-slate-400 uppercase">
+                            Live
+                        </span>
                     </div>
 
                     <div
                         class="bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 rounded-3xl overflow-hidden">
+
+
+                        <!-- WORLD MARKET -->
+                        <div class="bg-white dark:bg-zinc-900 px-6 py-6 border-t border-slate-100 dark:border-zinc-800">
+                            <div class="flex flex-col gap-5">
+
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+
+                                        <span
+                                            class="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em]">
+                                            Global Market Reference
+                                        </span>
+                                    </div>
+
+                                </div>
+
+                                <div class="flex flex-col gap-2">
+
+                                    <div
+                                        class="grid grid-cols-2 gap-4 p-3 rounded-2xl bg-slate-50/50 dark:bg-zinc-800/30 border border-slate-100 dark:border-zinc-800/50">
+
+                                        <div class="flex flex-col">
+                                            <span class="text-[9px] font-bold text-slate-400 uppercase mb-1">
+                                                USD Spot / oz
+                                            </span>
+
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="text-lg font-mono font-black text-slate-900 dark:text-white leading-none">
+                                                    ${{ $formatDecimal(gold.world_gold_price) }}
+                                                </span>
+
+                                                <TrendIcon :current="gold.world_gold_price"
+                                                    :previous="gold.prev_world_gold_price" />
+                                            </div>
+                                        </div>
+
+
+                                        <div class="flex flex-col border-l border-slate-200 dark:border-zinc-700 pl-4">
+                                            <span class="text-[9px] font-bold text-slate-400 uppercase mb-1">USD /
+                                                Gram</span>
+
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="text-sm font-mono font-bold text-slate-600 dark:text-zinc-400">
+                                                    ${{ $formatDecimal(gold.world_gold_price / 31.1035) }}
+                                                </span>
+
+                                                <TrendIcon :current="gold.world_gold_price / 31.1035"
+                                                    :previous="gold.prev_world_gold_price / 31.1035" />
+                                            </div>
+
+
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        class="grid grid-cols-2 gap-4 p-3 rounded-2xl bg-blue-50/30 dark:bg-blue-500/5 border border-blue-100/50 dark:border-blue-500/10">
+                                        <div class="flex flex-col">
+                                            <span class="text-[9px] font-bold text-blue-500 uppercase mb-1">SGD Spot /
+                                                oz</span>
+
+
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="text-lg font-mono font-black text-blue-600 dark:text-blue-400 leading-none">
+                                                    ${{ $formatDecimal(gold.sgd_price) }}
+                                                </span>
+
+                                                <TrendIcon :current="gold.sgd_price" :previous="gold.prev_sgd_price" />
+                                            </div>
+
+
+                                        </div>
+                                        <div
+                                            class="flex flex-col border-l border-blue-100 dark:border-blue-500/20 pl-4">
+                                            <span class="text-[9px] font-bold text-blue-500 uppercase mb-1">SGD /
+                                                Gram</span>
+
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="text-sm font-mono font-bold text-blue-600 dark:text-blue-400">
+                                                    ${{ $formatDecimal(gold.sgd_price / 31.1035) }}
+                                                </span>
+
+                                                <TrendIcon :current="gold.sgd_price / 31.1035"
+                                                    :previous="gold.prev_sgd_price / 31.1035" />
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!-- TABLE HEADER -->
                         <div
                             class="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-slate-50/50 dark:bg-zinc-800/30 border-b border-slate-100 dark:border-zinc-800">
                             <div class="col-span-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                Market System</div>
+                                Local Market System</div>
                             <div
                                 class="col-span-3 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                Price (MMK)</div>
+                                Price</div>
                             <div
                                 class="col-span-3 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                1 Pe (၁ ပဲ)</div>
+                                1 Pe</div>
                             <div
                                 class="col-span-2 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                USD Equiv.</div>
+                                USD</div>
                         </div>
 
                         <div class="divide-y divide-slate-100 dark:divide-zinc-800">
-                            <Link :href="route('public.gold.history', { type: 'new_system' })"
-                                class="group grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-amber-500/[0.02] transition-colors">
 
+                            <!-- NEW SYSTEM -->
+                            <Link :href="route('public.gold.history', { type: 'new_system' })" class="group grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 items-center
+                hover:bg-amber-500/[0.03] transition-all duration-500 hover:scale-[1.01]">
+
+                                <!-- LEFT -->
                                 <div class="col-span-4 flex items-center gap-4">
                                     <div>
                                         <h4
-                                            class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-amber-600 transition-colors">
-                                            New System</h4>
-                                        <p class="text-[10px] font-mono text-slate-400 uppercase tracking-tight">16.329g
-                                            / ကျပ်သား</p>
+                                            class="text-sm font-black text-slate-900 dark:text-white group-hover:text-amber-600 transition-colors">
+                                            New System
+                                        </h4>
+                                        <p class="text-[10px] font-mono text-slate-400 uppercase tracking-tight">
+                                            16.329g / ကျပ်သား
+                                        </p>
                                     </div>
                                 </div>
 
+                                <!-- PRICE -->
                                 <div class="col-span-3 md:text-right flex md:block justify-between items-center">
                                     <span class="md:hidden text-[9px] font-bold text-slate-400 uppercase">Price</span>
 
                                     <div class="flex flex-col md:items-end items-end">
                                         <span
-                                            class="text-[9px] font-black font-sans text-amber-600/60 dark:text-amber-500/40 uppercase tracking-tighter mb-0.5">
+                                            class="text-[9px] font-black text-amber-600/60 uppercase tracking-tighter mb-0.5">
                                             MMK
                                         </span>
 
-                                        <span
-                                            class="text-xl font-mono font-black text-slate-900 dark:text-white tabular-nums leading-none">
+                                        <span :class="[
+                                            'text-xl font-mono font-black tabular-nums leading-none transition-all duration-500',
+                                            'text-slate-900 dark:text-white',
+                                            gold.mmk_price_new > gold.prev_mmk_price_new ? 'scale-105 text-emerald-500' : ''
+                                        ]">
                                             {{ $formatMoney(gold.mmk_price_new) }}
                                         </span>
 
                                         <div class="mt-1.5 flex items-center gap-1 opacity-80">
-                                            <TrendIcon :current="gold.mmk_price_new" :previous="gold.prev_mmk_price_new"
-                                                class="scale-90" />
-
+                                            <TrendIcon :current="gold.mmk_price_new"
+                                                :previous="gold.prev_mmk_price_new" />
                                         </div>
                                     </div>
                                 </div>
 
+                                <!-- 1 PE -->
                                 <div class="col-span-3 md:text-right flex md:block justify-between items-center">
                                     <span class="md:hidden text-[9px] font-bold text-slate-400 uppercase">1 Pe</span>
+
                                     <span class="text-base font-mono font-bold text-amber-600 tabular-nums">
                                         {{ $formatMoney(gold.mmk_price_new / 16) }}
                                     </span>
                                 </div>
 
+                                <!-- USD -->
                                 <div class="col-span-2 md:text-right flex md:block justify-between items-center">
                                     <span class="md:hidden text-[9px] font-bold text-slate-400 uppercase">USD</span>
+
                                     <span class="text-sm font-mono text-slate-500 tabular-nums">
                                         ${{ $formatDecimal(calculateUsdPrice(gold.mmk_price_new, gold.usd_mmk_rate)) }}
                                     </span>
                                 </div>
                             </Link>
 
-                            <Link :href="route('public.gold.history', { type: 'traditional' })"
-                                class="group grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-indigo-500/[0.02] transition-colors">
+                            <!-- TRADITIONAL -->
+                            <Link :href="route('public.gold.history', { type: 'traditional' })" class="group grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 items-center
+                hover:bg-indigo-500/[0.03] transition-all duration-500 hover:scale-[1.01]">
 
                                 <div class="col-span-4 flex items-center gap-4">
                                     <div>
                                         <h4
-                                            class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
-                                            Traditional</h4>
-                                        <p class="text-[10px] font-mono text-slate-400 uppercase tracking-tight">16.606g
-                                            / ကျပ်သား</p>
+                                            class="text-sm font-black text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                                            Traditional
+                                        </h4>
+                                        <p class="text-[10px] font-mono text-slate-400 uppercase tracking-tight">
+                                            16.606g / ကျပ်သား
+                                        </p>
                                     </div>
                                 </div>
 
@@ -172,26 +235,28 @@
 
                                     <div class="flex flex-col md:items-end items-end">
                                         <span
-                                            class="text-[9px] font-sans font-black text-amber-600/60 dark:text-amber-500/40 uppercase tracking-tighter mb-0.5">
+                                            class="text-[9px] font-black text-amber-600/60 uppercase tracking-tighter mb-0.5">
                                             MMK
                                         </span>
 
-                                        <span
-                                            class="text-xl font-mono font-black text-slate-900 dark:text-white tabular-nums leading-none">
+                                        <span :class="[
+                                            'text-xl font-mono font-black tabular-nums leading-none transition-all duration-500',
+                                            'text-slate-900 dark:text-white',
+                                            gold.mmk_price_old > gold.prev_mmk_price_old ? 'scale-105 text-emerald-500' : ''
+                                        ]">
                                             {{ $formatMoney(gold.mmk_price_old) }}
                                         </span>
 
                                         <div class="mt-1.5 flex items-center gap-1 opacity-80">
-                                            <TrendIcon :current="gold.mmk_price_old" :previous="gold.prev_mmk_price_old"
-                                                class="scale-90" />
-
+                                            <TrendIcon :current="gold.mmk_price_old"
+                                                :previous="gold.prev_mmk_price_old" />
                                         </div>
                                     </div>
                                 </div>
 
-
                                 <div class="col-span-3 md:text-right flex md:block justify-between items-center">
                                     <span class="md:hidden text-[9px] font-bold text-slate-400 uppercase">1 Pe</span>
+
                                     <span class="text-base font-mono font-bold text-indigo-600 tabular-nums">
                                         {{ $formatMoney(gold.mmk_price_old / 16) }}
                                     </span>
@@ -199,158 +264,198 @@
 
                                 <div class="col-span-2 md:text-right flex md:block justify-between items-center">
                                     <span class="md:hidden text-[9px] font-bold text-slate-400 uppercase">USD</span>
+
                                     <span class="text-sm font-mono text-slate-500 tabular-nums">
                                         ${{ $formatDecimal(calculateUsdPrice(gold.mmk_price_old, gold.usd_mmk_rate)) }}
                                     </span>
                                 </div>
                             </Link>
+
                         </div>
 
-                        <div class="bg-emerald-500/5 dark:bg-emerald-500/10 px-6 py-4 border-t border-emerald-500/20">
-                            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="relative flex h-2 w-2">
-                                        <span
-                                            class="animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                    </div>
-                                    <span
-                                        class="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">World
-                                        Reference</span>
-                                </div>
 
-                                <div
-                                    class="flex flex-wrap justify-center md:justify-end items-center gap-x-6 gap-y-2 md:gap-8 font-mono text-xs">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-slate-400 uppercase text-[9px] font-bold">Spot</span>
-                                        <span class="text-emerald-600 font-bold">${{
-                                            $formatDecimal(gold.world_gold_price) }} <span
-                                                class="text-[9px] opacity-60">/oz</span></span>
-                                    </div>
 
-                                    <div class="hidden sm:block w-px h-3 bg-slate-200 dark:bg-zinc-700"></div>
-
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-slate-400 uppercase text-[9px] font-bold">Gram</span>
-                                        <span class="text-emerald-600 font-bold">${{
-                                            $formatDecimal(gold.world_gold_price / 31.1035) }} <span
-                                                class="text-[9px] opacity-60">/g</span></span>
-                                    </div>
-
-                                    <div class="hidden sm:block w-px h-3 bg-slate-200 dark:bg-zinc-700"></div>
-
-                                    <!-- <div class="flex items-center gap-2">
-                                        <span class="text-slate-400 uppercase text-[9px] font-bold">FX Rate</span>
-                                        <span class="text-slate-700 dark:text-zinc-300 font-bold">
-                                            {{ $formatDecimal(gold.usd_mmk_rate) }} <span class="text-[9px]">MMK</span>
-                                        </span>
-                                    </div> -->
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </section>
 
+
+
+
+
                 <!-- Exchange Rates -->
                 <section class="mt-8">
-                    <div class="flex items-center justify-between mb-4 px-1">
-                        <h2
-                            class="text-[11px] font-mono tracking-[0.12em] uppercase text-slate-400 dark:text-zinc-500 flex items-center gap-2">
-                            <span class="w-1.5 h-3 bg-orange-500 rounded-full"></span>
-                            Exchange Rates
-                        </h2>
 
+                    <!-- HEADER -->
+                    <div class="flex items-center justify-between mb-6 px-1">
+                        <div class="flex flex-col gap-1">
+                            <h2
+                                class="text-[11px] font-black tracking-[0.15em] uppercase text-slate-400 dark:text-zinc-500 flex items-center gap-2">
+                                <span class="relative flex h-2 w-2">
+                                    <span
+                                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                                </span>
+                                Live Exchange Rates
+                            </h2>
+
+                        </div>
                     </div>
 
+                    <!-- DATA -->
                     <div v-if="rates && rates.length > 0">
+
+                        <!-- TABLE HEADER -->
                         <div
-                            class="hidden sm:grid grid-cols-[2.5fr_1.2fr_1.2fr_1fr] px-6 pb-3 text-[10px] font-mono tracking-widest uppercase text-slate-400">
-                            <span>Market / Time</span>
-                            <span class="text-right">Buy (MMK)</span>
-                            <span class="text-right">Sell (MMK)</span>
+                            class="hidden sm:grid grid-cols-[2.5fr_1.2fr_1.2fr_1fr] px-6 pb-4 text-[10px] font-black tracking-widest uppercase text-slate-400/70">
+                            <span>Currency / Market Time</span>
+                            <span class="text-right pr-4">Buy (MMK)</span>
+                            <span class="text-right pr-4">Sell (MMK)</span>
                             <span class="text-right">24h Change</span>
                         </div>
 
-                        <div class="space-y-2">
-                            <Link v-for="rate in rates" :key="rate.id"
-                                :href="route('history', rate.currency?.id || rate.id)"
-                                class="group block bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 rounded-xl overflow-hidden hover:border-orange-500/30 hover:shadow-md transition-all duration-300">
-                                <div
-                                    class="grid grid-cols-2 sm:grid-cols-[2.5fr_1.2fr_1.2fr_1fr] items-center p-4 sm:p-5 gap-y-4 sm:gap-0">
+                        <div class="space-y-3">
 
-                                    <div class="flex items-center gap-3">
+                            <Link v-for="rate in rates" :key="rate.id"
+                                :href="route('history', rate.currency?.id || rate.id)" class="group block rounded-2xl overflow-hidden transition-all duration-500
+                bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800
+                hover:scale-[1.015] hover:-translate-y-0.5
+                hover:border-orange-500/30 hover:shadow-xl hover:shadow-orange-500/5
+                hover:bg-gradient-to-r hover:from-orange-500/5 hover:to-transparent">
+
+                                <div
+                                    class="grid grid-cols-2 sm:grid-cols-[2.5fr_1.2fr_1.2fr_1fr] items-center p-4 sm:p-5">
+
+                                    <!-- LEFT -->
+                                    <div class="flex items-center gap-4">
                                         <div
-                                            class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-zinc-800 flex items-center justify-center text-xs font-mono text-slate-400">
+                                            class="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-black text-slate-500 border-2 border-white dark:border-zinc-900 shadow-sm">
                                             {{ rate.currency?.code?.substring(0, 2) }}
                                         </div>
+
                                         <div class="flex flex-col">
                                             <div class="flex items-center gap-2">
-                                                <span class="text-base font-monok text-slate-900 dark:text-white">{{
-                                                    rate.currency?.code }}</span>
+                                                <!-- Bigger & cleaner -->
                                                 <span
-                                                    class="hidden md:inline text-[10px] font-mono text-slate-400 uppercase tracking-tighter">{{
-                                                        rate.currency?.name }}</span>
+                                                    class="text-xl font-black text-slate-900 dark:text-white leading-tight group-hover:text-orange-500 transition-colors">
+                                                    {{ rate.currency?.code }}
+                                                </span>
+
+                                                <span
+                                                    class="hidden md:inline-block px-1.5 py-0.5 rounded-md bg-slate-50 dark:bg-zinc-800 text-[9px] font-bold text-slate-400 uppercase tracking-tighter border border-slate-100 dark:border-zinc-700">
+                                                    {{ rate.currency?.name }}
+                                                </span>
                                             </div>
-                                            <span class="text-[10px] font-monobold text-slate-400 tabular-nums">
-                                                {{ $formatShortDate(rate.created_at) }} • {{
-                                                    $formatTime24(rate.created_at) }}
+
+                                            <span class="text-[10px] font-medium text-slate-400 tabular-nums mt-0.5">
+                                                {{ $formatTime24(rate.created_at) }}
+                                                <span class="mx-1 opacity-30">|</span>
+                                                {{ $formatShortDate(rate.created_at) }}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div class="flex justify-end sm:order-last">
-                                        <span v-if="rate.change_percentage"
-                                            class="inline-flex items-center gap-1 text-[11px] font-mono px-2.5 py-1 rounded-lg transition-colors"
-                                            :class="rate.market_trend === 'up'
-                                                ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
-                                                : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
-                                                ">
-                                            <span class="text-[8px]">{{ rate.market_trend === 'up' ? '▲' : '▼' }}</span>
-                                            {{ Math.abs(rate.change_percentage).toFixed(2) }}%
-                                        </span>
-                                        <span v-else class="text-[11px] font-mono text-slate-300">—</span>
-                                    </div>
+                                    <div class="sm:hidden "></div>
 
+                                    <!-- BUY -->
                                     <div
-                                        class="flex flex-col sm:items-end border-t sm:border-t-0 border-slate-50 dark:border-zinc-800 pt-3 sm:pt-0">
-                                        <span class="text-[9px] font-mono text-slate-400 uppercase sm:hidden mb-1">Buy
-                                            Rate</span>
+                                        class="flex flex-col sm:items-end justify-center px-4 py-2 sm:py-0 rounded-xl  border border-emerald-100/20 sm:border-none">
+
                                         <span
-                                            class="text-sm font-monok tabular-nums text-emerald-600 dark:text-emerald-400">
+                                            class="text-[8px] font-black text-emerald-600/60 uppercase sm:hidden mb-1">
+                                            Buy
+                                        </span>
+
+                                        <span :class="[
+                                            'text-base font-mono font-black tabular-nums leading-none transition-all duration-500',
+                                            'text-emerald-600 dark:text-emerald-400',
+                                            rate.market_trend === 'up' ? 'scale-105' : ''
+                                        ]">
                                             {{ $formatMoney(rate.buy_rate) }}
                                         </span>
-                                        <TrendIcon :current="rate.buy_rate" :previous="rate.prev_buy_rate"
-                                            class="scale-90 origin-right" />
+
+                                        <div class="mt-1 flex items-center gap-1">
+                                            <TrendIcon :current="rate.buy_rate" :previous="rate.prev_buy_rate"
+                                                class="scale-100" />
+                                            <span class="text-[9px] font-mono text-emerald-600/50">MMK</span>
+                                        </div>
                                     </div>
 
+                                    <!-- SELL -->
                                     <div
-                                        class="flex flex-col items-end border-t sm:border-t-0 border-slate-50 dark:border-zinc-800 pt-3 sm:pt-0">
-                                        <span class="text-[9px] font-mono text-slate-400 uppercase sm:hidden mb-1">Sell
-                                            Rate</span>
-                                        <span class="text-sm font-monok tabular-nums text-rose-600 dark:text-rose-400">
+                                        class="flex flex-col items-end justify-center px-4 py-2 sm:py-0 rounded-xl  border border-rose-100/20 sm:border-none">
+
+                                        <span class="text-[8px] font-black text-rose-600/60 uppercase sm:hidden mb-1">
+                                            Sell
+                                        </span>
+
+                                        <span :class="[
+                                            'text-base font-mono font-black tabular-nums leading-none transition-all duration-500',
+                                            'text-rose-600 dark:text-rose-400',
+                                            rate.market_trend === 'down' ? 'scale-105' : ''
+                                        ]">
                                             {{ $formatMoney(rate.sell_rate) }}
                                         </span>
-                                        <TrendIcon :current="rate.sell_rate" :previous="rate.prev_sell_rate"
-                                            class="scale-90 origin-right" />
+
+                                        <div class="mt-1 flex items-center gap-1">
+                                            <TrendIcon :current="rate.sell_rate" :previous="rate.prev_sell_rate"
+                                                class="scale-100" />
+                                            <span class="text-[9px] font-mono text-rose-600/50">MMK</span>
+                                        </div>
+
+
+                                    </div>
+
+                                    <!-- CHANGE -->
+                                    <div class="sm:flex justify-end mt-4 sm:mt-0 hidden ">
+
+                                        <div v-if="rate.change_percentage"
+                                            class="inline-flex flex-col items-end justify-content-end gap-1 px-3 py-1.5 rounded-xl transition-all"
+                                            :class="rate.market_trend === 'up'
+                                                ? ' text-emerald-600 dark:text-emerald-400'
+                                                : ' text-rose-600 dark:text-rose-400'">
+
+                                            <div class="flex items-center gap-1">
+                                                <span class="text-[8px]">
+                                                    {{ rate.market_trend === 'up' ? '▲' : '▼' }}
+                                                </span>
+                                                <span class="text-xs font-black font-mono">
+                                                    {{ Math.abs(rate.change_percentage).toFixed(2) }}%
+                                                </span>
+                                            </div>
+
+                                            <!-- FIXED LABEL -->
+                                            <span
+                                                class="text-[8px] text-black dark:text-white font-bold uppercase opacity-80">
+                                                Spread: {{ $formatMoney(rate.sell_rate - rate.buy_rate) }}
+                                            </span>
+                                        </div>
+
+                                        <span v-else class="text-[11px] font-mono text-slate-300">—</span>
                                     </div>
 
                                 </div>
                             </Link>
+
                         </div>
                     </div>
 
+                    <!-- EMPTY -->
                     <div v-else
-                        class="bg-white dark:bg-zinc-900 border border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl p-16 text-center">
+                        class="bg-white dark:bg-zinc-900 border-2 border-dashed border-slate-100 dark:border-zinc-800 rounded-[2rem] p-20 text-center">
+
                         <div
-                            class="w-12 h-12 bg-slate-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            class="w-16 h-16 bg-slate-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-8 h-8 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <p class="text-sm font-mono text-slate-400 uppercase tracking-widest">No market data available
+
+                        <p class="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
+                            Waiting for market pulse...
                         </p>
                     </div>
+
                 </section>
             </main>
         </div>

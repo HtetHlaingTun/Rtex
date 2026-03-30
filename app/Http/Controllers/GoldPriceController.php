@@ -345,9 +345,9 @@ class GoldPriceController extends Controller
 
         if ($type === 'world_oz') {
             $history = DB::table('world_gold_snapshots')
-                ->select('id', 'fetched_at as created_at', 'usd_price as price')
+                ->select('id', 'fetched_at as created_at', 'usd_price as price', 'sgd_price')
                 ->orderBy('fetched_at', 'desc')
-                ->paginate(150); // Increase limit to see more days
+                ->paginate(150);
         } else {
             $system = $type === 'new_system' ? 'new' : 'old';
             $goldTypeIds = GoldType::where('system', $system)->where('is_active', 1)->pluck('id');
@@ -395,10 +395,13 @@ class GoldPriceController extends Controller
             if ($latest && $yesterdayClose) {
                 $diff = $latest->usd_price - $yesterdayClose->usd_price;
                 $percent = ($diff / $yesterdayClose->usd_price) * 100;
+                $diffSgd = $latest->sgd_price - $yesterdayClose->sgd_price;
 
                 $stats = [
                     'current' => (float) $latest->usd_price,
+                    'current_sgd' => (float) $latest->sgd_price,
                     'diff' => abs($diff),
+                    'diff_sgd ' => abs($diffSgd),
                     'percent' => round($percent, 2),
                     'trend' => $diff > 0 ? 'up' : ($diff < 0 ? 'down' : 'flat'),
                     'compare_date' => Carbon::parse($yesterdayClose->fetched_at)->format('d M'),
@@ -574,55 +577,40 @@ class GoldPriceController extends Controller
     private function getWorldGoldData($period)
     {
         try {
-            // Check if table exists
+            // 1. Basic Table Check
             if (!Schema::hasTable('world_gold_snapshots')) {
                 Log::warning('world_gold_snapshots table does not exist');
                 return response()->json([]);
             }
 
-            // Get date range based on period
+            // 2. Define Date Range
             $days = match ($period) {
                 '7d' => 7,
                 '1m' => 30,
                 '3m' => 90,
                 '1y' => 365,
-                'all' => 365 * 2, // 2 years max for performance
+                'all' => 365 * 2,
                 default => 7
             };
 
             $startDate = now()->subDays($days);
+            $dateColumn = 'fetched_at'; // Standardizing on your table column
 
-            // Check available columns
-            $columns = Schema::getColumnListing('world_gold_snapshots');
+            // 3. Query Logic
+            $query = DB::table('world_gold_snapshots')
+                ->where($dateColumn, '>=', $startDate);
 
-            // Determine price column
-            $priceColumn = $this->getPriceColumn($columns);
-            if (!$priceColumn) {
-                Log::error('No price column found. Available: ' . implode(', ', $columns));
-                return response()->json([]);
-            }
-
-            // Determine date column
-            $dateColumn = $this->getDateColumn($columns);
-            if (!$dateColumn) {
-                Log::error('No date column found. Available: ' . implode(', ', $columns));
-                return response()->json([]);
-            }
-
-            // Count total records in range
-            $totalRecords = DB::table('world_gold_snapshots')
-                ->where($dateColumn, '>=', $startDate)
-                ->count();
-
-            Log::info("World gold query for period {$period}: found {$totalRecords} records");
-
-            // Apply different aggregation strategies based on period
             switch ($period) {
                 case '7d':
-                    // For 7 days, return all points (hourly data) - this gives ~168 points
-                    return DB::table('world_gold_snapshots')
-                        ->where($dateColumn, '>=', $startDate)
-                        ->select("$priceColumn as price", "$dateColumn as recorded_at")
+                    /**
+                     * For 7 days: Return all raw snapshots (likely hourly).
+                     * This provides high-resolution data for the short-term chart.
+                     */
+                    return $query->select(
+                        'usd_price as price',
+                        'sgd_price',
+                        "$dateColumn as recorded_at"
+                    )
                         ->orderBy($dateColumn, 'asc')
                         ->get();
 
@@ -630,28 +618,28 @@ class GoldPriceController extends Controller
                 case '3m':
                 case '1y':
                 case 'all':
-                    // For all longer periods, use daily aggregation
-                    // This will give 1 point per day instead of 24 points per day
-                    return DB::table('world_gold_snapshots')
-                        ->where($dateColumn, '>=', $startDate)
-                        ->select(
-                            DB::raw("AVG($priceColumn) as price"),
-                            DB::raw("DATE($dateColumn) as recorded_at")
-                        )
+                    /**
+                     * For longer periods: Aggregate by Day.
+                     * We take the Average (AVG) of both USD and SGD for each day 
+                     * to keep the chart clean and prevent thousands of points.
+                     */
+                    return $query->select(
+                        DB::raw("AVG(usd_price) as price"),
+                        DB::raw("AVG(sgd_price) as sgd_price"),
+                        DB::raw("DATE($dateColumn) as recorded_at")
+                    )
                         ->groupBy(DB::raw("DATE($dateColumn)"))
                         ->orderBy('recorded_at', 'asc')
                         ->get();
 
                 default:
-                    return DB::table('world_gold_snapshots')
-                        ->where($dateColumn, '>=', $startDate)
-                        ->select("$priceColumn as price", "$dateColumn as recorded_at")
+                    return $query->select('usd_price as price', 'sgd_price', "$dateColumn as recorded_at")
                         ->orderBy($dateColumn, 'asc')
                         ->get();
             }
         } catch (\Exception $e) {
             Log::error('World gold data error: ' . $e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json(['error' => 'Internal Server Error'], 500);
         }
     }
     private function getPriceColumn($columns)

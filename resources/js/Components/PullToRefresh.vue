@@ -1,15 +1,21 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { router, usePage } from '@inertiajs/vue3';
 
 const props = defineProps({
     message: { type: String, default: 'Refreshing data...' }
 });
 
+
 const isPulling = ref(false);
 const pullDistance = ref(0);
 const threshold = 80; // Distance in px to trigger refresh
 const startY = ref(0);
+const page = usePage()
+
+// Use computed so it reacts to Inertia reload
+const lastSync = computed(() => page.props.value.lastSync)
+const syncStatus = computed(() => page.props.value.syncStatus)
 
 const getScrollTop = () => {
     // Check the actual scrolling container first
@@ -58,26 +64,31 @@ const handleTouchMove = (e) => {
     }
 };
 
+
+
 const handleTouchEnd = () => {
     if (pullDistance.value >= threshold) {
-        refresh();
+        refresh()
+    } else {
+        isPulling.value = false
     }
 
-    // Reset state
-    isPulling.value = false;
-    pullDistance.value = 0;
-    startY.value = 0;
-};
+    pullDistance.value = 0
+    startY.value = 0
+}
 
 const refresh = () => {
-    // This triggers router.on('start') in AdminLayout
+    isPulling.value = true
+
     router.reload({
+        only: ['lastSync', 'syncStatus'], // ensures only these props are updated
         data: { _loader_message: props.message },
+        preserveState: true, // optional, keeps scroll/other state
         onFinish: () => {
-            // Logic to hide the pull indicator is already handled by handleTouchEnd
-        }
-    });
-};
+            isPulling.value = false
+        },
+    })
+}
 
 onMounted(() => {
     window.addEventListener('touchstart', handleTouchStart, { passive: false });
@@ -104,6 +115,8 @@ onUnmounted(() => {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
         </div>
+
+
     </div>
 </template>
 <style scoped>

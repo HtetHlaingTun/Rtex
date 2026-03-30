@@ -180,38 +180,50 @@ const chartPoints = computed(() => {
     if (!rawData.value.length) return []
 
     const processed = []
-
     for (const item of rawData.value) {
-        const price = extractPrice(item)
+        const price = extractPrice(item) // This is USD for world_oz
         const date = extractDate(item)
+        // Capture SGD Price
+        const sgdPrice = item.sgd_price ? parseFloat(item.sgd_price) : null
 
         if (price !== null && date !== null) {
             processed.push({
                 price: price,
+                sgd_price: sgdPrice, // Add this
                 date: date,
                 original: item
             })
         }
     }
-
-    // Sort by date
     return processed.sort((a, b) => a.date - b.date)
 })
 
 const stats = computed(() => {
-    const prices = chartPoints.value.map(p => p.price)
-    if (!prices.length) return { high: null, low: null, avg: null, count: 0 }
+    const points = chartPoints.value;
+    const usdPrices = points.map(p => p.price);
+
+    // Filter specifically for points that have an SGD price
+    const sgdPoints = points.filter(p => p.sgd_price !== null);
+    const sgdPrices = sgdPoints.map(p => p.sgd_price);
+
+    if (!usdPrices.length) return { high: null, low: null, avg: null, count: 0 };
 
     return {
-        high: Math.max(...prices),
-        low: Math.min(...prices),
-        avg: prices.reduce((a, b) => a + b, 0) / prices.length,
-        count: prices.length
-    }
-})
+        high: Math.max(...usdPrices),
+        low: Math.min(...usdPrices),
+        avg: usdPrices.reduce((a, b) => a + b, 0) / usdPrices.length,
+        count: points.length, // Total USD records (usually all)
+        sgdCount: sgdPoints.length, // Only records with SGD values
+        sgd: props.type === 'world_oz' && sgdPrices.length ? {
+            high: Math.max(...sgdPrices),
+            low: Math.min(...sgdPrices),
+            avg: sgdPrices.reduce((a, b) => a + b, 0) / sgdPrices.length,
+        } : null
+    };
+});
 
 const priceLabel = computed(() => {
-    if (props.type === 'world_oz') return 'Price · USD / oz'
+    if (props.type === 'world_oz') return 'Price · USD & SGD / oz'
     return `Price · ${props.currency}`
 })
 
@@ -317,38 +329,54 @@ const fetchData = async () => {
 const getChartOptions = () => {
     return {
         responsive: true,
-        maintainAspectRatio: false, // Essential for our responsive height classes
+        maintainAspectRatio: false,
         animation: { duration: 400, easing: 'easeOutQuart' },
         plugins: {
-            legend: { display: false },
+            // Legend must be a sibling of tooltip, not inside it
+            legend: {
+                display: props.type === 'world_oz',
+                position: 'top',
+                align: 'end',
+                labels: {
+                    usePointStyle: true,
+                    boxWidth: 8,
+                    padding: 15,
+                    font: { size: 11, weight: '600' },
+                    color: '#a1a1aa'
+                }
+            },
             tooltip: {
                 enabled: true,
-                position: 'nearest',
-                external: props.isMobile ? null : undefined, // Potential for custom mobile tooltips
+                mode: 'index', // Important: shows both values on one hover
                 intersect: false,
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                backgroundColor: 'rgba(255, 255, 255, 0.98)',
                 titleColor: '#18181b',
                 bodyColor: '#27272a',
                 borderColor: '#e4e4e7',
                 borderWidth: 1,
-                padding: props.isMobile ? 8 : 12,
-                displayColors: false,
+                padding: 12,
+                displayColors: true, // Set to true to see the line colors in tooltip
+                callbacks: {
+                    label: (context) => {
+                        const label = context.dataset.label || '';
+                        const value = context.parsed.y;
+                        const symbol = label.includes('USD') ? '$' : 'S$';
+                        return `${label}: ${symbol}${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+                    }
+                }
             }
         },
         scales: {
             y: {
-                // On mobile, show labels inside or reduce count
                 position: props.isMobile ? 'right' : 'left',
                 beginAtZero: false,
                 grid: {
-                    display: !props.isMobile, // Hide horizontal lines on small screens for clarity
+                    display: !props.isMobile,
                     color: 'rgba(240, 240, 238, 0.5)'
                 },
-                border: { display: false },
                 ticks: {
                     color: '#a1a1aa',
                     font: { size: props.isMobile ? 9 : 11 },
-                    maxTicksLimit: props.isMobile ? 4 : 6,
                     callback: (v) => formatYAxisTick(v)
                 }
             },
@@ -358,26 +386,12 @@ const getChartOptions = () => {
                     unit: getTimeUnit(),
                     displayFormats: getTimeFormats(),
                 },
-                grid: { display: false },
-                border: { display: false },
                 ticks: {
-                    display: !props.isMobile, // Hide X labels on mobile, rely on tooltip
+                    display: !props.isMobile,
                     color: '#a1a1aa',
-                    font: { size: 10 },
-                    maxRotation: 0,
-                    autoSkip: true,
                     maxTicksLimit: props.isMobile ? 3 : 8
-                }
-            }
-        },
-        elements: {
-            line: {
-                tension: 0.4, // Curvier lines look better on mobile
-                borderWidth: props.isMobile ? 2 : 3,
-            },
-            point: {
-                radius: 0, // Keep it clean
-                hoverRadius: props.isMobile ? 6 : 4,
+                },
+                grid: { display: false }
             }
         }
     }
@@ -420,48 +434,50 @@ const formatYAxisTick = (value) => {
 
 // ── Chart Building ────────────────────────────
 const buildChart = () => {
-    if (!chartCanvas.value || !chartPoints.value.length) {
+    if (!chartCanvas.value || !chartPoints.value.length) return;
 
-        return
-    }
+    const ctx = chartCanvas.value.getContext('2d');
+    const primaryColor = props.chartColor; // Usually Blue
+    const secondaryColor = '#10b981'; // Emerald/Green for SGD
+    const points = chartPoints.value;
 
-    const ctx = chartCanvas.value.getContext('2d')
-    const color = props.chartColor
-    const points = chartPoints.value
-
-
-
-    // Create gradient
-    const gradient = ctx.createLinearGradient(0, 0, 0, 260)
-    gradient.addColorStop(0, `${color}28`)
-    gradient.addColorStop(1, `${color}00`)
-
-    // Destroy existing chart
     if (chartInstance) {
-        chartInstance.destroy()
-        chartInstance = null
+        chartInstance.destroy();
     }
 
-    // Create new chart
+    const datasets = [
+        {
+            label: 'USD Price',
+            data: points.map(p => ({ x: p.date, y: p.price })),
+            borderColor: primaryColor,
+            backgroundColor: 'transparent',
+            borderWidth: 3,
+            tension: 0.3,
+            pointRadius: 0,
+            pointHoverRadius: 5
+        }
+    ];
+
+    // Only add SGD dataset if we are on world_oz and have data
+    if (props.type === 'world_oz' && points.some(p => p.sgd_price)) {
+        datasets.push({
+            label: 'SGD Price',
+            data: points.map(p => ({ x: p.date, y: p.sgd_price })),
+            borderColor: secondaryColor,
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [5, 5], // This makes the SGD line dashed
+            tension: 0.3,
+            pointRadius: 0,
+            pointHoverRadius: 5
+        });
+    }
+
     chartInstance = new Chart(ctx, {
         type: 'line',
-        data: {
-            datasets: [{
-                data: points.map(p => ({ x: p.date, y: p.price })),
-                borderColor: color,
-                backgroundColor: gradient,
-                borderWidth: 2,
-                fill: true,
-                tension: 0.35,
-                pointRadius: 0,
-                pointHoverRadius: 5,
-                pointHoverBackgroundColor: color,
-                pointHoverBorderColor: '#fff',
-                pointHoverBorderWidth: 2
-            }]
-        },
+        data: { datasets },
         options: getChartOptions()
-    })
+    });
 }
 
 // ── Actions ───────────────────────────────────────────

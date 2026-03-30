@@ -84,9 +84,13 @@ class WelcomeController extends Controller
                 'world_gold_price' => $latestGold->usd_price,
                 'usd_price' => $latestGold->usd_price,
 
+                'sgd_price' => $latestGold->sgd_price,
+                'usd_sgd_rate' => $latestGold->usd_sgd_rate,
+                // trend data
                 'prev_mmk_price_new' => $previousGold?->mmk_price_new,
                 'prev_mmk_price_old' => $previousGold?->mmk_price_old,
                 'prev_world_gold_price' => $previousGold?->usd_price,
+                'prev_sgd_price' => $previousGold?->sgd_price,
             ] : null,
         ]);
     }

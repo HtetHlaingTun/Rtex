@@ -70,6 +70,8 @@ class HandleInertiaRequests extends Middleware
                 }
                 return $crumbs;
             },
+            'lastSync' => now()->toIso8601String(),
+            'syncStatus' => 'success'
         ];
     }
 

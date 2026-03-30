@@ -11,79 +11,86 @@ use Carbon\Carbon;
 class FetchWorldGoldPriceCommand extends Command
 {
     protected $signature = 'gold:fetch';
-    protected $description = 'Fetch current world gold price from Yahoo Finance and save snapshot';
+    protected $description = 'Fetch global USD gold and calculate SGD price for snapshots';
 
     public function handle()
     {
-        $this->info('Starting gold price fetch from Yahoo Finance...');
+        $this->info('Starting multi-market gold price fetch...');
 
         try {
-            $response = Http::withHeaders([
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            ])->timeout(15)->get('https://query1.finance.yahoo.com/v8/finance/chart/GC=F');
+            $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 
-            if (!$response->successful()) {
-                throw new \Exception('Yahoo Finance API unreachable. HTTP Status: ' . $response->status());
+            // 1. FETCH GLOBAL GOLD (USD)
+            $goldResponse = Http::withHeaders(['User-Agent' => $userAgent])
+                ->timeout(15)
+                ->get('https://query1.finance.yahoo.com/v8/finance/chart/GC=F');
+
+            // 2. FETCH USD/SGD EXCHANGE RATE
+            $rateResponse = Http::withHeaders(['User-Agent' => $userAgent])
+                ->timeout(15)
+                ->get('https://query1.finance.yahoo.com/v8/finance/chart/USDSGD=X');
+
+            if (!$goldResponse->successful() || !$rateResponse->successful()) {
+                throw new \Exception('Yahoo Finance unreachable. Gold: ' . $goldResponse->status() . ' Rate: ' . $rateResponse->status());
             }
 
-            $result = $response->json('chart.result.0');
-            $meta = $result['meta'] ?? null;
+            // Extract Data
+            $goldMeta = $goldResponse->json('chart.result.0.meta');
+            $rateMeta = $rateResponse->json('chart.result.0.meta');
 
-            if (!$meta || !isset($meta['regularMarketPrice'])) {
-                throw new \Exception('Invalid data structure received from Yahoo Finance.');
+            if (!$goldMeta || !$rateMeta) {
+                throw new \Exception('Invalid JSON structure from Yahoo.');
             }
 
-            $currentPrice = floatval($meta['regularMarketPrice']);
+            $currentPriceUsd = floatval($goldMeta['regularMarketPrice']);
+            $usdSgdRate      = floatval($rateMeta['regularMarketPrice']);
+            $currentPriceSgd = $currentPriceUsd * $usdSgdRate;
+
+            // Fetch MMK Rate from your model
             $mmkRate = WorldGoldSnapshot::getUsdMmkRate();
-
             if (!$mmkRate) {
-                $this->error('MMK rate not available in database.');
+                $this->error('MMK rate not found in database.');
                 return Command::FAILURE;
             }
 
             $now = Carbon::now('Asia/Singapore');
 
-            // 🔥 IMPROVED DUPLICATE CHECK
-            $lastSnapshot = WorldGoldSnapshot::where('fetched_at', '>=', $now->copy()->subMinutes(5))
-                ->latest('fetched_at')
-                ->first();
+            // --- IMPROVED DUPLICATE CHECK ---
+            $lastSnapshot = WorldGoldSnapshot::latest('fetched_at')->first();
 
-            if ($lastSnapshot) {
-                $priceSame = (float)$lastSnapshot->usd_price === $currentPrice;
-                $rateSame = (float)$lastSnapshot->usd_mmk_rate === (float)$mmkRate;
-                $sameMinute = $lastSnapshot->fetched_at->format('Y-m-d H:i') === $now->format('Y-m-d H:i');
-
-                if ($sameMinute && $priceSame && $rateSame) {
-                    $this->line('<fg=gray>Price and rate unchanged in same minute. Skipping snapshot.</>');
+            if ($lastSnapshot && $lastSnapshot->fetched_at->diffInMinutes($now) < 1) {
+                if ((float)$lastSnapshot->usd_price === $currentPriceUsd && (float)$lastSnapshot->usd_mmk_rate === (float)$mmkRate) {
+                    $this->line('<fg=gray>Price unchanged within the same minute. Skipping.</>');
                     return Command::SUCCESS;
                 }
             }
 
-            // Create snapshot
-            $previousPrice = WorldGoldSnapshot::latest('id')->first()?->usd_price ?? $currentPrice;
-            $change = round($currentPrice - $previousPrice, 2);
-            $changePercent = $previousPrice > 0 ? round(($change / $previousPrice) * 100, 4) : 0;
-            $previousClose = floatval($meta['previousClose'] ?? $previousPrice);
+            // Calculate Changes
+            $previousSnapshot = WorldGoldSnapshot::latest('id')->first();
+            $previousPriceUsd = $previousSnapshot?->usd_price ?? $currentPriceUsd;
+            $change           = round($currentPriceUsd - $previousPriceUsd, 2);
+            $changePercent    = $previousPriceUsd > 0 ? round(($change / $previousPriceUsd) * 100, 4) : 0;
 
+            // Save Snapshot
             WorldGoldSnapshot::create([
-                'usd_price'      => $currentPrice,
+                'usd_price'      => $currentPriceUsd,
+                'sgd_price'      => $currentPriceSgd,
+                'usd_sgd_rate'   => $usdSgdRate,
                 'change'         => $change,
                 'change_percent' => $changePercent,
-                'day_high'       => floatval($meta['regularMarketDayHigh'] ?? 0),
-                'day_low'        => floatval($meta['regularMarketDayLow'] ?? 0),
-                'previous_close' => $previousClose,
+                'day_high'       => floatval($goldMeta['regularMarketDayHigh'] ?? 0),
+                'day_low'        => floatval($goldMeta['regularMarketDayLow'] ?? 0),
+                'previous_close' => floatval($goldMeta['previousClose'] ?? $currentPriceUsd),
                 'usd_mmk_rate'   => $mmkRate,
-                'mmk_price'      => WorldGoldSnapshot::convertToMmk($currentPrice, $mmkRate),
-                'mmk_price_new'  => WorldGoldSnapshot::convertToMmkNew($currentPrice, $mmkRate),
-                'mmk_price_old'  => WorldGoldSnapshot::convertToMmkOld($currentPrice, $mmkRate),
+                'mmk_price'      => WorldGoldSnapshot::convertToMmk($currentPriceUsd, $mmkRate),
+                'mmk_price_new'  => WorldGoldSnapshot::convertToMmkNew($currentPriceUsd, $mmkRate),
+                'mmk_price_old'  => WorldGoldSnapshot::convertToMmkOld($currentPriceUsd, $mmkRate),
                 'fetched_at'     => $now,
             ]);
 
-            $this->info("✅ SUCCESS: Global Gold \${$currentPrice}");
+            $this->info("✅ SUCCESS: USD \${$currentPriceUsd} | SGD \${$currentPriceSgd}");
 
-            // Cleanup old records
             $this->performCleanup();
-
             return Command::SUCCESS;
         } catch (\Exception $e) {
             $this->error('FAILED: ' . $e->getMessage());
@@ -101,10 +108,6 @@ class FetchWorldGoldPriceCommand extends Command
             ->havingRaw('COUNT(*) > 1')
             ->pluck('date');
 
-        if ($oldDates->isEmpty()) {
-            return;
-        }
-
         foreach ($oldDates as $date) {
             $records = WorldGoldSnapshot::whereDate('fetched_at', $date)
                 ->orderBy('fetched_at', 'desc')
@@ -113,20 +116,16 @@ class FetchWorldGoldPriceCommand extends Command
             if ($records->count() <= 1) continue;
 
             $keeper = $records->first();
-
-            $dayHigh = $records->max('usd_price');
-            $dayLow = $records->min('usd_price');
-
             $keeper->update([
-                'day_high' => $dayHigh,
-                'day_low'  => $dayLow,
+                'day_high' => $records->max('usd_price'),
+                'day_low'  => $records->min('usd_price'),
             ]);
 
             WorldGoldSnapshot::whereDate('fetched_at', $date)
                 ->where('id', '!=', $keeper->id)
                 ->forceDelete();
 
-            $this->line("<fg=yellow>Squashed {$date}: Kept 1 record</>");
+            $this->line("<fg=yellow>Cleaned up {$date}: Record consolidated.</>");
         }
     }
 }

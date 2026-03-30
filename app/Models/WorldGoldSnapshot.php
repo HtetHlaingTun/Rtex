@@ -14,6 +14,8 @@ class WorldGoldSnapshot extends Model
 
     protected $fillable = [
         'usd_price',
+        'sgd_price',
+        'usd_sgd_rate',
         'change',
         'change_percent',
         'day_high',

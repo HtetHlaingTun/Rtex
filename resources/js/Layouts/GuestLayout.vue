@@ -23,8 +23,11 @@
 
         <div class="relative z-10 flex flex-col w-full min-w-0">
 
-            <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-4">
-                <PublicBreadcrumb :breadcrumbs="breadcrumbs" />
+            <div class="sticky top-[64px] z-50 w-full backdrop-blur-md bg-white/70 dark:bg-zinc-900/70
+                transition-all duration-300">
+                <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-2">
+                    <PublicBreadcrumb :breadcrumbs="breadcrumbs" />
+                </div>
             </div>
 
             <PullToRefresh :message="globalLoadingMessage" />
