@@ -47,7 +47,7 @@
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                     <div class="flex items-center gap-6">
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                            RTEx • Real-Time Currency Exchange Rates
+                            MMRatePro • Real-Time Currency Exchange Rates
                         </p>
                         <div class="flex gap-4">
                             <a href="#" class="text-[10px] text-slate-400 hover:text-orange-500 transition">About</a>

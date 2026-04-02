@@ -40,42 +40,7 @@ const isAdmin = computed(() => user.value?.role === 'admin');
                             Live Rates
                         </Link>
 
-                        <div class="gap-2 flex ms-5">
-                            <Link v-if="$page.props.auth.user?.role === 'admin' && $page.props.pendingCount"
-                                :href="route('currencies.pending')"
-                                class="relative flex flex-col items-center justify-center flex-1 py-1 mx-2 transition-colors"
-                                :class="$page.component === 'Currencies/Pending' ? 'text-rose-600' : 'text-slate-400 hover:text-rose-400'">
 
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-
-                                <span v-if="$page.props.pendingCount > 0"
-                                    class="absolute top-1 right-1/4 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] font-black text-white ring-2 ring-white animate-pulse">
-                                    {{ $page.props.pendingCount }}
-                                </span>
-
-                                <span class="text-[10px] font-bold mt-1">Currency</span>
-                            </Link>
-
-                            <Link v-if="isAdmin && $page.props.pending_gold_count" :href="route('gold.pending')"
-                                class="relative flex flex-col items-center justify-center flex-1 mx-2 py-1"
-                                :class="$page.component === 'Gold/Pending' ? 'text-amber-600' : 'text-slate-400'">
-
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-
-                                <span v-if="$page.props.pending_gold_count > 0"
-                                    class="absolute top-1 right-1/4 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[8px] font-black text-white ring-2 ring-white animate-pulse">
-                                    {{ $page.props.pending_gold_count }}
-                                </span>
-
-                                <span class="text-[10px] font-bold mt-1">Gold</span>
-                            </Link>
-                        </div>
                     </div>
                 </div>
 

@@ -45,13 +45,15 @@
                     </span>
                     <span :class="isOnline ? 'text-emerald-600' : 'text-red-500'"
                         class="font-bold uppercase tracking-widest text-[9px]">
-                        {{ isOnline ? 'Live' : 'Offline' }}
+                        {{ isOnline ? 'Online' : 'Offline' }}
                     </span>
                 </div>
 
                 <div class="text-slate-400 dark:text-zinc-500 flex items-center gap-1.5">
-                    <span class="hidden xs:inline opacity-50">SYNC:</span>
-                    <span class="tabular-nums font-bold text-slate-600 dark:text-zinc-300">{{ lastSync }}</span>
+
+                    <span class="tabular-nums font-bold text-slate-600 dark:text-zinc-300">
+                        {{ currentTime }}
+                    </span>
                 </div>
             </div>
         </div>
@@ -77,6 +79,13 @@ const props = defineProps({
 const isOnline = ref(navigator.onLine)
 const lastSync = ref('—')
 
+const currentTime = ref('—')
+
+const updateTime = () => {
+    const now = new Date()
+    currentTime.value = now.toLocaleTimeString()
+}
+
 const updateOnlineStatus = () => {
     isOnline.value = navigator.onLine
 }
@@ -89,9 +98,9 @@ onMounted(() => {
     window.addEventListener('online', updateOnlineStatus)
     window.addEventListener('offline', updateOnlineStatus)
 
-    updateLastSync()
+    updateTime()
 
-    const interval = setInterval(updateLastSync, 30000)
+    const interval = setInterval(updateTime, 1000)
 
     // cleanup (important)
     onUnmounted(() => {

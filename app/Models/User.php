@@ -128,15 +128,15 @@ class User extends Authenticatable
         return $this->hasMany(GoldPrice::class, 'verified_by');
     }
 
-    public function createdMarketUpdates()
-    {
-        return $this->hasMany(MarketUpdate::class, 'created_by');
-    }
+    // public function createdMarketUpdates()
+    // {
+    //     return $this->hasMany(MarketUpdate::class, 'created_by');
+    // }
 
-    public function updatedMarketUpdates()
-    {
-        return $this->hasMany(MarketUpdate::class, 'updated_by');
-    }
+    // public function updatedMarketUpdates()
+    // {
+    //     return $this->hasMany(MarketUpdate::class, 'updated_by');
+    // }
 
     public function priceHistories()
     {

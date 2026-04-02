@@ -6,20 +6,22 @@
                 <Breadcrumbs :items="currencyBreadcrumbs" />
             </div>
         </template>
+
         <template #header>
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                        Conversion Factors & Spreads
+                        Currency Rate Configuration
                     </h1>
-                    <p class="text-[11px] sm:text-sm text-slate-500 font-medium mt-1 ">
-                        Configure how CBM rates are converted to buy/sell rates
+                    <p class="text-[11px] sm:text-sm text-slate-500 font-medium mt-1">
+                        Configure source mode, bank markup, and spreads for each currency
                     </p>
                 </div>
                 <div class="flex gap-2">
-                    <div class="px-3 py-2 bg-slate-100 rounded-xl text-sm hidden md:block">
-                        Formula: Working Rate = CBM Rate × Factor
-                    </div>
+                    <button @click="saveAll" :disabled="saving"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50">
+                        {{ saving ? 'Saving...' : 'Save All Changes' }}
+                    </button>
                 </div>
             </div>
         </template>
@@ -37,17 +39,11 @@
                                 {{ cbm_available ? 'Connected' : 'Disconnected' }}
                             </span>
                         </div>
-                        <p class="text-xs text-slate-500 mt-1 hidden md:block">
-                            Configure factors and spreads for each currency. Changes take effect immediately.
+                        <p class="text-xs text-slate-500 mt-1">
+                            Current CBM rates are used as reference for 'cbm' mode only
                         </p>
                     </div>
-
                     <Fab :href="route('currencies.settings')" icon="currency" />
-
-                    <button @click="saveAll" :disabled="saving"
-                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50">
-                        {{ saving ? 'Saving...' : 'Save All Changes' }}
-                    </button>
                 </div>
             </div>
 
@@ -59,118 +55,168 @@
 
             <!-- Currencies Grid -->
             <div v-else-if="currencies && currencies.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-
                 <div v-for="currency in currencies" :key="currency.id"
                     class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
 
+                    <!-- Header -->
                     <div class="p-4 border-b border-slate-100 bg-slate-50">
                         <div class="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-3">
                             <div class="flex items-center gap-3">
-                                <div
-                                    class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                                <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
                                     <span class="text-indigo-700 font-bold text-sm">{{ currency.code }}</span>
                                 </div>
                                 <div>
-                                    <h3 class="font-bold text-slate-900 leading-tight">{{ currency.name }}</h3>
-                                    <p class="text-xs text-slate-500 uppercase">{{ currency.code }}</p>
+                                    <h3 class="font-bold text-slate-900">{{ currency.name }}</h3>
+                                    <p class="text-xs text-slate-500">{{ currency.code }}</p>
+                                    <!-- Last sync info moved here -->
+                                    <div class="text-[10px] text-slate-400 mt-1">
+                                        Last sync: {{ currency.banks_last_synced_at ? new
+                                            Date(currency.banks_last_synced_at).toLocaleString() : 'Never' }}
+                                        <span v-if="currency.avg_bank_rate" class="ml-2">
+                                            (Avg: {{ $formatMoney(currency.avg_bank_rate) }})
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="text-left xs:text-right border-t xs:border-t-0 pt-2 xs:pt-0 w-full xs:w-auto">
-                                <div class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">CBM Rate
+                            <div class="text-left xs:text-right">
+                                <div class="text-[10px] uppercase text-slate-400 font-bold">Current CBM Rate</div>
+                                <div class="font-mono font-bold text-slate-700">
+                                    {{ $formatMoney(currency.current_cbm_rate) }}
                                 </div>
-                                <div class="font-mono font-bold text-slate-700">{{
-                                    $formatMoney(currency.current_cbm_rate) }}</div>
                             </div>
                         </div>
                     </div>
 
+
+                    <!-- Current Settings Badges -->
+                    <div class="px-4 py-2 bg-slate-50 border-b border-slate-100">
+                        <div class="flex flex-wrap gap-2 text-[10px]">
+                            <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full">
+                                Mode: {{ editing[currency.id]?.source_mode || currency.source_mode || 'bank_avg' }}
+                            </span>
+                            <span v-if="editing[currency.id]?.source_mode === 'bank_avg'"
+                                class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">
+                                Markup: {{ Number(editing[currency.id]?.bank_markup ?? currency.bank_markup_percentage
+                                    ?? 0).toFixed(1) }}%
+                            </span>
+                            <span v-if="editing[currency.id]?.source_mode === 'cbm'"
+                                class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+                                Factor: {{ Number(editing[currency.id]?.factor || currency.cbm_conversion_factor ||
+                                    1).toFixed(4) }}
+                            </span>
+                            <span class="px-2 py-1 bg-slate-200 text-slate-600 rounded-full">
+                                Spread: {{ Number(editing[currency.id]?.buy_spread ?? currency.buy_spread_percentage ??
+                                    0.5).toFixed(1) }}% /
+                                {{ Number(editing[currency.id]?.sell_spread ?? currency.sell_spread_percentage ??
+                                    0.5).toFixed(1) }}%
+                            </span>
+                        </div>
+                    </div>
+
                     <div class="p-4 space-y-5 flex-1">
-
-                        <div class="bg-blue-50 p-3 sm:p-4 rounded-xl border border-blue-200">
-                            <label class="block text-xs font-bold text-blue-800 mb-2 uppercase tracking-tight gap-2">
-                                Enter Bank Rate
-                            </label>
-
-                            <div class="flex flex-col sm:flex-row gap-2">
-                                <input type="number" v-model="bankRateInput[currency.id]" step="0.01"
-                                    class="w-full px-3 py-3 border border-blue-300 rounded-lg font-mono text-base bg-white focus:ring-2 focus:ring-blue-500/20 shadow-sm"
-                                    :placeholder="`${currency.code} Rate`">
-
-                                <div class="flex gap-2 w-full sm:w-auto">
-                                    <button @click="calculateFactorFromBankRate(currency)"
-                                        class="flex-1 sm:flex-none px-4 py-3 bg-blue-600 text-white rounded-lg text-xs font-black uppercase tracking-wider hover:bg-blue-700 active:scale-[0.98] transition-all">
-                                        Calculate
-                                    </button>
-                                    <button @click="resetToCBM(currency)"
-                                        class="px-4 py-3 bg-white text-gray-500 border border-blue-200 rounded-lg text-xs font-bold hover:bg-gray-100">
-                                        Reset
-                                    </button>
-                                </div>
+                        <!-- Source Mode Selection -->
+                        <div>
+                            <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Source Mode</label>
+                            <div class="grid grid-cols-3 gap-2 p-1 bg-slate-100 rounded-xl">
+                                <button v-for="mode in ['bank_avg', 'cbm', 'manual']" :key="mode"
+                                    @click="editing[currency.id].source_mode = mode"
+                                    class="py-2 rounded-lg text-[11px] font-bold transition-all"
+                                    :class="editing[currency.id].source_mode === mode ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'">
+                                    {{ mode === 'bank_avg' ? 'Bank Average' : mode === 'cbm' ? 'CBM Rate' : 'Manual' }}
+                                </button>
                             </div>
-
-                            <div v-if="calculatedMarketRates[currency.id]"
-                                class="mt-3 p-3 bg-white rounded-lg border border-blue-100 shadow-sm">
-                                <div class="grid grid-cols-2 gap-4 text-center">
-                                    <div class="border-r border-slate-100">
-                                        <div class="text-[10px] text-slate-400 uppercase font-bold">Market Buy</div>
-                                        <div class="font-bold text-emerald-600 text-sm">
-                                            {{ $formatMoney(calculatedMarketRates[currency.id].buy) }}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="text-[10px] text-slate-400 uppercase font-bold">Market Sell</div>
-                                        <div class="font-bold text-rose-600 text-sm">
-                                            {{ $formatMoney(calculatedMarketRates[currency.id].sell) }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="text-[10px] text-gray-400 text-center mt-2 font-mono">
-                                    {{ calculatedMarketRates[currency.id].factor.toFixed(6) }} factor applied
-                                </div>
-                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1">
+                                <span v-if="editing[currency.id].source_mode === 'bank_avg'">Uses average of 4 banks
+                                    (KBZ, Yoma,
+                                    CB, AYA)</span>
+                                <span v-else-if="editing[currency.id].source_mode === 'cbm'">Uses CBM rate × conversion
+                                    factor</span>
+                                <span v-else>Manually entered rate</span>
+                            </p>
                         </div>
 
-                        <div class="pt-2">
+                        <!-- Bank Markup (only for bank_avg mode) -->
+                        <div v-if="editing[currency.id].source_mode === 'bank_avg'" class="pt-2">
                             <div class="flex items-center justify-between mb-1.5">
-                                <label class="text-xs font-bold text-slate-500 uppercase">Current Factor</label>
+                                <label class="text-xs font-bold text-slate-500 uppercase">Bank Markup (%)</label>
+                                <button @click="setMarkupToZero(currency)"
+                                    class="text-[10px] text-indigo-600 font-bold underline">
+                                    Set to 0%
+                                </button>
+                            </div>
+                            <input type="number" v-model="editing[currency.id].bank_markup" step="0.1"
+                                class="w-full px-3 py-2.5 border border-slate-200 rounded-lg font-mono text-sm bg-white focus:ring-2 focus:ring-indigo-500/20"
+                                placeholder="Markup percentage (e.g., 0 for no markup)">
+                            <p class="text-[10px] text-slate-400 mt-1">
+                                Formula: Base Rate = Bank Average Rate × (1 + Markup%)
+                            </p>
+                        </div>
+
+                        <!-- Manual Rate (only for manual mode) -->
+                        <div v-if="editing[currency.id].source_mode === 'manual'" class="pt-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Manual Base
+                                Rate</label>
+                            <input type="number" v-model="editing[currency.id].manual_base_rate" step="0.01"
+                                class="w-full px-3 py-2.5 border border-slate-200 rounded-lg font-mono text-sm bg-white focus:ring-2 focus:ring-indigo-500/20"
+                                placeholder="Enter manual rate">
+                        </div>
+
+                        <!-- CBM Factor (only for cbm mode) -->
+                        <div v-if="editing[currency.id].source_mode === 'cbm'" class="pt-2">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="text-xs font-bold text-slate-500 uppercase">CBM Conversion Factor</label>
                                 <button @click="setFactorTo1(currency)"
                                     class="text-[10px] text-indigo-600 font-bold underline">
                                     Set to 1.0
                                 </button>
                             </div>
                             <input type="number" v-model="editing[currency.id].factor" step="0.000001"
-                                class="w-full px-3 py-2.5 border border-slate-200 rounded-lg font-mono text-sm bg-slate-50 text-slate-500"
-                                readonly>
+                                class="w-full px-3 py-2.5 border border-slate-200 rounded-lg font-mono text-sm bg-white focus:ring-2 focus:ring-indigo-500/20">
+                            <p class="text-[10px] text-slate-400 mt-1">
+                                Formula: Base Rate = CBM Rate × Factor
+                            </p>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
-                            <button v-for="type in ['percentage', 'fixed']" :key="type"
-                                @click="editing[currency.id].spread_type = type"
-                                class="py-2 rounded-lg text-[11px] font-bold transition-all"
-                                :class="editing[currency.id].spread_type === type ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'">
-                                {{ type === 'percentage' ? 'Percentage' : 'Fixed Margin' }}
-                            </button>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="space-y-1">
-                                <label class="text-[10px] font-black text-slate-400 uppercase">
-                                    Buy {{ editing[currency.id].spread_type === 'percentage' ? '%' : 'MMK' }}
-                                </label>
-                                <input type="number" v-model="editing[currency.id].buy_spread"
-                                    class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/10">
+                        <!-- Spread Configuration -->
+                        <div class="pt-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Spread
+                                Configuration</label>
+                            <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl mb-3">
+                                <button v-for="type in ['percentage', 'fixed']" :key="type"
+                                    @click="editing[currency.id].spread_type = type"
+                                    class="py-2 rounded-lg text-[11px] font-bold transition-all"
+                                    :class="editing[currency.id].spread_type === type ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'">
+                                    {{ type === 'percentage' ? 'Percentage' : 'Fixed Margin' }}
+                                </button>
                             </div>
-                            <div class="space-y-1">
-                                <label class="text-[10px] font-black text-slate-400 uppercase">
-                                    Sell {{ editing[currency.id].spread_type === 'percentage' ? '%' : 'MMK' }}
-                                </label>
-                                <input type="number" v-model="editing[currency.id].sell_spread"
-                                    class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/10">
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase">
+                                        Buy {{ editing[currency.id].spread_type === 'percentage' ? '%' : 'MMK' }}
+                                    </label>
+                                    <input type="number" v-model="editing[currency.id].buy_spread" step="0.01"
+                                        class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/10">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase">
+                                        Sell {{ editing[currency.id].spread_type === 'percentage' ? '%' : 'MMK' }}
+                                    </label>
+                                    <input type="number" v-model="editing[currency.id].sell_spread" step="0.01"
+                                        class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/10">
+                                </div>
                             </div>
                         </div>
 
+                        <!-- Preview Section -->
                         <div class="bg-slate-900 p-4 rounded-xl shadow-inner mt-auto">
-                            <div class="grid grid-cols-2 gap-4 text-center">
+                            <div class="text-center mb-2">
+                                <div class="text-[10px] text-slate-500 font-bold uppercase">Base Rate</div>
+                                <div class="font-mono font-bold text-white text-lg">
+                                    {{ $formatMoney(previewBaseRate(currency)) }}
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 text-center border-t border-slate-800 pt-3">
                                 <div class="border-r border-slate-800">
                                     <div class="text-[10px] text-slate-500 font-bold uppercase mb-1">Final Buy</div>
                                     <div class="text-base font-black font-mono text-emerald-400">
@@ -186,6 +232,7 @@
                             </div>
                         </div>
 
+                        <!-- Auto-fetch & Save -->
                         <div class="flex flex-col gap-3 pt-2">
                             <label class="flex items-center gap-3 cursor-pointer group">
                                 <div class="relative">
@@ -202,15 +249,12 @@
                             </label>
                             <button @click="saveCurrency(currency)" :disabled="saving"
                                 class="w-full py-4 bg-indigo-600 text-white rounded-xl text-sm font-black uppercase tracking-widest shadow-lg shadow-indigo-200 disabled:opacity-50 active:translate-y-px transition-all">
-                                {{ saving ? 'Saving...' : 'Confirm & Save' }}
+                                {{ saving ? 'Saving...' : 'Save Settings' }}
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-
-
-
 
             <!-- Empty State -->
             <div v-else class="text-center py-12 bg-white rounded-2xl shadow-sm border border-slate-200">
@@ -222,9 +266,7 @@
                         </svg>
                     </div>
                     <h4 class="text-sm font-bold text-slate-900">No currencies found</h4>
-                    <p class="text-xs text-slate-500 mt-1">
-                        Please add currencies in settings first.
-                    </p>
+                    <p class="text-xs text-slate-500 mt-1">Please add currencies in settings first.</p>
                     <Link :href="route('currencies.settings')"
                         class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700">
                         Add Currencies
@@ -259,134 +301,88 @@ const props = defineProps({
 
 const currencyBreadcrumbs = [
     { label: 'Live Rates', href: route('currencies.index') },
-    { label: 'Factors Config' },
+    { label: 'Rate Configuration' },
 ]
 
 const editing = reactive({})
-const bankRateInput = reactive({})
-const calculatedMarketRates = reactive({})
 const saving = ref(false)
 const loading = ref(true)
-
-// Fixed markup percentages for each currency
-const MARKUP_PERCENTAGES = {
-    USD: 17.3,   // 17.3% markup
-    SGD: 14.5,   // 14.5% markup
-    THB: 5.0,    // 5% markup
-    EUR: 15.5,   // 15.5% markup
-    GBP: 15.5,   // 15.5% markup
-    CNY: 13.5,   // 13.5% markup
-    MYR: 12.5,   // 12.5% markup
-    JPY: 11.5,   // 11.5% markup
-    VND: 8.0,    // 8% markup
-    KRW: 10.0,   // 10% markup
-}
 
 onMounted(() => {
     if (props.currencies && Array.isArray(props.currencies) && props.currencies.length > 0) {
         props.currencies.forEach(currency => {
             editing[currency.id] = {
+                source_mode: currency.source_mode || 'bank_avg',
                 factor: currency.cbm_conversion_factor || props.default_factor,
+                bank_markup: currency.bank_markup_percentage ?? 0,
+                manual_base_rate: currency.manual_base_rate || 0,
                 spread_type: currency.spread_type || 'percentage',
-                buy_spread: currency.buy_spread_percentage || 0.5,
-                sell_spread: currency.sell_spread_percentage || 0.5,
+                buy_spread: currency.buy_spread_percentage ?? 0.5,
+                sell_spread: currency.sell_spread_percentage ?? 0.5,
                 fixed_buy_margin: currency.fixed_buy_margin || 0,
                 fixed_sell_margin: currency.fixed_sell_margin || 0,
                 auto_fetch: currency.use_cbm_auto_fetch !== false,
             }
-            bankRateInput[currency.id] = ''
-            calculatedMarketRates[currency.id] = null
+
+            // Debug: Log what was loaded
+            // console.log(`Loaded ${currency.code}:`, {
+            //     source_mode: editing[currency.id].source_mode,
+            //     bank_markup: editing[currency.id].bank_markup,
+            //     buy_spread: editing[currency.id].buy_spread,
+            //     sell_spread: editing[currency.id].sell_spread
+            // })
         })
     }
     loading.value = false
 })
 
-// Fixed formula: Bank Rate × (1 + Markup%) = Market Rate
-const calculateFactorFromBankRate = (currency) => {
-    const bankRate = bankRateInput[currency.id]
-    if (!bankRate) {
-        alert(`Please enter the bank rate for ${currency.code} (e.g., 3662 for USD)`)
-        return
-    }
+const previewBaseRate = (currency) => {
+    const mode = editing[currency.id].source_mode
 
-    const markupPercent = MARKUP_PERCENTAGES[currency.code] || 15.0
-    const markupMultiplier = 1 + (markupPercent / 100)
-
-    // Calculate market rate from bank rate
-    const marketRate = bankRate * markupMultiplier
-
-    // Calculate factor to achieve this market rate from CBM
-    const factor = marketRate / currency.current_cbm_rate
-
-    // Store calculated rates
-    calculatedMarketRates[currency.id] = {
-        buy: marketRate * 0.995,  // 0.5% below market
-        sell: marketRate * 1.005, // 0.5% above market
-        working: marketRate,
-        factor: factor,
-        bankRate: bankRate,
-        markup: markupPercent
-    }
-
-    // Update the factor in editing
-    editing[currency.id].factor = factor
-
-    alert(`✅ Calculated for ${currency.code}:\n\n` +
-        `Bank Rate: ${bankRate}\n` +
-        `Markup: ${markupPercent}%\n` +
-        `Market Rate: ${marketRate.toFixed(2)}\n` +
-        `CBM Rate: ${currency.current_cbm_rate}\n` +
-        `Factor: ${factor.toFixed(6)}\n\n` +
-        `Result: ${currency.current_cbm_rate} × ${factor.toFixed(6)} = ${marketRate.toFixed(2)}`)
-}
-
-// Reset to pure CBM (factor = 1)
-const resetToCBM = (currency) => {
-    if (confirm(`Reset ${currency.code} to use pure CBM rate?\n\nCurrent CBM rate: ${currency.current_cbm_rate}\nMarket rate will become: ${currency.current_cbm_rate}`)) {
-        editing[currency.id].factor = 1
-        calculatedMarketRates[currency.id] = {
-            buy: currency.current_cbm_rate * 0.995,
-            sell: currency.current_cbm_rate * 1.005,
-            working: currency.current_cbm_rate,
-            factor: 1,
-            bankRate: null,
-            markup: 0
-        }
-        alert(`✅ ${currency.code} reset to CBM base rate. Factor = 1`)
+    if (mode === 'bank_avg') {
+        const bankAvg = Number(currency.avg_bank_rate) || 0
+        const markup = Number(editing[currency.id].bank_markup) || 0
+        return bankAvg * (1 + markup / 100)
+    } else if (mode === 'cbm') {
+        const cbmRate = Number(currency.current_cbm_rate) || 0
+        const factor = Number(editing[currency.id].factor) || 1
+        return cbmRate * factor
+    } else {
+        return Number(editing[currency.id].manual_base_rate) || 0
     }
 }
 
-// Set factor to 1 without confirmation
-const setFactorTo1 = (currency) => {
-    editing[currency.id].factor = 1
-    calculatedMarketRates[currency.id] = {
-        buy: currency.current_cbm_rate * 0.995,
-        sell: currency.current_cbm_rate * 1.005,
-        working: currency.current_cbm_rate,
-        factor: 1,
-        bankRate: null,
-        markup: 0
-    }
-}
 
 const previewBuyRate = (currency) => {
-    if (!currency.current_cbm_rate) return 0
-    const workingRate = currency.current_cbm_rate * editing[currency.id].factor
+    const baseRate = previewBaseRate(currency)
+    if (!baseRate) return 0
+
+    const spread = Number(editing[currency.id].buy_spread) || 0
     if (editing[currency.id].spread_type === 'percentage') {
-        return workingRate * (1 - (editing[currency.id].buy_spread / 100))
+        return baseRate * (1 - spread / 100)
     } else {
-        return workingRate - editing[currency.id].fixed_buy_margin
+        return baseRate - spread
     }
 }
 
 const previewSellRate = (currency) => {
-    if (!currency.current_cbm_rate) return 0
-    const workingRate = currency.current_cbm_rate * editing[currency.id].factor
+    const baseRate = previewBaseRate(currency)
+    if (!baseRate) return 0
+
+    const spread = Number(editing[currency.id].sell_spread) || 0
     if (editing[currency.id].spread_type === 'percentage') {
-        return workingRate * (1 + (editing[currency.id].sell_spread / 100))
+        return baseRate * (1 + spread / 100)
     } else {
-        return workingRate + editing[currency.id].fixed_sell_margin
+        return baseRate + spread
     }
+}
+
+const setMarkupToZero = (currency) => {
+    editing[currency.id].bank_markup = 0
+}
+
+const setFactorTo1 = (currency) => {
+    editing[currency.id].factor = 1
 }
 
 const saveCurrency = async (currency) => {
@@ -394,7 +390,10 @@ const saveCurrency = async (currency) => {
     try {
         await axios.post(`/currencies/${currency.id}/factor`, {
             _method: 'PUT',
+            source_mode: editing[currency.id].source_mode,
             cbm_conversion_factor: editing[currency.id].factor,
+            bank_markup_percentage: editing[currency.id].bank_markup,
+            manual_base_rate: editing[currency.id].manual_base_rate,
             spread_type: editing[currency.id].spread_type,
             buy_spread_percentage: editing[currency.id].buy_spread,
             sell_spread_percentage: editing[currency.id].sell_spread,
@@ -402,7 +401,7 @@ const saveCurrency = async (currency) => {
             fixed_sell_margin: editing[currency.id].fixed_sell_margin,
             use_cbm_auto_fetch: editing[currency.id].auto_fetch,
         })
-        alert(`✅ Saved factor for ${currency.code}`)
+        alert(`✅ Saved settings for ${currency.code}`)
     } catch (error) {
         console.error('Failed to save:', error)
         alert('Failed to save. Please try again.')
@@ -412,7 +411,7 @@ const saveCurrency = async (currency) => {
 }
 
 const saveAll = async () => {
-    if (!props.currencies || !Array.isArray(props.currencies) || props.currencies.length === 0) {
+    if (!props.currencies || props.currencies.length === 0) {
         alert('No currencies to save')
         return
     }
@@ -422,7 +421,10 @@ const saveAll = async () => {
         for (const currency of props.currencies) {
             await axios.post(`/currencies/${currency.id}/factor`, {
                 _method: 'PUT',
+                source_mode: editing[currency.id].source_mode,
                 cbm_conversion_factor: editing[currency.id].factor,
+                bank_markup_percentage: editing[currency.id].bank_markup,
+                manual_base_rate: editing[currency.id].manual_base_rate,
                 spread_type: editing[currency.id].spread_type,
                 buy_spread_percentage: editing[currency.id].buy_spread,
                 sell_spread_percentage: editing[currency.id].sell_spread,
@@ -431,11 +433,11 @@ const saveAll = async () => {
                 use_cbm_auto_fetch: editing[currency.id].auto_fetch,
             })
         }
-        alert('All factors saved successfully!')
+        alert('All settings saved successfully!')
         router.reload()
     } catch (error) {
         console.error('Failed to save all:', error)
-        alert('Failed to save some factors. Please try again.')
+        alert('Failed to save some settings. Please try again.')
     } finally {
         saving.value = false
     }

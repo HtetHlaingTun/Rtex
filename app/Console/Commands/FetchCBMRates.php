@@ -17,7 +17,7 @@ class FetchCBMRates extends Command
                             {--currency= : Specific currency code to fetch}
                             {--date= : Fetch rates for specific date (Y-m-d)}';
 
-    protected $description = 'Fetch exchange rates from CBM and store history, preventing duplicate entries.';
+    protected $description = 'Fetch reference CBM rates (not used for actual exchange rates)';
 
     protected $cbmService;
 
@@ -29,13 +29,12 @@ class FetchCBMRates extends Command
 
     public function handle()
     {
-        $this->info('Starting CBM rates fetch...');
+        $this->info('Starting CBM reference rates fetch...');
 
         $autoVerify = $this->option('auto-verify');
         $dryRun = $this->option('dry-run');
         $specificCurrency = $this->option('currency');
 
-        // Use provided date or default to today
         $dateInput = $this->option('date');
         $rateDate = $dateInput ? Carbon::parse($dateInput) : now();
 
@@ -62,15 +61,15 @@ class FetchCBMRates extends Command
             $this->warn('DRY RUN - Simulation only.');
         }
 
-        $results = $this->storeLatestRates($rates, $autoVerify, $rateDate, $dryRun);
+        $results = $this->storeReferenceRates($rates, $autoVerify, $rateDate, $dryRun);
         $this->displaySummary($results);
 
         return $results['errors'] > 0 ? 1 : 0;
     }
 
-    protected function storeLatestRates($rates, $autoVerify, $rateDate, $dryRun)
+    protected function storeReferenceRates($rates, $autoVerify, $rateDate, $dryRun)
     {
-        $results = ['success' => 0, 'errors' => 0, 'updated' => 0, 'created' => 0];
+        $results = ['success' => 0, 'errors' => 0, 'created' => 0];
 
         foreach ($rates as $currencyCode => $rateData) {
             $currency = Currency::where('code', $currencyCode)->first();
@@ -87,71 +86,38 @@ class FetchCBMRates extends Command
                     $sellRate = round(floatval($rateData['sell_rate'] ?? 0), 4);
                     $cbmRate = round(floatval($rateData['cbm_rate'] ?? 0), 4);
 
-
-                    // 1. Fetch the absolute last entry
-                    $lastRecord = ExchangeRate::where('currency_id', $currency->id)
-                        ->latest('id')
-                        ->first();
-
-                    if ($lastRecord) {
-                        // Check if the last record was created TODAY
-                        $isSameDay = $lastRecord->created_at->isToday();
-
-                        // Check if the price is the same
-                        $lastBuy = number_format((float)$lastRecord->buy_rate, 4, '.', '');
-                        $currentBuy = number_format($buyRate, 4, '.', '');
-                        $lastSell = number_format((float)$lastRecord->sell_rate, 4, '.', '');
-                        $currentSell = number_format($sellRate, 4, '.', '');
-                        $isSamePrice = ($lastBuy === $currentBuy && $lastSell === $currentSell);
-
-                        // ONLY skip if it is the same day AND the same price
-                        if ($isSameDay && $isSamePrice) {
-                            $this->line(" - {$currency->code}: Already recorded today with same price. Skipping...");
-                            return;
-                        }
-                    }
+                    // Only save if this is a REFERENCE record (marked as reference)
+                    // These will NOT be displayed as main rates on the welcome page
 
                     if ($dryRun) {
-                        $this->info(" - {$currency->code}: Would create new record ({$buyRate}/{$sellRate})");
+                        $this->info(" - {$currency->code}: Would create reference record (CBM: {$cbmRate})");
                         $results['created']++;
                         return;
                     }
 
-                    // 3. Trend Calculation
-                    $previousBuyRate = $lastRecord ? (float)$lastRecord->buy_rate : null;
-                    $changePercentage = null;
-                    $trend = 'stable';
-
-                    if ($previousBuyRate && $previousBuyRate > 0) {
-                        $changePercentage = (($buyRate - $previousBuyRate) / $previousBuyRate) * 100;
-                        if ($changePercentage > 0.001) $trend = 'up';
-                        elseif ($changePercentage < -0.001) $trend = 'down';
-                    }
-
-                    // 4. Create Record
-                    $newRate = ExchangeRate::create([
+                    ExchangeRate::create([
                         'currency_id'       => $currency->id,
                         'rate_date'         => $rateDate->format('Y-m-d'),
                         'buy_rate'          => $buyRate,
                         'sell_rate'         => $sellRate,
-                        'mid_rate'          => ($buyRate + $sellRate) / 2,
                         'cbm_rate'          => $cbmRate,
-                        'previous_buy_rate' => $previousBuyRate,
-                        'change_percentage' => $changePercentage,
-                        'market_trend'      => $trend,
-                        'source_name'       => 'CBM Auto-Fetch',
-                        'status'            => $autoVerify ? 'verified' : 'pending',
-                        'is_verified'       => $autoVerify,
-                        'verified_at'       => $autoVerify ? now() : null,
+                        'previous_buy_rate' => null,
+                        'change_percentage' => null,
+                        'market_trend'      => 'stable',
+                        'source_name'       => 'CBM Reference',
+                        'status'            => 'reference',
+                        'is_verified'       => false,
+                        'verified_at'       => null,
                         'created_by'        => 1,
                         'updated_by'        => 1,
                         'factors'           => [
                             'fetched_at' => now()->toDateTimeString(),
-                            'cbm_factor' => $rateData['conversion_factor'] ?? 1,
+                            'is_reference' => true,
+                            'cbm_rate' => $cbmRate,
                         ],
                     ]);
 
-                    $this->info("✓ Recorded: {$currency->code} | Trend: {$trend} (" . round($changePercentage ?? 0, 2) . "%)");
+                    $this->info("✓ Stored reference CBM rate for {$currency->code}: {$cbmRate}");
                     $results['created']++;
                 });
             } catch (\Exception $e) {
@@ -165,9 +131,10 @@ class FetchCBMRates extends Command
     protected function displaySummary($results)
     {
         $this->line('');
-        $this->info('  FETCH SUMMARY');
-        $this->line("  ✅ Created: {$results['created']}");
+        $this->info('  CBM REFERENCE FETCH SUMMARY');
+        $this->line("  ✅ Reference records created: {$results['created']}");
         $this->line("  ❌ Errors:  {$results['errors']}");
         $this->line(str_repeat('-', 20));
+        $this->line('  ℹ️  These are REFERENCE rates only. Actual exchange rates come from bank_avg mode.');
     }
 }

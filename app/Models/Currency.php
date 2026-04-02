@@ -2,22 +2,15 @@
 
 namespace App\Models;
 
-
-
-
 use App\Models\ExchangeRate;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 
-
-
-
 class Currency extends Model
 {
     use HasFactory, SoftDeletes;
-
 
     protected $fillable = [
         'code',
@@ -43,7 +36,16 @@ class Currency extends Model
         'spread_type',
         'use_cbm_auto_fetch',
         'factor_last_updated',
-        'factor_updated_by'
+        'factor_updated_by',
+        'cbm_rate',
+
+
+        // Logic & Sync Fields
+        'source_mode',
+        'manual_base_rate',
+        'avg_bank_rate',
+        'bank_markup_percentage',
+        'banks_last_synced_at'
     ];
 
     protected $casts = [
@@ -56,14 +58,76 @@ class Currency extends Model
         'is_active' => 'boolean',
         'is_base_currency' => 'boolean',
         'factor_last_updated' => 'datetime',
+        'banks_last_synced_at' => 'datetime',
+        'bank_markup_percentage' => 'float',
+        'avg_bank_rate' => 'float',
+        'manual_base_rate' => 'float',
     ];
 
-    // Auto-fill audit fields
+
+
+    protected $attributes = [
+        'source_mode' => 'bank_avg',
+        'bank_markup_percentage' => 0,
+        'buy_spread_percentage' => 0.5,
+        'sell_spread_percentage' => 0.5,
+        'spread_type' => 'percentage',
+        'cbm_conversion_factor' => 1,
+        'use_cbm_auto_fetch' => true,
+        'is_active' => true,
+        'decimal_places' => 2,
+
+    ];
+
+    /**
+     * Auto-fill audit fields (Fixed for Console/Artisan commands)
+     */
     protected static function boot()
     {
         parent::boot();
-        static::creating(fn($model) => $model->created_by = Auth::id());
-        static::updating(fn($model) => $model->updated_by = Auth::id());
+
+        static::creating(function ($model) {
+            // Default to ID 1 if no user is logged in (Command Line/Cron)
+            $model->created_by = Auth::id() ?? 1;
+        });
+
+        static::updating(function ($model) {
+            $model->updated_by = Auth::id() ?? 1;
+        });
+    }
+
+    /**
+     * Business Logic: Calculation Engine
+     */
+    public function calculateWorkingRate($cbmRateFromApi = null)
+    {
+        return match ($this->source_mode) {
+            'manual'   => (float) ($this->manual_base_rate ?? 0),
+            'bank_avg' => (float) ($this->avg_bank_rate ?? 0) * (1 + (($this->bank_markup_percentage ?? 0) / 100)),
+            'cbm'      => (float) ($cbmRateFromApi ?? 0) * (float) ($this->cbm_conversion_factor ?? 1),
+            default    => (float) ($cbmRateFromApi ?? 0),
+        };
+    }
+
+    public function calculateRatesFromCBM($cbmRateFromApi)
+    {
+        $workingRate = $this->calculateWorkingRate($cbmRateFromApi);
+        $decimal = $this->decimal_places ?? 2;
+
+        if ($this->spread_type === 'percentage') {
+            $buyRate = $workingRate * (1 - (($this->buy_spread_percentage ?? 0.5) / 100));
+            $sellRate = $workingRate * (1 + (($this->sell_spread_percentage ?? 0.5) / 100));
+        } else {
+            $buyRate = $workingRate - ($this->fixed_buy_margin ?? 0);
+            $sellRate = $workingRate + ($this->fixed_sell_margin ?? 0);
+        }
+
+        return [
+            'buy_rate'     => round(max(0, $buyRate), $decimal),
+            'sell_rate'    => round(max(0, $sellRate), $decimal),
+            'working_rate' => round($workingRate, $decimal),
+            'active_mode'  => $this->source_mode,
+        ];
     }
 
     /**
@@ -74,97 +138,23 @@ class Currency extends Model
         return $this->hasMany(ExchangeRate::class);
     }
 
-    public function creator()
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    // Scope to get only active currencies for the dropdowns
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true)->orderBy('display_order');
-    }
-
-
-
     public function latestRate()
     {
         return $this->hasOne(ExchangeRate::class)
             ->where('is_verified', true)
-            ->where('status', 'verified')
-            ->latest('rate_date');
+            ->latest('rate_date'); // Order by actual rate date
     }
 
-
-
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
-
-    public function factorUpdater()
+    public function scopeActive($query)
     {
-        return $this->belongsTo(User::class, 'factor_updated_by');
-    }
-
-    public function getEffectiveFactorAttribute()
-    {
-        return $this->cbm_conversion_factor ?? config('cbm.default_factor', 1);
-    }
-
-    public function calculateWorkingRate($cbmRate)
-    {
-        return $cbmRate * $this->effective_factor;
-    }
-
-    public function calculateRatesFromCBM($cbmRate)
-    {
-        // Get conversion factor (manual or default)
-        $factor = $this->cbm_conversion_factor ?? config('cbm.default_factor', 1);
-
-        // Calculate working rate
-        $workingRate = $cbmRate * $factor;
-
-        // Apply spread based on currency configuration
-        if ($this->spread_type === 'percentage') {
-            $buySpread = $this->buy_spread_percentage ?? 0.5;
-            $sellSpread = $this->sell_spread_percentage ?? 0.5;
-
-            $buyRate = $workingRate * (1 - ($buySpread / 100));
-            $sellRate = $workingRate * (1 + ($sellSpread / 100));
-
-            $buySpreadApplied = $buySpread;
-            $sellSpreadApplied = $sellSpread;
-        } else {
-            // Fixed margin
-            $buyMargin = $this->fixed_buy_margin ?? 0;
-            $sellMargin = $this->fixed_sell_margin ?? 0;
-
-            $buyRate = $workingRate - $buyMargin;
-            $sellRate = $workingRate + $sellMargin;
-
-            $buySpreadApplied = $buyMargin;
-            $sellSpreadApplied = $sellMargin;
-        }
-
-        // Ensure rates are positive
-        $buyRate = max(0, $buyRate);
-        $sellRate = max(0, $sellRate);
-
-        return [
-            'buy_rate' => round($buyRate, $this->decimal_places),
-            'sell_rate' => round($sellRate, $this->decimal_places),
-            'mid_rate' => round(($buyRate + $sellRate) / 2, $this->decimal_places),
-            'working_rate' => round($workingRate, $this->decimal_places),
-            'cbm_conversion_factor' => $factor,
-            'buy_spread_applied' => $buySpreadApplied,
-            'sell_spread_applied' => $sellSpreadApplied,
-            'spread_type_applied' => $this->spread_type,
-        ];
-    }
-
-    public function hasValidFactor()
-    {
-        return $this->cbm_conversion_factor !== null && $this->cbm_conversion_factor > 0;
+        return $query->where('is_active', true)->orderBy('display_order');
     }
 }

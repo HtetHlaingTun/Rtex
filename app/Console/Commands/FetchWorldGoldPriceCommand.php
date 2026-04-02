@@ -2,16 +2,18 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Currency;
+use App\Models\ExchangeRate;
 use App\Models\WorldGoldSnapshot;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class FetchWorldGoldPriceCommand extends Command
 {
     protected $signature = 'gold:fetch';
-    protected $description = 'Fetch global USD gold and calculate SGD price for snapshots';
+    protected $description = 'Fetch global USD gold and calculate SGD price for snapshots using dynamic USD-MMK rate';
 
     public function handle()
     {
@@ -46,20 +48,28 @@ class FetchWorldGoldPriceCommand extends Command
             $usdSgdRate      = floatval($rateMeta['regularMarketPrice']);
             $currentPriceSgd = $currentPriceUsd * $usdSgdRate;
 
-            // Fetch MMK Rate from your model
-            $mmkRate = WorldGoldSnapshot::getUsdMmkRate();
+            // ============ FETCH DYNAMIC USD-MMK RATE ============
+            $mmkRate = $this->getDynamicUsdMmkRate();
+
             if (!$mmkRate) {
-                $this->error('MMK rate not found in database.');
+                $this->error('❌ MMK rate not found. Please run bank sync first.');
+                Log::error('Gold fetch failed: No USD-MMK rate available');
                 return Command::FAILURE;
             }
 
+            $this->info("📊 Using USD-MMK rate: {$mmkRate} (from bank_avg with markup)");
+            // ====================================================
+
             $now = Carbon::now('Asia/Singapore');
 
-            // --- IMPROVED DUPLICATE CHECK ---
+            // Duplicate check within same minute
             $lastSnapshot = WorldGoldSnapshot::latest('fetched_at')->first();
 
             if ($lastSnapshot && $lastSnapshot->fetched_at->diffInMinutes($now) < 1) {
-                if ((float)$lastSnapshot->usd_price === $currentPriceUsd && (float)$lastSnapshot->usd_mmk_rate === (float)$mmkRate) {
+                if (
+                    (float)$lastSnapshot->usd_price === $currentPriceUsd &&
+                    (float)$lastSnapshot->usd_mmk_rate === (float)$mmkRate
+                ) {
                     $this->line('<fg=gray>Price unchanged within the same minute. Skipping.</>');
                     return Command::SUCCESS;
                 }
@@ -70,6 +80,17 @@ class FetchWorldGoldPriceCommand extends Command
             $previousPriceUsd = $previousSnapshot?->usd_price ?? $currentPriceUsd;
             $change           = round($currentPriceUsd - $previousPriceUsd, 2);
             $changePercent    = $previousPriceUsd > 0 ? round(($change / $previousPriceUsd) * 100, 4) : 0;
+
+            // Calculate MMK prices using dynamic rate
+            $mmkPriceNew = WorldGoldSnapshot::convertToMmkNew($currentPriceUsd, $mmkRate);
+            $mmkPriceOld = WorldGoldSnapshot::convertToMmkOld($currentPriceUsd, $mmkRate);
+            $mmkPrice    = WorldGoldSnapshot::convertToMmk($currentPriceUsd, $mmkRate);
+
+            $this->info("💰 Gold Price Calculation:");
+            $this->info("   USD Gold: \${$currentPriceUsd}");
+            $this->info("   USD-MMK Rate: {$mmkRate}");
+            $this->info("   New System (16.329g): {$mmkPriceNew} MMK");
+            $this->info("   Old System (16.606g): {$mmkPriceOld} MMK");
 
             // Save Snapshot
             WorldGoldSnapshot::create([
@@ -82,26 +103,82 @@ class FetchWorldGoldPriceCommand extends Command
                 'day_low'        => floatval($goldMeta['regularMarketDayLow'] ?? 0),
                 'previous_close' => floatval($goldMeta['previousClose'] ?? $currentPriceUsd),
                 'usd_mmk_rate'   => $mmkRate,
-                'mmk_price'      => WorldGoldSnapshot::convertToMmk($currentPriceUsd, $mmkRate),
-                'mmk_price_new'  => WorldGoldSnapshot::convertToMmkNew($currentPriceUsd, $mmkRate),
-                'mmk_price_old'  => WorldGoldSnapshot::convertToMmkOld($currentPriceUsd, $mmkRate),
+                'mmk_price'      => $mmkPrice,
+                'mmk_price_new'  => $mmkPriceNew,
+                'mmk_price_old'  => $mmkPriceOld,
                 'fetched_at'     => $now,
             ]);
 
-            $this->info("✅ SUCCESS: USD \${$currentPriceUsd} | SGD \${$currentPriceSgd}");
+            $this->info("✅ SUCCESS: USD \${$currentPriceUsd} | SGD \${$currentPriceSgd} | MMK {$mmkPriceNew}");
+            $this->info("   Spread: " . ($mmkPriceNew - $mmkPriceOld) . " MMK between systems");
 
             $this->performCleanup();
             return Command::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('FAILED: ' . $e->getMessage());
+            $this->error('❌ FAILED: ' . $e->getMessage());
             Log::error('FetchWorldGoldPriceCommand Error: ' . $e->getMessage());
             return Command::FAILURE;
         }
     }
 
+    /**
+     * Get dynamic USD-MMK rate from bank_avg system
+     * This uses the same rates as your exchange display
+     */
+    private function getDynamicUsdMmkRate(): ?float
+    {
+        // Method 1: Get the latest exchange rate from database (most accurate)
+        $usdCurrency = Currency::where('code', 'USD')->first();
+
+        if ($usdCurrency) {
+            $latestRate = ExchangeRate::where('currency_id', $usdCurrency->id)
+                ->where('status', 'verified')
+                ->where('is_verified', true)
+                ->latest('created_at')
+                ->first();
+
+            if ($latestRate) {
+                // Use mid rate (average of buy and sell) for gold calculation
+                $midRate = ($latestRate->buy_rate + $latestRate->sell_rate) / 2;
+                return round($midRate, 2);
+            }
+
+            // Fallback: use stored avg_bank_rate from currency
+            if ($usdCurrency->avg_bank_rate > 0) {
+                return round($usdCurrency->avg_bank_rate * (1 + ($usdCurrency->bank_markup_percentage / 100)), 2);
+            }
+        }
+
+        // Method 2: Use WorldGoldSnapshot method
+        $rate = WorldGoldSnapshot::getUsdMmkRate();
+
+        if ($rate) {
+            return $rate;
+        }
+
+        // Method 3: Last resort - manual fetch from exchange_rates table
+        $lastRate = ExchangeRate::whereHas('currency', function ($q) {
+            $q->where('code', 'USD');
+        })
+            ->where('is_verified', true)
+            ->latest('created_at')
+            ->first();
+
+        if ($lastRate) {
+            return round(($lastRate->buy_rate + $lastRate->sell_rate) / 2, 2);
+        }
+
+        return null;
+    }
+
+    /**
+     * Clean up old snapshots - keep only one per day
+     */
     private function performCleanup(): void
     {
-        $cutoff = Carbon::now('Asia/Singapore')->startOfDay();
+        $cutoff = Carbon::now('Asia/Singapore')->subDays(7)->startOfDay();
+
+        // For older records, keep only the latest one per day
         $oldDates = WorldGoldSnapshot::where('fetched_at', '<', $cutoff)
             ->selectRaw('DATE(fetched_at) as date')
             ->groupBy('date')
@@ -116,16 +193,27 @@ class FetchWorldGoldPriceCommand extends Command
             if ($records->count() <= 1) continue;
 
             $keeper = $records->first();
+
+            // Update day high/low for the keeper
             $keeper->update([
-                'day_high' => $records->max('usd_price'),
-                'day_low'  => $records->min('usd_price'),
+                'day_high' => max($records->pluck('usd_price')->toArray()),
+                'day_low'  => min($records->pluck('usd_price')->toArray()),
             ]);
 
+            // Delete all other records for this day
             WorldGoldSnapshot::whereDate('fetched_at', $date)
                 ->where('id', '!=', $keeper->id)
                 ->forceDelete();
 
-            $this->line("<fg=yellow>Cleaned up {$date}: Record consolidated.</>");
+            $this->line("<fg=yellow>🗑️  Cleaned up {$date}: Kept 1 record (consolidated).</>");
+        }
+
+        // Keep only last 90 days of data
+        $ninetyDaysAgo = Carbon::now('Asia/Singapore')->subDays(90);
+        $deletedCount = WorldGoldSnapshot::where('fetched_at', '<', $ninetyDaysAgo)->forceDelete();
+
+        if ($deletedCount > 0) {
+            $this->info("🗑️  Deleted {$deletedCount} records older than 90 days");
         }
     }
 }

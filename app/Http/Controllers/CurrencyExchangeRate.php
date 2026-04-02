@@ -110,7 +110,6 @@ class CurrencyExchangeRate extends Controller
     public function index()
     {
         $cbmAvailable = $this->cbmService->isAvailable();
-        $cbmRates = $cbmAvailable ? $this->cbmService->fetchCurrentRates() : [];
 
         $currencies = Currency::where('is_active', true)
             ->orderBy('display_order')
@@ -119,39 +118,61 @@ class CurrencyExchangeRate extends Controller
         $rates = [];
 
         foreach ($currencies as $currency) {
-            // 1. TRY LIVE DATA FIRST
-            if (isset($cbmRates[$currency->code])) {
-                $cbmData = $cbmRates[$currency->code];
-                $calculated = $this->calculateRatesFromCBM($currency, $cbmData['cbm_rate']);
+            // Get the latest verified exchange rate from database
+            $latestRate = ExchangeRate::where('currency_id', $currency->id)
+                ->where('is_verified', true)
+                ->where('status', 'verified')
+                ->latest('created_at')
+                ->first();
 
-                $rates[] = $this->transformRateData($currency, $calculated, $cbmData['cbm_rate'], true);
-            }
-            // 2. FALLBACK: USE LAST SAVED DATABASE RATE
-            else {
-                $lastRate = ExchangeRate::where('currency_id', $currency->id)
-                    ->where('is_verified', true)
-                    ->latest()
-                    ->first();
-
-                if ($lastRate) {
-                    $rates[] = [
+            if ($latestRate) {
+                $rates[] = [
+                    'id' => $currency->id,
+                    'currency' => [
                         'id' => $currency->id,
-                        'currency' => $currency->only(['id', 'code', 'name', 'symbol']),
-                        'buy_rate' => $lastRate->buy_rate,
-                        'sell_rate' => $lastRate->sell_rate,
-                        'cbm_rate' => $lastRate->cbm_rate ?? 0,
-                        'is_live' => false, // Add a flag to show it's cached
-                        'last_updated' => $lastRate->updated_at,
-                    ];
-                }
+                        'code' => $currency->code,
+                        'name' => $currency->name,
+                        'symbol' => $currency->symbol,
+                    ],
+                    'buy_rate' => (float) $latestRate->buy_rate,
+                    'sell_rate' => (float) $latestRate->sell_rate,
+                    'cbm_rate' => (float) ($latestRate->cbm_rate ?? 0),
+                    'change_percentage' => (float) ($latestRate->change_percentage ?? 0),
+                    'market_trend' => $latestRate->market_trend ?? 'stable',
+                    'last_updated' => $latestRate->created_at,
+                    'is_live' => true,
+                ];
+            } else {
+                // Fallback: No rate exists yet, show placeholder
+                $rates[] = [
+                    'id' => $currency->id,
+                    'currency' => [
+                        'id' => $currency->id,
+                        'code' => $currency->code,
+                        'name' => $currency->name,
+                        'symbol' => $currency->symbol,
+                    ],
+                    'buy_rate' => 0,
+                    'sell_rate' => 0,
+                    'cbm_rate' => 0,
+                    'change_percentage' => 0,
+                    'market_trend' => 'stable',
+                    'last_updated' => null,
+                    'is_live' => false,
+                ];
             }
         }
+
+        // Sort rates to put active currencies first
+        usort($rates, function ($a, $b) {
+            return $a['currency']['code'] <=> $b['currency']['code'];
+        });
 
         return Inertia::render('Currency/Index', [
             'rates' => $rates,
             'cbm_available' => $cbmAvailable,
-            'last_fetch_time' => count($rates) > 0 ? $rates[0]['last_updated'] : now(),
-            'userRole' => Auth::user()->role,
+            'last_fetch_time' => $rates[0]['last_updated'] ?? now(),
+            'userRole' => Auth::user()->role ?? 'guest',
         ]);
     }
 
@@ -195,36 +216,45 @@ class CurrencyExchangeRate extends Controller
 
     public function factors()
     {
-        // Get ALL active currencies, not just those with rates
         $currencies = Currency::where('is_active', true)
             ->orderBy('display_order')
             ->orderBy('code')
             ->get();
 
-        // Log for debugging
-        Log::info('Factors page currencies count: ' . $currencies->count());
-        Log::info('Currencies: ' . $currencies->pluck('code')->implode(', '));
-
-        // Get current CBM rates for preview
+        // Get current CBM rates
         $cbmRates = $this->cbmService->fetchCurrentRates();
 
-        // Enhance currencies with CBM rate data
         foreach ($currencies as $currency) {
+            // Ensure these are explicitly set from database
+            $currency->buy_spread_percentage = (float) $currency->buy_spread_percentage;
+            $currency->sell_spread_percentage = (float) $currency->sell_spread_percentage;
+            $currency->bank_markup_percentage = (float) $currency->bank_markup_percentage;
+            $currency->source_mode = $currency->source_mode ?? 'bank_avg';
+
+            // CBM rate
             if (isset($cbmRates[$currency->code])) {
                 $currency->current_cbm_rate = $cbmRates[$currency->code]['cbm_rate'];
-                $preview = $this->calculateRatesFromCBM($currency, $currency->current_cbm_rate);
-                $currency->preview_buy_rate = $preview['buy_rate'];
-                $currency->preview_sell_rate = $preview['sell_rate'];
             } else {
-                // Set default values if currency not found in CBM rates
-                $currency->current_cbm_rate = 0;
-                $currency->preview_buy_rate = 0;
-                $currency->preview_sell_rate = 0;
+                $currency->current_cbm_rate = $currency->cbm_rate ?? 0;
             }
+
+            // Bank average rate from last sync
+            $currency->avg_bank_rate = (float) ($currency->avg_bank_rate ?? 0);
+            $currency->banks_last_synced_at = $currency->banks_last_synced_at;
         }
 
+        // Debug: Log what's being sent
+        Log::info('Factors page data:', [
+            'currencies' => $currencies->map(fn($c) => [
+                'code' => $c->code,
+                'buy_spread' => $c->buy_spread_percentage,
+                'sell_spread' => $c->sell_spread_percentage,
+                'bank_markup' => $c->bank_markup_percentage,
+            ])
+        ]);
+
         return Inertia::render('Currency/Factors', [
-            'currencies' => $currencies, // Make sure this is passed as an array
+            'currencies' => $currencies,
             'cbm_available' => $this->cbmService->isAvailable(),
             'default_factor' => config('cbm.default_factor', 1),
         ]);
@@ -232,32 +262,52 @@ class CurrencyExchangeRate extends Controller
 
     public function updateFactor(Request $request, Currency $currency)
     {
-        $validated = $request->validate([
-            'cbm_conversion_factor' => 'nullable|numeric|min:0.000001|max:999999',
-            'buy_spread_percentage' => 'nullable|numeric|min:0|max:100',
-            'sell_spread_percentage' => 'nullable|numeric|min:0|max:100',
-            'fixed_buy_margin' => 'nullable|numeric|min:0',
-            'fixed_sell_margin' => 'nullable|numeric|min:0',
-            'spread_type' => 'required|in:percentage,fixed',
-            'use_cbm_auto_fetch' => 'boolean',
-        ]);
+        try {
+            Log::info('Updating currency factors', [
+                'currency_id' => $currency->id,
+                'code' => $currency->code,
+                'request_data' => $request->all()
+            ]);
 
-        $currency->update([
-            'cbm_conversion_factor' => $validated['cbm_conversion_factor'] ?? $currency->cbm_conversion_factor,
-            'buy_spread_percentage' => $validated['buy_spread_percentage'] ?? $currency->buy_spread_percentage,
-            'sell_spread_percentage' => $validated['sell_spread_percentage'] ?? $currency->sell_spread_percentage,
-            'fixed_buy_margin' => $validated['fixed_buy_margin'] ?? $currency->fixed_buy_margin,
-            'fixed_sell_margin' => $validated['fixed_sell_margin'] ?? $currency->fixed_sell_margin,
-            'spread_type' => $validated['spread_type'],
-            'use_cbm_auto_fetch' => $validated['use_cbm_auto_fetch'] ?? $currency->use_cbm_auto_fetch,
-            'factor_last_updated' => now(),
-            'factor_updated_by' => Auth::id(),
-        ]);
+            $validated = $request->validate([
+                'source_mode' => 'required|in:bank_avg,cbm,manual',
+                'cbm_conversion_factor' => 'nullable|numeric',
+                'bank_markup_percentage' => 'nullable|numeric|min:0|max:100',
+                'manual_base_rate' => 'nullable|numeric',
+                'spread_type' => 'required|in:percentage,fixed',
+                'buy_spread_percentage' => 'nullable|numeric',
+                'sell_spread_percentage' => 'nullable|numeric',
+                'fixed_buy_margin' => 'nullable|numeric',
+                'fixed_sell_margin' => 'nullable|numeric',
+                'use_cbm_auto_fetch' => 'boolean',
+            ]);
 
-        // Clear cache to apply new factors immediately
-        $this->cbmService->clearCache();
+            // Update the currency
+            $currency->update($validated);
 
-        return redirect()->back()->with('success', "Factor updated for {$currency->code}");
+            Log::info('Currency updated successfully', [
+                'code' => $currency->code,
+                'bank_markup' => $currency->bank_markup_percentage,
+                'buy_spread' => $currency->buy_spread_percentage,
+                'sell_spread' => $currency->sell_spread_percentage
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Settings saved successfully',
+                'data' => $currency
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to update currency', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function pending()
@@ -487,7 +537,7 @@ class CurrencyExchangeRate extends Controller
             'history' => $paginatedHistory,
             'breadcrumbs' => [
                 ['label' => 'Home', 'route' => 'welcome'],
-                ['label' => $currency->code . ' History', 'route' => 'currencies.history', 'params' => ['currency' => $currency->id]], // Add the required parameter
+                ['label' => $currency->code . ' History',  'params' => ['currency' => $currency->id]],
             ],
         ]);
     }

@@ -327,6 +327,7 @@ const fetchData = async () => {
 
 // ── Chart Configuration ───────────────────────────────
 const getChartOptions = () => {
+    const isWorld = props.type === 'world_oz';
     return {
         responsive: true,
         maintainAspectRatio: false,
@@ -368,16 +369,35 @@ const getChartOptions = () => {
         },
         scales: {
             y: {
-                position: props.isMobile ? 'right' : 'left',
+                type: 'linear',
+                display: true,
+                position: 'left',
                 beginAtZero: false,
+                grace: '40%',
                 grid: {
                     display: !props.isMobile,
                     color: 'rgba(240, 240, 238, 0.5)'
                 },
                 ticks: {
-                    color: '#a1a1aa',
+                    color: props.chartColor, // Match USD line color
                     font: { size: props.isMobile ? 9 : 11 },
-                    callback: (v) => formatYAxisTick(v)
+                    callback: (v) => isWorld ? `$${v}` : formatYAxisTick(v)
+                }
+            },
+            y1: {
+                type: 'linear',
+                display: isWorld, // ONLY show on world_oz
+                position: 'right',
+                beginAtZero: false,
+                grace: '40%',
+                grid: {
+                    drawOnChartArea: false, // Don't overlap grid lines
+                },
+                ticks: {
+                    display: !props.isMobile,
+                    color: '#10b981', // Match SGD green line color
+                    font: { size: props.isMobile ? 9 : 11 },
+                    callback: (v) => `S$${v}`
                 }
             },
             x: {
@@ -454,28 +474,27 @@ const buildChart = () => {
             label: props.type === 'world_oz' ? 'USD Price' : 'MMK Price',
             data: points.map(p => ({ x: p.date, y: p.price })),
             borderColor: primaryColor,
+            yAxisID: 'y', // Uses the left axis
             backgroundColor: 'transparent',
             borderWidth: 3,
             tension: 0.3,
             pointRadius: 0,
-            pointHoverRadius: 5
         }
     ];
-
     // Only add SGD dataset if we are on world_oz and have data
+
     if (props.type === 'world_oz' && points.some(p => p.sgd_price)) {
         datasets.push({
             label: 'SGD Price',
             data: points.map(p => ({ x: p.date, y: p.sgd_price })),
             borderColor: secondaryColor,
+            yAxisID: 'y1', // <--- USES THE RIGHT AXIS
             backgroundColor: 'transparent',
             borderWidth: 2,
-            borderDash: [5, 5], // This makes the SGD line dashed
+            borderDash: [5, 5],
             tension: 0.3,
             pointRadius: 0,
-            pointHoverRadius: 5
         });
-
     }
 
 

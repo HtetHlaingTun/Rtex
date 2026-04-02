@@ -6,6 +6,7 @@ use App\Models\Currency;
 use App\Models\ExchangeRate;
 use App\Models\GoldPrice;
 use App\Models\GoldType;
+use App\Models\WorldGoldSnapshot;
 use App\Services\PriceVerificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -28,17 +29,34 @@ class GoldPriceController extends Controller
 
     public function index()
     {
-        // Fetch the latest snapshot once
-        $snapshot = \App\Models\WorldGoldSnapshot::latest('fetched_at')->first();
+        // Get all gold types with their latest verified prices
+        $goldTypes = GoldType::with(['latestVerifiedPrice', 'prices' => function ($q) {
+            $q->latest('price_date')->limit(1);
+        }])->get();
+
+        // Count pending gold prices
+        $pendingGoldCount = GoldPrice::where('status', 'pending')->count();
+
+        // Get latest world gold snapshot
+        $worldGoldSnapshot = WorldGoldSnapshot::latest('fetched_at')->first();
+
+        // Get latest SGD rate from the WorldGoldSnapshot (since your command already fetches it)
+        $sgdRate = null;
+        if ($worldGoldSnapshot && $worldGoldSnapshot->usd_sgd_rate) {
+            $sgdRate = [
+                'usd_sgd_rate' => $worldGoldSnapshot->usd_sgd_rate,
+                'sgd_price' => $worldGoldSnapshot->sgd_price,
+                'change' => $worldGoldSnapshot->change,
+                'change_percent' => $worldGoldSnapshot->change_percent,
+                'fetched_at' => $worldGoldSnapshot->fetched_at,
+            ];
+        }
 
         return Inertia::render('Gold/Index', [
-            'goldTypes' => GoldType::with(['latestPrice' => function ($query) {
-                $query->orderBy('price_date', 'desc')->orderBy('created_at', 'desc');
-            }])->get(),
-            'pending_gold_count' => GoldPrice::where('status', 'pending')->count(),
-
-            // Use the $snapshot variable we just created
-            'worldGoldSnapshot' => $snapshot,
+            'goldTypes' => $goldTypes,
+            'pending_gold_count' => $pendingGoldCount,
+            'worldGoldSnapshot' => $worldGoldSnapshot,
+            'sgdRate' => $sgdRate,
         ]);
     }
 
@@ -100,109 +118,64 @@ class GoldPriceController extends Controller
 
     public function history($id)
     {
-
-
-
         $goldType = GoldType::findOrFail($id);
 
-        $cutoff = now()->subDays(10)->startOfDay();
+        // Get paginated history
+        $history = GoldPrice::where('gold_type_id', $id)
+            ->orderBy('price_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate(15);
 
-        $baseQuery = GoldPrice::where('gold_type_id', $id)
-            ->where('gold_prices.status', 'verified')
-            // Join snapshots where the fetched_at is closest to the gold_price creation
-            ->leftJoin('world_gold_snapshots', function ($join) {
-                $join->on(
-                    'world_gold_snapshots.created_at',
-                    '=',
-                    DB::raw("(SELECT created_at FROM world_gold_snapshots 
-                          WHERE created_at <= gold_prices.created_at 
-                          ORDER BY created_at DESC LIMIT 1)")
-                );
-            })
-            ->select([
-                'gold_prices.*',
-                'world_gold_snapshots.usd_price as world_gold_usd',
-                'world_gold_snapshots.change as world_gold_change',
-                'world_gold_snapshots.day_high as world_gold_high',
-                'world_gold_snapshots.change_percent as world_gold_change_percent',
-            ]);
-
-        // Within 10 days — all hourly records (up to 240)
-        $recentRecords = (clone $baseQuery)
-            ->where('gold_prices.created_at', '>=', $cutoff)
-            ->orderBy('gold_prices.created_at', 'desc')
-            ->get();
-
-        // Beyond 10 days — 1 record per day (latest of that day)
-        $olderRecords = (clone $baseQuery)
-            ->where('gold_prices.created_at', '<', $cutoff)
-            ->orderBy('gold_prices.price_date', 'desc')
-            ->orderBy('gold_prices.created_at', 'desc')
-            ->get()
-            ->unique('price_date')
-            ->values();
-
-        // Merge for paginated display
-        $allRecords = $recentRecords->concat($olderRecords);
-
-        // Manual pagination
-        $page    = request()->get('page', 1);
-        $perPage = 20;
-        $total   = $allRecords->count();
-        $items   = $allRecords->forPage($page, $perPage);
-
-        $history = new \Illuminate\Pagination\LengthAwarePaginator(
-            $items,
-            $total,
-            $perPage,
-            $page,
-            ['path' => request()->url(), 'query' => request()->query()]
-        );
-
-        if (!$history) {
-            // Redirect back to home with a flash message
-            return redirect('/')->with('error', 'History record not found.');
-        }
-
-
-        // Chart data — last 30 days, 1 point per day
+        // Get chart data (last 30 days)
         $chartData = GoldPrice::where('gold_type_id', $id)
             ->where('status', 'verified')
-            ->where('price_date', '>=', now()->subDays(30))
             ->orderBy('price_date', 'asc')
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->unique('price_date')
-            ->values()
-            ->map(fn($p) => [
-                'date'  => $p->price_date->format('d M'), // ← "19 Mar" not "Mar 19"
-                'price' => floatval($p->price),
-            ]);
+            ->limit(30)
+            ->get(['price_date as date', 'price'])
+            ->map(function ($item) {
+                return [
+                    'date' => $item->date,
+                    'price' => (float) $item->price
+                ];
+            });
 
-        // ✅ Fallback: if less than 2 days, use today's hourly records
-        if ($chartData->count() < 2) {
-            $chartData = GoldPrice::where('gold_type_id', $id)
-                ->where('status', 'verified')
-                ->whereDate('price_date', today())
-                ->orderBy('created_at', 'asc')
-                ->get()
-                ->map(fn($p) => [
-                    'date'  => $p->created_at->format('H:i'), // ← was H:i, keep short
-                    'price' => floatval($p->price),
-                ]);
-        }
-
-
+        // Get today's price
         $todayPrice = GoldPrice::where('gold_type_id', $id)
-            ->orderBy('price_date', 'desc')
-            ->orderBy('created_at', 'desc')
+            ->whereDate('price_date', now()->toDateString())
             ->first();
 
+        // Get yesterday's price
         $yesterdayPrice = GoldPrice::where('gold_type_id', $id)
-            ->where('status', 'verified')
-            ->whereDate('price_date', today()->subDay())
-            ->latest('created_at')
+            ->whereDate('price_date', now()->subDay()->toDateString())
             ->first();
+
+        // Get latest USD rate
+        $usdRate = ExchangeRate::whereHas('currency', function ($query) {
+            $query->where('code', 'USD');
+        })
+            ->latest('rate_date')
+            ->latest('id')
+            ->first();
+
+        // Get latest world gold snapshot (for SGD rate)
+        $latestSnapshot = WorldGoldSnapshot::latest('fetched_at')->first();
+
+        // Calculate volatility
+        $prices = GoldPrice::where('gold_type_id', $id)
+            ->where('status', 'verified')
+            ->where('price_date', '>=', now()->subDays(30))
+            ->orderBy('price_date', 'desc')
+            ->pluck('price')
+            ->toArray();
+
+        $volatility = 0;
+        if (count($prices) >= 2) {
+            $changes = [];
+            for ($i = 0; $i < count($prices) - 1; $i++) {
+                $changes[] = abs(($prices[$i] - $prices[$i + 1]) / $prices[$i + 1]) * 100;
+            }
+            $volatility = round(array_sum($changes) / count($changes), 2);
+        }
 
         return Inertia::render('Gold/History', [
             'goldType'       => $goldType,
@@ -213,16 +186,46 @@ class GoldPriceController extends Controller
             'stats'          => [
                 'highest'       => GoldPrice::where('gold_type_id', $id)->where('status', 'verified')->max('price'),
                 'lowest'        => GoldPrice::where('gold_type_id', $id)->where('status', 'verified')->min('price'),
+                'average'       => round(GoldPrice::where('gold_type_id', $id)->where('status', 'verified')->avg('price'), 2),
                 'total_entries' => GoldPrice::where('gold_type_id', $id)->count(),
+                'volatility'    => $volatility,
             ],
-            'latestSnapshot' => \App\Models\WorldGoldSnapshot::latest('fetched_at')->first(),
-            'usdRate' => ExchangeRate::whereHas('currency', function ($query) {
-                $query->where('code', 'USD');
-            })
-                ->latest('rate_date')
-                ->latest('id') // Ensures you get the most recent entry if multiple exist for one date
-                ->first(),
+            'latestSnapshot' => $latestSnapshot,
+            'usdRate'        => $usdRate,
         ]);
+    }
+
+
+    /**
+     * Calculate price volatility for gold type
+     */
+    private function calculateVolatility($goldTypeId, $days = 30)
+    {
+        $prices = GoldPrice::where('gold_type_id', $goldTypeId)
+            ->where('status', 'verified')
+            ->orderBy('price_date', 'desc')
+            ->limit($days)
+            ->pluck('price')
+            ->toArray();
+
+        if (count($prices) < 2) {
+            return 0;
+        }
+
+        // Calculate standard deviation
+        $mean = array_sum($prices) / count($prices);
+        $variance = 0;
+
+        foreach ($prices as $price) {
+            $variance += pow($price - $mean, 2);
+        }
+
+        $standardDeviation = sqrt($variance / count($prices));
+
+        // Calculate coefficient of variation (volatility percentage)
+        $volatility = ($standardDeviation / $mean) * 100;
+
+        return round($volatility, 2);
     }
 
 
@@ -336,10 +339,9 @@ class GoldPriceController extends Controller
             'world_oz' => 'World Spot'
         ];
 
-
         $breadcrumbs = [
             ['label' => 'Home', 'route' => 'welcome'],
-            ['label' => 'Gold History', 'route' => 'public.gold.history', 'params' => ['type' => 'new_system']],
+            ['label' => 'Gold History', 'route' => 'user.gold.history', 'params' => ['type' => 'new_system']],
             ['label' => $typeLabels[$type]]
         ];
 
@@ -352,37 +354,26 @@ class GoldPriceController extends Controller
             $system = $type === 'new_system' ? 'new' : 'old';
             $goldTypeIds = GoldType::where('system', $system)->where('is_active', 1)->pluck('id');
 
-            // REMOVE the '>= $today' restriction to allow older history to flow in
             $history = GoldPrice::whereIn('gold_type_id', $goldTypeIds)
                 ->where('status', 'verified')
-                // We order by date so Page 1 contains the most recent days
                 ->orderBy('price_date', 'desc')
                 ->orderBy('created_at', 'desc')
-                ->paginate(150) // High number to ensure we get at least 7-30 days of data
+                ->paginate(150)
                 ->withQueryString();
         }
 
-        // Debug: Log to see if data is being passed
+        // Debug logging
         Log::info('Public gold history data', [
             'type' => $type,
             'total' => $history->total(),
             'first_record' => $history->first(),
-            'has_links' => isset($history->links)
         ]);
-
-        // TEMPORARY DEBUG - Remove after testing
-        Log::info('History data being sent:', [
-            'total' => $history->total(),
-            'count' => $history->count(),
-            'first_item' => $history->first(),
-            'has_data' => $history->isNotEmpty()
-        ]);
-
 
         $stats = null;
+        $latestPrice = 0;
+        $latestSgdPrice = 0; // Add this variable
 
         if ($type === 'world_oz') {
-            // --- WORLD GOLD LOGIC ---
             $latest = DB::table('world_gold_snapshots')
                 ->orderBy('fetched_at', 'desc')
                 ->first();
@@ -392,25 +383,37 @@ class GoldPriceController extends Controller
                 ->orderBy('fetched_at', 'desc')
                 ->first();
 
+            // Set latest price
+            $latestPrice = $latest ? (float) $latest->usd_price : 0;
+            $latestSgdPrice = $latest ? (float) ($latest->sgd_price ?? 0) : 0;
+
             if ($latest && $yesterdayClose) {
-                $diff = $latest->usd_price - $yesterdayClose->usd_price;
-                $percent = ($diff / $yesterdayClose->usd_price) * 100;
-                $diffSgd = $latest->sgd_price - $yesterdayClose->sgd_price;
+                $latestUsd = (float) $latest->usd_price;
+                $yesterdayUsd = (float) $yesterdayClose->usd_price;
+                $latestSgd = (float) ($latest->sgd_price ?? 0);
+                $yesterdaySgd = (float) ($yesterdayClose->sgd_price ?? 0);
+
+                $diff = $latestUsd - $yesterdayUsd;
+                $diff_sgd = $latestSgd - $yesterdaySgd;
+                $percent = $yesterdayUsd > 0 ? ($diff / $yesterdayUsd) * 100 : 0;
+                $percent_sgd = $yesterdaySgd > 0 ? ($diff_sgd / $yesterdaySgd) * 100 : 0;
+                $diffSgd = ($latestSgd > 0 && $yesterdaySgd > 0) ? ($latestSgd - $yesterdaySgd) : 0;
 
                 $stats = [
-                    'current' => (float) $latest->usd_price,
-                    'current_sgd' => (float) $latest->sgd_price,
+                    'current' => $latestUsd,
+                    'current_sgd' => $latestSgd,
                     'diff' => abs($diff),
-                    'diff_sgd ' => abs($diffSgd),
+                    'diff_sgd' => abs($diffSgd),
                     'percent' => round($percent, 2),
+                    'percent_sgd' => round($percent_sgd, 2),
                     'trend' => $diff > 0 ? 'up' : ($diff < 0 ? 'down' : 'flat'),
-                    'compare_date' => Carbon::parse($yesterdayClose->fetched_at)->format('d M'),
+                    'compare_date' => \Carbon\Carbon::parse($yesterdayClose->fetched_at)->format('d M'),
                     'symbol' => '$',
                     'suffix' => '/ oz'
                 ];
             }
         } else {
-            // --- LOCAL GOLD LOGIC (MMK) ---
+            // Local gold logic (MMK)
             $system = $type === 'new_system' ? 'new' : 'old';
 
             $latest = GoldPrice::whereHas('goldType', fn($q) => $q->where('system', $system))
@@ -423,6 +426,9 @@ class GoldPriceController extends Controller
                 ->where('price_date', '<', now()->toDateString())
                 ->orderBy('price_date', 'desc')
                 ->first();
+
+            // Set latest price
+            $latestPrice = $latest ? (float) $latest->price : 0;
 
             if ($latest && $yesterdayClose) {
                 $diff = $latest->price - $yesterdayClose->price;
@@ -440,31 +446,48 @@ class GoldPriceController extends Controller
             }
         }
 
-        if ($type === 'world_oz') {
-            // Get the single most recent snapshot from the world table
-            $latestRecord = DB::table('world_gold_snapshots')
-                ->orderBy('fetched_at', 'desc')
-                ->first();
-            $latestPrice = $latestRecord ? $latestRecord->usd_price : 0;
-        } else {
-            // Get the single most recent verified price for the local system
-            $system = $type === 'new_system' ? 'new' : 'old';
-            $latestRecord = GoldPrice::whereHas('goldType', fn($q) => $q->where('system', $system))
-                ->where('status', 'verified')
-                ->orderBy('created_at', 'desc')
-                ->first();
-            $latestPrice = $latestRecord ? $latestRecord->price : 0;
-        }
-
         return Inertia::render('Gold/PublicHistory', [
             'history' => $history,
             'selectedType' => $type,
             'breadcrumbs' => $breadcrumbs,
             'stats' => $stats,
-            'latestPrice' => (float)$latestPrice,
+            'latestPrice' => (float) $latestPrice,
+            'latestSgdPrice' => (float) $latestSgdPrice, // Add this line
         ]);
     }
 
+
+    public function publicGoldType($goldType)
+    {
+        $goldType = GoldType::findOrFail($goldType);
+
+        $history = GoldPrice::where('gold_type_id', $goldType->id)
+            ->orderBy('price_date', 'desc')
+            ->paginate(30);
+
+        // Get chart data for the last 30 days
+        $chartData = GoldPrice::where('gold_type_id', $goldType->id)
+            ->where('status', 'verified')
+            ->orderBy('price_date', 'asc')
+            ->limit(30)
+            ->get(['price_date as date', 'price'])
+            ->map(function ($item) {
+                return [
+                    'date' => $item->date,
+                    'price' => (float) $item->price
+                ];
+            });
+
+        // Get latest world gold snapshot for reference
+        $latestSnapshot = WorldGoldSnapshot::latest('fetched_at')->first();
+
+        return Inertia::render('Public/GoldTypeHistory', [
+            'goldType' => $goldType,
+            'history' => $history,
+            'chartData' => $chartData,
+            'latestSnapshot' => $latestSnapshot,
+        ]);
+    }
 
     // chart data 
     public function chartData(Request $request, $id)

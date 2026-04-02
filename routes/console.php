@@ -25,7 +25,7 @@ Schedule::command('gold:save-hourly')
     ->appendOutputTo(storage_path('logs/gold_sync.log'));
 
 Schedule::command('gold:consolidate-daily --days-to-keep=1')
-    ->dailyAt('00:05')
+    ->everySixHours()
 
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/gold-consolidation.log'));
@@ -42,15 +42,34 @@ Schedule::command('gold:consolidate-daily --permanent-years=2 --stats')
 
 
 // --- CBM Fetching ---
+
+Schedule::command('banks:sync-rates')
+    ->everyThirtyMinutes()
+    ->between('6:00', '22:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/banks-sync.log'));
+
+
+
 Schedule::command('cbm:fetch --auto-verify')
-    ->everyTwoMinutes()
+    ->dailyAt('08:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/cbm-fetch.log'));
 
+
+// Test CBM connection and clear cache
+Schedule::command('cbm:test --clear-cache')
+    ->dailyAt('02:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/cbm-test.log'));
+
+
+
+
+
 // --- Cleanup & Maintenance ---
 Schedule::command('exchange:consolidate-rates --days-to-keep=1')
-    ->dailyAt('00:05')
-    // ->everyTwoMinutes()
+    ->everySixHours()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/exchange-consolidation.log'));
 
@@ -60,13 +79,3 @@ Schedule::command('exchange:consolidate-rates --permanent-years=2 --stats')
     ->monthly()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/gold-consolidation-monthly.log'));
-
-
-
-Schedule::command('cbm:test --clear-cache')
-    // ->dailyAt('00:05')
-    ->everyTwoMinutes()
-    ->withoutOverlapping();
-
-Schedule::command('cbm:cleanup --days=30 --force')
-    ->weeklyOn(0, '03:00');

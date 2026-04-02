@@ -25,8 +25,42 @@ import MobileBottomNav from "./Components/UI/MobileBottomNav.vue";
 import RateHistoryChart from "./Components/Charts/Rate/RateHistoryChart.vue";
 
 window.Chart = Chart;
-
+let logoutTimer;
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
+
+function resetTimer() {
+    clearTimeout(logoutTimer);
+    logoutTimer = setTimeout(
+        () => {
+            // Check if user is still active
+            fetch("/check-session", {
+                method: "GET",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+            }).then((response) => {
+                if (response.status === 401) {
+                    window.location.href = "/login";
+                }
+            });
+        },
+        55 * 60 * 1000,
+    ); // Check every 55 minutes
+}
+
+// Reset timer on user activity
+window.onload = resetTimer;
+window.onmousemove = resetTimer;
+window.onkeypress = resetTimer;
+window.onscroll = resetTimer;
+window.onclick = resetTimer;
+
+// Warn before closing if admin is logged in
+window.onbeforeunload = function () {
+    if (document.querySelector('meta[name="user-role"]')?.content === "admin") {
+        return "You have unsaved changes. Are you sure you want to leave?";
+    }
+};
 
 // Router event handlers
 router.on("finish", (event) => {
@@ -101,6 +135,57 @@ createInertiaApp({
 
             const formatted = percent.toFixed(2);
             return `${percent > 0 ? "+" : ""}${formatted}%`;
+        };
+
+        app.config.globalProperties.$formatYway = (kyatTharPrice) => {
+            if (!kyatTharPrice) return "0";
+            const price = parseFloat(kyatTharPrice) / 128;
+            return new Intl.NumberFormat("en-US", {
+                maximumFractionDigits: 0,
+            }).format(price);
+        };
+
+        app.config.globalProperties.$formatLiveTime = (value) => {
+            if (!value) return "—";
+
+            // Convert "2026-03-31 08:10:27" to "2026-03-31T08:10:27"
+            // This ensures Javascript sees it as a valid date object
+            const dateString =
+                typeof value === "string" ? value.replace(/\s+/g, "T") : value;
+            const date = new Date(dateString);
+
+            if (isNaN(date.getTime())) return "Invalid Date";
+
+            return date.toLocaleTimeString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true,
+            });
+        };
+
+        app.config.globalProperties.$calculateGoldPremium = (
+            localMmk,
+            worldUsd,
+            usdMmkRate,
+        ) => {
+            if (!localMmk || !worldUsd || !usdMmkRate) return 0;
+
+            // 1.875 is the conversion factor for 1 Troy Oz to 1 Myanmar Kyat Thar (Traditional)
+            const worldInMmk =
+                (parseFloat(worldUsd) / 1.875) * parseFloat(usdMmkRate);
+            const diff = parseFloat(localMmk) - worldInMmk;
+
+            return (diff / worldInMmk) * 100;
+        };
+
+        app.config.globalProperties.$calculateUsdPrice = (
+            mmkPrice,
+            usdMmkRate,
+        ) => {
+            if (!mmkPrice || !usdMmkRate || parseFloat(usdMmkRate) === 0)
+                return 0;
+            return parseFloat(mmkPrice) / parseFloat(usdMmkRate);
         };
 
         // --- New: Trend Direction Finder ---
@@ -264,11 +349,11 @@ createInertiaApp({
             });
         };
 
-        app.config.globalProperties.$formatDecimal = (value) => {
+        app.config.globalProperties.$formatDecimal = (value, decimals = 2) => {
             if (!value && value !== 0) return "0.00";
             return new Intl.NumberFormat("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals,
             }).format(value);
         };
 

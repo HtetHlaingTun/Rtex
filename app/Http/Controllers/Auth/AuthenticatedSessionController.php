@@ -31,11 +31,27 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        // Regenerate session
         $request->session()->regenerate();
 
-        return redirect()->intended(route('gold.index', absolute: false));
-    }
+        $user = Auth::user();
 
+        // Set last activity
+        session(['last_activity' => time()]);
+
+        // Role-based session config
+        if ($user->is_admin) {
+            config(['session.lifetime' => 60]);
+            session(['is_admin' => true]);
+
+            return redirect()->route('currencies.index');
+        } else {
+            config(['session.lifetime' => 120]);
+            session(['is_admin' => false]);
+
+            return redirect()->route('welcome');
+        }
+    }
     /**
      * Destroy an authenticated session.
      */
