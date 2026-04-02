@@ -29,10 +29,7 @@ const submit = () => {
             <div class="pt-[80px] pb-20 flex flex-col justify-between max-w-lg mx-auto px-6">
 
                 <div class="text-center mb-10">
-                    <div
-                        class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-orange-50 dark:bg-orange-500/10 mb-4 transition-colors duration-500">
-                        <img src="/favicon.ico" class="h-10 w-10 transform hover:rotate-12 transition-transform">
-                    </div>
+
                     <h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white transition-colors">
                         Join <span class="text-orange-600">RTEx</span>
                     </h1>
