@@ -99,10 +99,11 @@
             </div>
         </aside>
 
-        <!-- Mobile Header -->
+        <!-- Main Content Area with Fixed Header -->
         <div class="lg:pl-64">
+            <!-- Fixed Header -->
             <header
-                class="sticky top-0 z-20 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-slate-200 dark:border-zinc-800">
+                class="fixed top-0 right-0 left-0 lg:left-64 z-20 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-slate-200 dark:border-zinc-800">
                 <div class="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 gap-2">
                     <!-- Left section: Menu button + Breadcrumbs -->
                     <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
@@ -119,8 +120,24 @@
                         </div>
                     </div>
 
-                    <!-- Right section: Icons + Add Asset -->
+                    <!-- Right section: Icons + Add Asset + Dark Mode Toggle -->
                     <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                        <!-- Dark Mode Toggle Button -->
+                        <button @click="toggleDarkMode"
+                            class="p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition"
+                            :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+                            <svg v-if="isDarkMode" class="w-4 h-4 sm:w-5 sm:h-5 text-slate-500" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                            <svg v-else class="w-4 h-4 sm:w-5 sm:h-5 text-slate-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                            </svg>
+                        </button>
+
                         <button @click="refreshData"
                             class="p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800">
                             <svg class="w-4 h-4 sm:w-5 sm:h-5 text-slate-500" :class="{ 'animate-spin': refreshing }"
@@ -156,8 +173,11 @@
                 </div>
             </header>
 
+            <!-- Spacer to offset fixed header -->
+            <div class="h-[57px] sm:h-[65px] lg:h-[73px]"></div>
+
             <!-- Main Content -->
-            <main class="p-3 sm:p-4 md:p-6">
+            <main class="p-3 sm:p-4 md:p-6 xs:mt-[40px]">
                 <div v-if="$slots.header" class="mb-6">
                     <slot name="header" />
                 </div>
@@ -171,11 +191,43 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
 
-
 const page = usePage()
 const user = computed(() => page.props.auth.user)
 const sidebarOpen = ref(false)
 const refreshing = ref(false)
+
+// Dark Mode State
+const isDarkMode = ref(false)
+
+// Initialize dark mode from localStorage or system preference
+const initDarkMode = () => {
+    const savedMode = localStorage.getItem('darkMode')
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+
+    if (savedMode !== null) {
+        isDarkMode.value = savedMode === 'true'
+    } else {
+        isDarkMode.value = systemPrefersDark
+    }
+
+    applyDarkMode()
+}
+
+// Apply dark mode to document
+const applyDarkMode = () => {
+    if (isDarkMode.value) {
+        document.documentElement.classList.add('dark')
+    } else {
+        document.documentElement.classList.remove('dark')
+    }
+}
+
+// Toggle dark mode
+const toggleDarkMode = () => {
+    isDarkMode.value = !isDarkMode.value
+    localStorage.setItem('darkMode', isDarkMode.value)
+    applyDarkMode()
+}
 
 // Local reactive state for notifications
 const localNotifications = ref([])
@@ -313,6 +365,9 @@ const startPolling = () => {
 }
 
 onMounted(() => {
+    // Initialize dark mode
+    initDarkMode()
+
     if (Notification.permission === 'default') {
         Notification.requestPermission()
     }
@@ -357,5 +412,10 @@ onUnmounted(() => {
     main {
         padding: 0.75rem;
     }
+}
+
+/* Dark mode transition */
+* {
+    transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 </style>

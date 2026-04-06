@@ -37,39 +37,35 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // 1. Create the user
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-
+            'role' => 'viewer', // 👈 IMPORTANT: Assign a default role upon registration
+            'is_active' => true,
         ]);
 
         event(new Registered($user));
 
-        // 2. Log them in
         Auth::login($user);
 
-        // 3. Sync Session Logic with LoginController
         $request->session()->regenerate();
-        session(['last_activity' => time()]);
 
-        // 4. Mirror the Redirect Logic from your Login store method
-        if ($user->is_viewer) {
-            config(['session.lifetime' => 120]);
-            session(['is_admin' => false]);
-            return redirect()->route('user.dashboard');
-        }
-
+        // 1. Check Admin (Uses your getIsAdminAttribute logic)
         if ($user->is_admin) {
-            config(['session.lifetime' => 60]);
             session(['is_admin' => true]);
             return redirect()->route('currencies.index');
         }
 
-        // Default for standard users
-        config(['session.lifetime' => 120]);
+        // 2. Default session for non-admins
         session(['is_admin' => false]);
+
+        // 3. Check Viewer (Uses your getIsViewerAttribute logic)
+        if ($user->is_viewer) {
+            return redirect()->route('user.dashboard');
+        }
+
+        // 4. Fallback
         return redirect()->route('welcome');
     }
 }

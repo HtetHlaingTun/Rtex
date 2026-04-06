@@ -3,7 +3,7 @@
         <template #header>
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-black text-slate-900">Price Alerts</h1>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Price Alerts</h1>
                     <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
                         Get notified when currency rates reach your target levels
                     </p>
@@ -38,7 +38,7 @@
             <div class="bg-white dark:bg-zinc-900 rounded-xl p-3 sm:p-4 border border-slate-200 dark:border-zinc-800">
                 <p class="text-[10px] sm:text-xs text-slate-400 uppercase tracking-wide">Currencies</p>
                 <p class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">{{ uniqueCurrenciesCount
-                }}</p>
+                    }}</p>
                 <p class="text-[8px] sm:text-[10px] text-slate-400 mt-1">watched</p>
             </div>
         </div>
@@ -108,11 +108,11 @@
                                     {{ alert.type === 'above' ? '↑ Above' : '↓ Below' }}
                                 </span>
                             </td>
-                            <td class="px-3 sm:px-4 py-2 sm:py-3 text-right">
+                            <td class="px-3 sm:px-4 py-2 sm:py-3 text-right dark:text-white">
                                 <p class="font-mono font-bold text-[11px] sm:text-sm">{{ formatNumber(alert.target_rate)
-                                }}</p>
+                                    }}</p>
                             </td>
-                            <td class="px-3 sm:px-4 py-2 sm:py-3 text-right">
+                            <td class="px-3 sm:px-4 py-2 sm:py-3 text-right ">
                                 <p class="font-mono text-[11px] sm:text-sm" :class="getRateStatusClass(alert)">
                                     {{ formatNumber(currentRates[alert.currency_id]?.mid_rate) }}
                                 </p>

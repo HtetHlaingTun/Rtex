@@ -3,7 +3,7 @@
         <template #header>
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-black text-slate-900">My Watchlist</h1>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">My Watchlist</h1>
                     <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
                         Track your favorite currencies and get real-time updates
                     </p>
@@ -97,15 +97,15 @@
                                 </div>
                             </td>
                             <td class="px-3 sm:px-4 py-2 sm:py-3 text-right">
-                                <p class="font-mono font-bold text-[11px] sm:text-sm">{{
+                                <p class="font-mono font-bold text-[11px] sm:text-sm dark:text-white">{{
                                     formatNumber(currentRates[item.currency_id]?.buy_rate) }}</p>
                             </td>
                             <td class="px-3 sm:px-4 py-2 sm:py-3 text-right">
-                                <p class="font-mono font-bold text-[11px] sm:text-sm">{{
+                                <p class="font-mono font-bold text-[11px] sm:text-sm dark:text-white">{{
                                     formatNumber(currentRates[item.currency_id]?.sell_rate) }}</p>
                             </td>
                             <td class="px-3 sm:px-4 py-2 sm:py-3 text-right">
-                                <p class="font-mono font-bold text-[11px] sm:text-sm">{{
+                                <p class="font-mono font-bold text-[11px] sm:text-sm dark:text-white">{{
                                     formatNumber(currentRates[item.currency_id]?.mid_rate) }}</p>
                             </td>
                             <td class="px-3 sm:px-4 py-2 sm:py-3 text-center">
@@ -226,19 +226,19 @@
                 </div>
 
                 <div class="p-4 sm:p-5">
-                    <p class="text-sm text-slate-600 mb-4">
+                    <p class="text-sm text-slate-600 mb-4 dark:text-white">
                         Set alert for <span class="font-bold">{{ selectedCurrency?.code }} - {{ selectedCurrency?.name
                             }}</span>
                     </p>
 
                     <div class="mb-4">
-                        <label class="block text-sm font-bold mb-2">Condition</label>
+                        <label class="block text-sm font-bold mb-2 dark:text-white">Condition</label>
                         <div class="flex gap-4">
-                            <label class="flex items-center gap-2">
+                            <label class="flex items-center gap-2 dark:text-white">
                                 <input type="radio" v-model="alertCondition" value="above" class="rounded">
                                 <span class="text-sm">↑ Above</span>
                             </label>
-                            <label class="flex items-center gap-2">
+                            <label class="flex items-center gap-2 dark:text-white">
                                 <input type="radio" v-model="alertCondition" value="below" class="rounded">
                                 <span class="text-sm">↓ Below</span>
                             </label>
@@ -246,7 +246,7 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="block text-sm font-bold mb-2">Threshold Value (MMK)</label>
+                        <label class="block text-sm font-bold mb-2 dark:text-white">Threshold Value (MMK)</label>
                         <input type="number" v-model="alertThreshold" step="0.01"
                             class="w-full px-3 sm:px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm"
                             :placeholder="editingAlertId ? 'Update threshold rate' : 'Enter threshold rate'">

@@ -22,9 +22,11 @@ const hasLiveStatus = computed(() =>
 
 <template>
     <nav class="flex py-3 text-gray-700  " aria-label="Breadcrumb">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex items-center text-sm font-medium">
+        <div
+            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex items-center text-sm font-medium dark:bg-zinc-900/95 dark:border-zinc-800 dark:text-white">
 
-            <Link :href="route('user.dashboard')" class="text-gray-400 hover:text-slate-900 transition flex-shrink-0">
+            <Link :href="route('user.dashboard')"
+                class="text-gray-400 hover:text-slate-900 transition flex-shrink-0 dark:bg-zinc-900/95 dark:border-zinc-800 dark:text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -32,7 +34,7 @@ const hasLiveStatus = computed(() =>
                 </svg>
             </Link>
 
-            <div v-for="(item, index) in breadcrumbLinks" :key="index" class="flex items-center">
+            <div v-for="(item, index) in breadcrumbLinks" :key="index" class="flex items-center ">
                 <svg class="h-5 w-5 text-gray-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd"
                         d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
@@ -40,10 +42,11 @@ const hasLiveStatus = computed(() =>
                 </svg>
 
                 <Link v-if="item.href" :href="item.href"
-                    class="ml-2 text-gray-400 hover:text-slate-900 uppercase tracking-widest text-[10px] font-black transition-colors">
+                    class="ml-2 text-gray-400 hover:text-slate-900 uppercase tracking-widest text-[10px] font-black transition-colors dark:bg-zinc-900/95 dark:border-zinc-800 dark:text-white">
                     {{ item.label }}
                 </Link>
-                <span v-else class="ml-2 text-slate-900 font-black uppercase tracking-widest text-[10px]">
+                <span v-else
+                    class="ml-2 text-slate-900 font-black uppercase tracking-widest text-[10px] dark:bg-zinc-900/95 dark:border-zinc-800 dark:text-white">
                     {{ item.label }}
                 </span>
             </div>
