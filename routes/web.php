@@ -5,7 +5,11 @@ use App\Http\Controllers\GoldPriceController;
 use App\Http\Controllers\GoldTypeController;
 use App\Http\Controllers\ProfileController;
 use App\Services\BankAggregatorService;
-
+use App\Http\Controllers\User\DashboardController;
+use App\Http\Controllers\User\UserAssetController;
+use App\Http\Controllers\User\WatchlistController;
+use App\Http\Controllers\User\AlertController;
+use App\Http\Controllers\User\NotificationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Symfony\Component\DomCrawler\Crawler;
@@ -16,11 +20,38 @@ use Symfony\Component\DomCrawler\Crawler;
 require base_path('routes/guest.php');
 
 // ============================================
-// AUTHENTICATED USER ROUTES
+// AUTHENTICATED USER ROUTES (Breeze/Inertia)
 // ============================================
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+// ============================================
+// USER ASSET ROUTES (for logged-in users)
+// ============================================
+Route::middleware(['auth', 'verified'])->prefix('user')->name('user.')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::resource('assets', UserAssetController::class);
+    Route::get('/watchlist', [WatchlistController::class, 'index'])->name('watchlist.index');
+    Route::post('/watchlist', [WatchlistController::class, 'store'])->name('watchlist.store');
+    Route::delete('/watchlist/{watchlist}', [WatchlistController::class, 'destroy'])->name('watchlist.destroy');
+    Route::post('/watchlist/bulk-destroy', [WatchlistController::class, 'bulkDestroy'])->name('watchlist.bulk-destroy');
+
+    // Alert routes
+    Route::get('/alerts', [AlertController::class, 'index'])->name('alerts.index');
+    Route::post('/alerts', [AlertController::class, 'store'])->name('alerts.store');
+    Route::put('/alerts/{alert}', [AlertController::class, 'update'])->name('alerts.update');
+    Route::patch('/alerts/{alert}/toggle', [AlertController::class, 'toggle'])->name('alerts.toggle');
+    Route::delete('/alerts/{alert}', [AlertController::class, 'destroy'])->name('alerts.destroy');
+    Route::post('/alerts/bulk-destroy', [AlertController::class, 'bulkDestroy'])->name('alerts.bulk-destroy');
+
+    // Notification routes
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/{notification}/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::delete('/notifications/clear-all', [NotificationController::class, 'clearAll'])->name('notifications.clear-all');
+});
 
 // ============================================
 // ADMIN ROUTES (with auth + admin middleware)
@@ -61,12 +92,8 @@ Route::middleware(['auth', 'verified', 'is_admin', 'session.timeout'])->group(fu
 
     // Gold History API (Admin only)
     Route::get('/api/gold-history', [GoldPriceController::class, 'getGoldHistory'])->name('api.gold-history');
-});
 
-// ============================================
-// PROFILE ROUTES
-// ============================================
-Route::middleware(['auth', 'is_admin', 'session.timeout'])->group(function () {
+    // Profile routes (admin)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -130,14 +157,19 @@ if (app()->environment('local')) {
 }
 
 // ============================================
+// AUTHENTICATION ROUTES - ONLY ONE!
+// ============================================
+// IMPORTANT: Use ONLY ONE of these:
+
+// OPTION A: For Laravel UI (Bootstrap) - Remove this if using Breeze
+// require __DIR__ . '/auth.php';
+
+// OPTION B: For Laravel Breeze (Inertia) - This is what you should use with Vue
+require __DIR__ . '/auth.php';
+
+// ============================================
 // FALLBACK ROUTE
 // ============================================
 Route::fallback(function () {
     return redirect('/');
 });
-
-// ============================================
-// AUTHENTICATION ROUTES (Laravel UI)
-// ============================================
-require __DIR__ . '/auth.php';
-require __DIR__ . '/user.php';
