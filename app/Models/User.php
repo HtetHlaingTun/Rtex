@@ -3,10 +3,13 @@
 
 namespace App\Models;
 
-use Illuminate\Http\Request;
+use App\Models\Alert;
+use App\Models\Notification;
+use App\Models\Watchlist;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Http\Request;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -43,7 +46,9 @@ class User extends Authenticatable
         'entries_created_count',
         'entries_verified_count',
         'created_by',
-        'updated_by'
+        'updated_by',
+
+
     ];
 
     /**
@@ -166,6 +171,12 @@ class User extends Authenticatable
         return in_array($this->role, ['super_admin', 'admin']);
     }
 
+    public function getIsViewerAttribute(): bool
+    {
+        return in_array($this->role, ['viewer']);
+    }
+
+
     public function getCanEditAttribute(): bool
     {
         return in_array($this->role, ['super_admin', 'admin', 'editor']);
@@ -285,5 +296,26 @@ class User extends Authenticatable
     public function scopeRecentlyActive($query, $days = 7)
     {
         return $query->where('last_login_at', '>=', now()->subDays($days));
+    }
+
+    // Relatinon 
+    public function assets()
+    {
+        return $this->hasMany(UserAsset::class);
+    }
+
+    public function watchlist()
+    {
+        return $this->hasMany(Watchlist::class);
+    }
+
+    public function alerts()
+    {
+        return $this->hasMany(Alert::class);
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
     }
 }

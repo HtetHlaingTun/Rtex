@@ -140,3 +140,4 @@ Route::fallback(function () {
 // AUTHENTICATION ROUTES (Laravel UI)
 // ============================================
 require __DIR__ . '/auth.php';
+require __DIR__ . '/user.php';

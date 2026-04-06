@@ -39,6 +39,12 @@ class AuthenticatedSessionController extends Controller
         // Set last activity
         session(['last_activity' => time()]);
 
+        if ($user->is_viewer) {
+            config(['session.lifetime' => 120]);
+            session(['is_admin' => false]);
+            return redirect()->route('user.dashboard');
+        }
+
         // Role-based session config
         if ($user->is_admin) {
             config(['session.lifetime' => 60]);

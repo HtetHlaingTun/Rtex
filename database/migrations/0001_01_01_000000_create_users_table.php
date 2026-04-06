@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('password');
 
             // Role & Permissions
-            $table->enum('role', ['super_admin', 'admin', 'editor', 'viewer'])->default('viewer');
+            $table->enum('role', ['super_admin', 'admin', 'editor', 'viewer',])->default('viewer');
             $table->json('permissions')->nullable(); // For fine-grained permissions
 
             // Profile Information

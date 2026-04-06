@@ -31,7 +31,7 @@ const submit = () => {
                 <div class="text-center mb-10">
 
                     <h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white transition-colors">
-                        Join <span class="text-orange-600">RTEx</span>
+                        Join <span class="text-orange-600">MMRatePro</span>
                     </h1>
                     <p class="text-sm text-slate-500 dark:text-zinc-400 mt-2">Start monitoring gold markets and currency
                         rates</p>

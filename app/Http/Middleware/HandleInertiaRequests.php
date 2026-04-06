@@ -3,8 +3,10 @@
 namespace App\Http\Middleware;
 
 use App\Models\ExchangeRate;
-
+use App\Models\Notification;
+use App\Models\Watchlist;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -71,7 +73,30 @@ class HandleInertiaRequests extends Middleware
                 return $crumbs;
             },
             'lastSync' => now()->toIso8601String(),
-            'syncStatus' => 'success'
+            'syncStatus' => 'success',
+            // Notifications for the bell icon
+            'notifications' => function () {
+                if (Auth::check()) {
+                    return [
+                        'items' => Notification::where('user_id', Auth::id())
+                            ->latest()
+                            ->take(10)
+                            ->get(),
+                        'unread_count' => Notification::where('user_id', Auth::id())
+                            ->where('is_read', false)
+                            ->count(),
+                    ];
+                }
+                return ['items' => [], 'unread_count' => 0];
+            },
+            // Watchlist count for the bell icon
+            'watchlistCount' => function () {
+                if (Auth::check()) {
+                    return Watchlist::where('user_id', Auth::id())->count();
+                }
+                return 0;
+            },
+
         ];
     }
 

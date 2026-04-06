@@ -101,13 +101,13 @@ const submit = () => {
                         </PrimaryButton>
                     </div>
 
-                    <!-- <p class="text-center text-sm text-slate-400 dark:text-zinc-500 mt-10">
-                        New to RTEx?
+                    <p class="text-center text-sm text-slate-400 dark:text-zinc-500 mt-10">
+                        New to MMRatePro?
                         <Link :href="route('register')"
                             class="font-monok text-slate-900 dark:text-white underline decoration-orange-500/30 hover:decoration-orange-600 transition-all decoration-2 underline-offset-4">
                             Create Account
                         </Link>
-                    </p> -->
+                    </p>
                 </form>
             </div>
         </main>

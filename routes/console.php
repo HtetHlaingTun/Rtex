@@ -25,7 +25,7 @@ Schedule::command('gold:save-hourly')
     ->appendOutputTo(storage_path('logs/gold_sync.log'));
 
 Schedule::command('gold:consolidate-daily --days-to-keep=1')
-    ->everySixHours()
+    ->dailyAt('00:05')
 
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/gold-consolidation.log'));
@@ -45,7 +45,6 @@ Schedule::command('gold:consolidate-daily --permanent-years=2 --stats')
 
 Schedule::command('banks:sync-rates')
     ->everyThirtyMinutes()
-    ->between('6:00', '22:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/banks-sync.log'));
 
@@ -69,7 +68,7 @@ Schedule::command('cbm:test --clear-cache')
 
 // --- Cleanup & Maintenance ---
 Schedule::command('exchange:consolidate-rates --days-to-keep=1')
-    ->everySixHours()
+    ->dailyAt('00:05')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/exchange-consolidation.log'));
 
@@ -79,3 +78,14 @@ Schedule::command('exchange:consolidate-rates --permanent-years=2 --stats')
     ->monthly()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/gold-consolidation-monthly.log'));
+
+// alert notification
+Schedule::command('watch:alerts-check')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/alerts-check.log'));
+
+Schedule::command('watch:alerts-check --cleanup')
+    ->dailyAt('00:05')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/alerts-check-cleanup.log'));

@@ -23,6 +23,8 @@ import PublicBreadcrumb from "./Components/UI/PublicBreadcrumb.vue";
 import UserGoldChart from "./Components/Charts/UserGoldChart.vue";
 import MobileBottomNav from "./Components/UI/MobileBottomNav.vue";
 import RateHistoryChart from "./Components/Charts/Rate/RateHistoryChart.vue";
+import UserBreadcrumbs from "./Components/Layouts/UserBreadcrumbs.vue";
+import NotificationsBell from "./Components/NotificationsBell.vue";
 
 window.Chart = Chart;
 let logoutTimer;
@@ -82,16 +84,16 @@ router.on("invalid", (event) => {
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
-    // resolve: (name) =>
-    //     resolvePageComponent(
-    //         `./Pages/${name}.vue`,
-    //         import.meta.glob("./Pages/**/*.vue"),
-    //     ),
-    resolve: async (name) => {
-        const pages = import.meta.glob("./Pages/**/*.vue");
-        const page = await pages[`./Pages/${name}.vue`]();
-        return page.default;
-    },
+    resolve: (name) =>
+        resolvePageComponent(
+            `./Pages/${name}.vue`,
+            import.meta.glob("./Pages/**/*.vue"),
+        ),
+    // resolve: async (name) => {
+    //     const pages = import.meta.glob("./Pages/**/*.vue");
+    //     const page = await pages[`./Pages/${name}.vue`]();
+    //     return page.default;
+    // },
     setup({ el, App, props, plugin }) {
         const app = createApp({ render: () => h(App, props) })
             .use(plugin)
@@ -113,6 +115,8 @@ createInertiaApp({
             .component("UserGoldChart", UserGoldChart)
             .component("MobileBottomNav", MobileBottomNav)
             .component("RateHistoryChart", RateHistoryChart)
+            .component("UserBreadcrumbs", UserBreadcrumbs)
+            .component("NotificationsBell", NotificationsBell)
 
             .component("PublicBreadcrumb", PublicBreadcrumb)
             .component("Paginations", Paginations);

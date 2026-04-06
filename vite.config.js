@@ -10,4 +10,10 @@ export default defineConfig({
         }),
         vue(),
     ],
+    build: {
+        rollupOptions: {
+            // Externalize favicon to prevent build error
+            external: ["/favicon.ico"],
+        },
+    },
 });
