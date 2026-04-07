@@ -35,35 +35,35 @@
             <div class="py-3 w-full">
                 <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 w-full box-border">
                     <main class="w-full">
+                        <GoogleAnalytics />
                         <slot />
                     </main>
                 </div>
             </div>
         </div>
 
-        <footer
-            class="hidden sm:block relative z-10 border-t border-slate-200 dark:border-zinc-800 py-8 mt-12 bg-white/30 dark:bg-transparent backdrop-blur-sm">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div class="flex items-center gap-6">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                            MMRatePro • Real-Time Currency Exchange Rates
-                        </p>
-                        <div class="flex gap-4">
-                            <a href="#" class="text-[10px] text-slate-400 hover:text-orange-500 transition">About</a>
-                            <a href="#" class="text-[10px] text-slate-400 hover:text-orange-500 transition">Privacy</a>
-                            <a href="#" class="text-[10px] text-slate-400 hover:text-orange-500 transition">Terms</a>
-                        </div>
+        <footer class="bg-gray-800 text-white py-8 mt-12">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">MMRatePro Currency</h3>
+                        <p class="text-gray-400">Real-time exchange rates for Myanmar</p>
                     </div>
-
-                    <div class="flex items-center gap-2">
-                        <span class="relative flex h-2 w-2">
-                            <span
-                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                        </span>
-                        <p class="text-[10px] text-slate-400 font-medium">Systems Operational</p>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                        <ul class="space-y-2 text-gray-400">
+                            <li><a href="/privacy" class="hover:text-white">Privacy Policy</a></li>
+                            <li><a href="/contact" class="hover:text-white">Contact Us</a></li>
+                            <li><a href="/terms" class="hover:text-white">Terms of Service</a></li>
+                        </ul>
                     </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Contact</h3>
+                        <p class="text-gray-400">Email: support@luckeymm.online</p>
+                    </div>
+                </div>
+                <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                    <p>&copy; {{ new Date().getFullYear() }} MMRatePro Currency. All rights reserved.</p>
                 </div>
             </div>
         </footer>
@@ -75,6 +75,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
 import { useDarkMode } from '@/Composables/useDarkMode';
+
 
 
 const { isDark, toggleDark } = useDarkMode()

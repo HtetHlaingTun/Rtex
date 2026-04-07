@@ -1,0 +1,10 @@
+{
+    "appId": "com.MMRatePro.app",
+    "appName": "MMRatePro",
+    "webDir": "public",
+    "bundledWebRuntime": false,
+    "server": {
+        "url": "https://luckeymm.online",
+        "cleartext": true
+    }
+}

@@ -179,11 +179,14 @@
             <!-- Main Content -->
             <main class="p-3 sm:p-4 md:p-6 mt-[50px] sm:mt-[10px]">
                 <div v-if="$slots.header" class="mb-6">
+                    <GoogleAnalytics />
                     <slot name="header" />
                 </div>
                 <slot />
             </main>
         </div>
+
+
     </div>
 </template>
 

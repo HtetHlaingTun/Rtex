@@ -25,6 +25,7 @@ import MobileBottomNav from "./Components/UI/MobileBottomNav.vue";
 import RateHistoryChart from "./Components/Charts/Rate/RateHistoryChart.vue";
 import UserBreadcrumbs from "./Components/Layouts/UserBreadcrumbs.vue";
 import NotificationsBell from "./Components/NotificationsBell.vue";
+import GoogleAnalytics from "./Components/GoogleAnalytics.vue";
 
 window.Chart = Chart;
 let logoutTimer;
@@ -32,22 +33,19 @@ const appName = import.meta.env.VITE_APP_NAME;
 
 function resetTimer() {
     clearTimeout(logoutTimer);
-    logoutTimer = setTimeout(
-        () => {
-            // Check if user is still active
-            fetch("/check-session", {
-                method: "GET",
-                headers: {
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-            }).then((response) => {
-                if (response.status === 401) {
-                    window.location.href = "/login";
-                }
-            });
-        },
-        55 * 60 * 1000,
-    ); // Check every 55 minutes
+    logoutTimer = setTimeout(() => {
+        // Check if user is still active
+        fetch("/check-session", {
+            method: "GET",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        }).then((response) => {
+            if (response.status === 401) {
+                window.location.href = "/login";
+            }
+        });
+    }, 55 * 60 * 1000); // Check every 55 minutes
 }
 
 // Reset timer on user activity
@@ -87,7 +85,7 @@ createInertiaApp({
     resolve: (name) =>
         resolvePageComponent(
             `./Pages/${name}.vue`,
-            import.meta.glob("./Pages/**/*.vue"),
+            import.meta.glob("./Pages/**/*.vue")
         ),
     // resolve: async (name) => {
     //     const pages = import.meta.glob("./Pages/**/*.vue");
@@ -117,6 +115,7 @@ createInertiaApp({
             .component("RateHistoryChart", RateHistoryChart)
             .component("UserBreadcrumbs", UserBreadcrumbs)
             .component("NotificationsBell", NotificationsBell)
+            .component("GoogleAnalytics", GoogleAnalytics)
 
             .component("PublicBreadcrumb", PublicBreadcrumb)
             .component("Paginations", Paginations);
@@ -128,7 +127,7 @@ createInertiaApp({
         // --- Currency & Money Formatting ---
         app.config.globalProperties.$calculateDailyChange = (
             current,
-            previous,
+            previous
         ) => {
             if (!previous || !previous.sell_rate || previous.sell_rate == 0)
                 return "0.00%";
@@ -171,7 +170,7 @@ createInertiaApp({
         app.config.globalProperties.$calculateGoldPremium = (
             localMmk,
             worldUsd,
-            usdMmkRate,
+            usdMmkRate
         ) => {
             if (!localMmk || !worldUsd || !usdMmkRate) return 0;
 
@@ -185,7 +184,7 @@ createInertiaApp({
 
         app.config.globalProperties.$calculateUsdPrice = (
             mmkPrice,
-            usdMmkRate,
+            usdMmkRate
         ) => {
             if (!mmkPrice || !usdMmkRate || parseFloat(usdMmkRate) === 0)
                 return 0;
@@ -195,7 +194,7 @@ createInertiaApp({
         // --- New: Trend Direction Finder ---
         app.config.globalProperties.$getTrendDirection = (
             current,
-            previous,
+            previous
         ) => {
             if (!previous) return "neutral";
             const curr = parseFloat(current.sell_rate);
@@ -232,10 +231,12 @@ createInertiaApp({
 
         app.config.globalProperties.$formatCurrency = (
             value,
-            symbol = "MMK",
+            symbol = "MMK"
         ) => {
             if (!value && value !== 0) return "-";
-            return `${app.config.globalProperties.$formatMoney(value)} ${symbol}`;
+            return `${app.config.globalProperties.$formatMoney(
+                value
+            )} ${symbol}`;
         };
 
         // --- Factor Formatting (6 decimal places) ---
@@ -277,8 +278,8 @@ createInertiaApp({
                 percentage > 0
                     ? "text-green-600"
                     : percentage < 0
-                      ? "text-red-600"
-                      : "text-slate-400";
+                    ? "text-red-600"
+                    : "text-slate-400";
             const icon = percentage > 0 ? "▲" : percentage < 0 ? "▼" : null;
 
             return { text, class: class_name, icon };

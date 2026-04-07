@@ -14,6 +14,41 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Symfony\Component\DomCrawler\Crawler;
 
+
+
+
+
+
+
+// Public pages
+Route::get('/privacy', function () {
+    return Inertia::render('Privacy');
+})->name('privacy');
+
+Route::get('/contact', function () {
+    return Inertia::render('Contact');
+})->name('contact');
+
+Route::post('/contact', function (\Illuminate\Http\Request $request) {
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email',
+        'subject' => 'required|string|max:255',
+        'message' => 'required|string',
+    ]);
+
+    // Send email or store in database
+    \Illuminate\Support\Facades\Mail::raw(
+        "From: {$validated['name']} ({$validated['email']})\n\n{$validated['message']}",
+        function ($message) {
+            $message->to('support@luckeymm.online')
+                ->subject('Contact Form: ' . request('subject'));
+        }
+    );
+
+    return back()->with('success', 'Message sent successfully!');
+})->name('contact.store');
+
 // ============================================
 // INCLUDE PUBLIC ROUTES
 // ============================================
