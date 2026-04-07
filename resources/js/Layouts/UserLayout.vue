@@ -177,7 +177,7 @@
             <div class="h-[57px] sm:h-[65px] lg:h-[73px]"></div>
 
             <!-- Main Content -->
-            <main class="p-3 sm:p-4 md:p-6 xs:mt-[40px]">
+            <main class="p-3 sm:p-4 md:p-6 mt-[50px] sm:mt-[10px]">
                 <div v-if="$slots.header" class="mb-6">
                     <slot name="header" />
                 </div>

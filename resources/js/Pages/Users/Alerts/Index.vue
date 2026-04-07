@@ -50,7 +50,7 @@
                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
-                + New Alert
+                New Alert
             </button>
         </div>
 
@@ -201,7 +201,7 @@
                 </div>
                 <div class="p-4 sm:p-5">
                     <div class="mb-4">
-                        <label class="block text-sm font-bold mb-2">Currency</label>
+                        <label class="block text-sm font-bold mb-2 dark:text-white">Currency</label>
                         <select v-model="form.currency_id" :disabled="!!editingAlert"
                             class="w-full px-3 sm:px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm">
                             <option value="">Select a currency</option>
@@ -212,13 +212,13 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="block text-sm font-bold mb-2">Condition</label>
+                        <label class="block text-sm font-bold mb-2 dark:text-white">Condition</label>
                         <div class="flex gap-4">
-                            <label class="flex items-center gap-2">
-                                <input type="radio" v-model="form.type" value="above" class="rounded">
+                            <label class="flex items-center gap-2 dark:text-white">
+                                <input type="radio" v-model="form.type" value="above" class="rounded ">
                                 <span class="text-sm">↑ Above</span>
                             </label>
-                            <label class="flex items-center gap-2">
+                            <label class="flex items-center gap-2 dark:text-white">
                                 <input type="radio" v-model="form.type" value="below" class="rounded">
                                 <span class="text-sm">↓ Below</span>
                             </label>
@@ -226,7 +226,7 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="block text-sm font-bold mb-2">Target Rate (MMK)</label>
+                        <label class="block text-sm font-bold mb-2 dark:text-white">Target Rate (MMK)</label>
                         <input type="number" v-model="form.target_rate" step="0.01"
                             class="w-full px-3 sm:px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 text-sm"
                             placeholder="Enter target rate">

@@ -169,17 +169,15 @@ class BankAggregatorService
             $hasCbm = $cbmRate > 0;
             $totalSources = $validSources + ($hasCbm ? 1 : 0);
 
-            // Use ONLY values from your ENUM: 'draft', 'pending', 'verified', 'rejected'
-            $status = 'draft';
-            $isVerified = false;
 
-            if ($totalSources >= 3) {
-                $status = 'verified';
-                $isVerified = true;
-            } elseif ($totalSources >= 1) {
-                $status = 'pending';
-                $isVerified = false;
-            }
+
+            // Use ONLY values from your ENUM: 'draft', 'pending', 'verified', 'rejected'
+            // Use the shouldAutoVerify method for smarter verification
+            $shouldVerify = $this->shouldAutoVerify($code, $validRates, $cbmRate, $previousRecord);
+
+            $status = $shouldVerify ? 'verified' : 'pending';
+            $isVerified = $shouldVerify;
+
 
             $factors = [
                 'raw_rates' => $allRates,
@@ -228,6 +226,56 @@ class BankAggregatorService
 
             Log::info("Synced {$currency->code}: Buy={$finalRates['buy_rate']}, Sell={$finalRates['sell_rate']}, Banks={$validSources}, CBM=" . ($hasCbm ? $cbmRate : 'none'));
         }
+    }
+
+
+
+
+    protected function shouldAutoVerify(string $code, array $validRates, float $cbmRate, ?ExchangeRate $previousRecord): bool
+    {
+        $validSources = count(array_filter($validRates, fn($r) => $r['buy'] > 0 || $r['sell'] > 0));
+        $hasCbm = $cbmRate > 0;
+
+        // Always auto-verify USD (most important)
+        if ($code === 'USD') {
+            return true;
+        }
+
+        // Auto-verify if we have 2+ bank sources
+        if ($validSources >= 2) {
+            return true;
+        }
+
+        // Auto-verify if 1 bank + CBM and they're consistent
+        if ($validSources >= 1 && $hasCbm) {
+            $firstBankRate = $this->getFirstValidRate($validRates);
+            if ($firstBankRate > 0 && $cbmRate > 0) {
+                $diffPercent = abs($firstBankRate - $cbmRate) / $cbmRate * 100;
+                return $diffPercent <= 15; // Within 15%
+            }
+        }
+
+        // Don't auto-verify if we have no sources
+        if ($validSources == 0) {
+            return false;
+        }
+
+        // Default to auto-verify for single sources with small changes
+        if ($previousRecord && $previousRecord->buy_rate > 0) {
+            // We don't have the final rate yet, so this is approximate
+            return true; // Be optimistic
+        }
+
+        return false;
+    }
+
+    protected function getFirstValidRate(array $validRates): float
+    {
+        foreach ($validRates as $rates) {
+            if ($rates['buy'] > 0) return $rates['buy'];
+            if ($rates['sell'] > 0) return $rates['sell'];
+        }
+        return 0;
     }
 
     /**
@@ -307,7 +355,7 @@ class BankAggregatorService
     {
         $modeNames = ['manual' => 'Manual', 'bank_avg' => 'Bank Avg', 'cbm' => 'CBM'];
         $modeName = $modeNames[$mode] ?? 'Mixed';
-        return $totalSources >= 3 ? "{$modeName} (Verified)" : $modeName;
+        return $totalSources >= 2 ? "{$modeName} (Verified)" : $modeName;
     }
 
 

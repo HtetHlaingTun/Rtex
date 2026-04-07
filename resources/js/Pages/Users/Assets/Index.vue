@@ -252,10 +252,7 @@
                 <option value="all">All Types</option>
                 <option value="gold">🥇 Gold</option>
                 <option value="currency">💵 Currency</option>
-                <option value="property">🏠 Property</option>
-                <option value="car">🚗 Vehicle</option>
-                <option value="jewelry">💍 Jewelry</option>
-                <option value="crypto">₿ Crypto</option>
+
             </select>
             <select v-model="filterCurrency"
                 class="px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white">
