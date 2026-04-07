@@ -14,9 +14,22 @@
     @guest
     {{-- <script src="https://pl29084850.profitablecpmratenetwork.com/24/fb/c6/24fbc6c3855b45418eb9f70f4c00a60f.js">
     </script> --}}
-    <script async="async" data-cfasync="false"
+
+
+    {{-- <script async="async" data-cfasync="false"
         src="https://pl29084878.profitablecpmratenetwork.com/bf7ea0869d15921e230d365bc66d753b/invoke.js"></script>
-    <div id="container-bf7ea0869d15921e230d365bc66d753b"></div>
+    <div id="container-bf7ea0869d15921e230d365bc66d753b"></div> --}}
+
+    <script>
+        atOptions = {
+        'key' : '2a6c1da951959ae9b100cd1aa0786555',
+        'format' : 'iframe',
+        'height' : 300,
+        'width' : 160,
+        'params' : {}
+      };
+    </script>
+    <script src="https://www.highperformanceformat.com/2a6c1da951959ae9b100cd1aa0786555/invoke.js"></script>
     @endguest
 
     <!-- Viewport -->
