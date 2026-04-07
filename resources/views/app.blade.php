@@ -8,8 +8,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="user-role" content="{{ optional(Auth::user())->is_admin ? 'admin' : 'user' }}">
 
-    <meta name="monetag" content="b8ef70e5a3dcc05470eac54b6d5ace98">
-
+    <script src="https://quge5.com/88/tag.min.js" data-zone="227293" async data-cfasync="false"></script>
     <!-- Viewport -->
     <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
