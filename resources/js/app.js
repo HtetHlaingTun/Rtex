@@ -28,7 +28,7 @@ import NotificationsBell from "./Components/NotificationsBell.vue";
 
 window.Chart = Chart;
 let logoutTimer;
-const appName = import.meta.env.VITE_APP_NAME || "Laravel";
+const appName = import.meta.env.VITE_APP_NAME;
 
 function resetTimer() {
     clearTimeout(logoutTimer);
