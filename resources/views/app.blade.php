@@ -8,6 +8,10 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="user-role" content="{{ optional(Auth::user())->is_admin ? 'admin' : 'user' }}">
 
+    <script src="https://pl29084850.profitablecpmratenetwork.com/24/fb/c6/24fbc6c3855b45418eb9f70f4c00a60f.js"></script>
+
+
+
     <!-- Viewport -->
     <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
