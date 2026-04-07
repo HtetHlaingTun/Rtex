@@ -12,7 +12,11 @@
     </script> --}}
 
     @guest
-    <script src="https://pl29084850.profitablecpmratenetwork.com/24/fb/c6/24fbc6c3855b45418eb9f70f4c00a60f.js"></script>
+    {{-- <script src="https://pl29084850.profitablecpmratenetwork.com/24/fb/c6/24fbc6c3855b45418eb9f70f4c00a60f.js">
+    </script> --}}
+    <script async="async" data-cfasync="false"
+        src="https://pl29084878.profitablecpmratenetwork.com/bf7ea0869d15921e230d365bc66d753b/invoke.js"></script>
+    <div id="container-bf7ea0869d15921e230d365bc66d753b"></div>
     @endguest
 
     <!-- Viewport -->
