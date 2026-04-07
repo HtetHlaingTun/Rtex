@@ -6,7 +6,8 @@ import { computed } from 'vue'
 const navItems = [
     // { name: 'Dashboard', href: route('dashboard'), component: 'Dashboard' },
     { name: 'Gold Prices', href: route('gold.index'), component: 'Gold/Index' },
-    // { name: 'Reports', href: '#', component: 'Reports' },
+    { name: 'Feedback', href: route('admin.contacts.index'), component: 'Admin/Contact/Index' },
+    { name: 'Blog', href: route('admin.blog.index'), component: 'Admin/Blog/Index' },
 ];
 
 const user = computed(() => usePage().props.auth.user);

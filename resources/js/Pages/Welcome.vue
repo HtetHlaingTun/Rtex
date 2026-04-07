@@ -32,25 +32,7 @@
                 <CurrencyExchangeList :rates="rates" />
             </main>
 
-            <!-- Footer -->
-            <footer class="border-t border-slate-200 dark:border-zinc-800 py-8 mt-8">
-                <div class="max-w-[960px] mx-auto px-6">
-                    <div
-                        class="flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] text-slate-400">
-                        <div class="flex items-center gap-4">
-                            <span>© {{ new Date().getFullYear() }} MMRatePro Engine</span>
-                            <span>•</span>
-                            <span>Data reference from Yahoo Finance</span>
 
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <span>Powered by Yahoo Finance</span>
-                            <span>•</span>
-                            <span>v2.0</span>
-                        </div>
-                    </div>
-                </div>
-            </footer>
         </div>
     </GuestLayout>
 </template>

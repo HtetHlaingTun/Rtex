@@ -72,6 +72,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'permissions' => 'array',
+        'role' => 'string',
         'two_factor_recovery_codes' => 'array',
         'is_active' => 'boolean',
         'two_factor_enabled' => 'boolean',

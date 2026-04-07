@@ -1,15 +1,19 @@
 <?php
 
+use App\Http\Controllers\AdminBlogController;
+use App\Http\Controllers\BlogController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CurrencyExchangeRate;
 use App\Http\Controllers\GoldPriceController;
 use App\Http\Controllers\GoldTypeController;
+use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\ProfileController;
-use App\Services\BankAggregatorService;
+use App\Http\Controllers\User\AlertController;
 use App\Http\Controllers\User\DashboardController;
+use App\Http\Controllers\User\NotificationController;
 use App\Http\Controllers\User\UserAssetController;
 use App\Http\Controllers\User\WatchlistController;
-use App\Http\Controllers\User\AlertController;
-use App\Http\Controllers\User\NotificationController;
+use App\Services\BankAggregatorService;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Symfony\Component\DomCrawler\Crawler;
@@ -17,6 +21,13 @@ use Symfony\Component\DomCrawler\Crawler;
 
 
 
+Route::post('/subscribe', [NewsletterController::class, 'subscribe'])->name('subscribe');
+
+
+
+
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
 
 
@@ -25,29 +36,20 @@ Route::get('/privacy', function () {
     return Inertia::render('Privacy');
 })->name('privacy');
 
+// Public routes
 Route::get('/contact', function () {
     return Inertia::render('Contact');
 })->name('contact');
 
-Route::post('/contact', function (\Illuminate\Http\Request $request) {
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email',
-        'subject' => 'required|string|max:255',
-        'message' => 'required|string',
-    ]);
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
-    // Send email or store in database
-    \Illuminate\Support\Facades\Mail::raw(
-        "From: {$validated['name']} ({$validated['email']})\n\n{$validated['message']}",
-        function ($message) {
-            $message->to('support@luckeymm.online')
-                ->subject('Contact Form: ' . request('subject'));
-        }
-    );
-
-    return back()->with('success', 'Message sent successfully!');
-})->name('contact.store');
+// Admin routes (add to your existing admin group)
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
+    Route::get('/contacts/{contact}', [ContactController::class, 'show'])->name('contacts.show');
+    Route::delete('/contacts/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy');
+    Route::patch('/contacts/{contact}/mark-replied', [ContactController::class, 'markReplied'])->name('contacts.mark-replied');
+});
 
 // ============================================
 // INCLUDE PUBLIC ROUTES
@@ -132,6 +134,15 @@ Route::middleware(['auth', 'verified', 'is_admin', 'session.timeout'])->group(fu
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Blog Management
+    Route::get('/admin/blog', [AdminBlogController::class, 'index'])->name('admin.blog.index');
+    Route::get('/admin/blog/create', [AdminBlogController::class, 'create'])->name('admin.blog.create');
+    Route::post('/admin/blog', [AdminBlogController::class, 'store'])->name('admin.blog.store');
+    Route::get('/admin/blog/{blog}/edit', [AdminBlogController::class, 'edit'])->name('admin.blog.edit');
+    Route::put('/admin/blog/{blog}', [AdminBlogController::class, 'update'])->name('admin.blog.update');
+    Route::delete('/admin/blog/{blog}', [AdminBlogController::class, 'destroy'])->name('admin.blog.destroy');
+    Route::patch('/admin/blog/{blog}/toggle-publish', [AdminBlogController::class, 'togglePublish'])->name('admin.blog.toggle-publish');
 });
 
 // ============================================

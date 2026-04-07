@@ -14,14 +14,20 @@ class IsAdmin
      *
      * @param  Closure(Request): (Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next)
     {
-        // Logic: Check if user is logged in AND has an admin role/flag
-        if (Auth::check() && Auth::user()->is_admin) {
-            return $next($request);
+        if (!Auth::check()) {
+            return redirect()->route('login');
         }
 
-        // If not admin, send them back to the dashboard or home
-        return redirect('/')->with('error', 'You do not have administrative access.');
+        // Check if user has admin role (super_admin or admin)
+        $user = Auth::user();
+        $allowedRoles = ['super_admin', 'admin'];
+
+        if (!in_array($user->role, $allowedRoles)) {
+            abort(403, 'Access denied. Admin privileges required.');
+        }
+
+        return $next($request);
     }
 }
