@@ -21,8 +21,6 @@
             <UserNavbar />
         </header>
 
-        <!-- REMOVED the broken AdUnit component -->
-
         <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <div
                 class="absolute -top-[40%] -right-[20%] w-[80%] h-[80%] bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-transparent rounded-full blur-3xl animate-float">
@@ -44,13 +42,36 @@
 
             <div class="py-3 w-full">
                 <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 w-full box-border">
-                    <main class="w-full">
-                        <GoogleAnalytics />
-                        <slot />
-                    </main>
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <!-- Main Content Area -->
+                        <main class="flex-1 w-full">
+                            <!-- Native Ad Banner Container -->
+                            <div id="native-ad-container" class="native-ad-container my-6"></div>
+
+                            <!-- Affiliate Link -->
+                            <div class="my-4 text-center">
+                                <a href="https://www.profitablecpmratenetwork.com/w4mvfs44?key=eb7a97a683a089c9b8ae34e2d71f0d56"
+                                    target="_blank" rel="noopener noreferrer"
+                                    class="text-amber-600 hover:text-amber-700">
+                                    Compare Exchange Rates →
+                                </a>
+                            </div>
+
+                            <GoogleAnalytics />
+                            <slot />
+                        </main>
+
+                        <!-- Sidebar Banner Container (Desktop only) -->
+                        <aside class="md:w-48 hidden md:block">
+                            <div id="sidebar-ad-container" class="sticky top-24"></div>
+                        </aside>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- Social Bar Container -->
+        <div id="social-bar-container" class="fixed bottom-0 left-0 right-0 z-40"></div>
 
         <footer class="bg-gray-800 text-white py-8 mt-12">
             <div class="max-w-7xl mx-auto px-4">
@@ -190,6 +211,44 @@ const subscribeEmail = async () => {
     }
 }
 
+// --- Load Ads Function ---
+const loadAds = () => {
+    // Only load ads in production
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        console.log('Ads skipped: Local environment')
+        return
+    }
+
+    // Native Banner Ad
+    const nativeScript = document.createElement('script')
+    nativeScript.async = true
+    nativeScript.setAttribute('data-cfasync', 'false')
+    nativeScript.src = 'https://pl29084878.profitablecpmratenetwork.com/bf7ea0869d15921e230d365bc66d753b/invoke.js'
+    document.getElementById('native-ad-container')?.appendChild(nativeScript)
+
+    // Sidebar Banner Ad
+    const sidebarOptions = document.createElement('script')
+    sidebarOptions.innerHTML = `
+        atOptions = {
+            'key': '2a6c1da951959ae9b100cd1aa0786555',
+            'format': 'iframe',
+            'height': 300,
+            'width': 160,
+            'params': {}
+        };
+    `
+    document.getElementById('sidebar-ad-container')?.appendChild(sidebarOptions)
+
+    const sidebarScript = document.createElement('script')
+    sidebarScript.src = 'https://www.highperformanceformat.com/2a6c1da951959ae9b100cd1aa0786555/invoke.js'
+    document.getElementById('sidebar-ad-container')?.appendChild(sidebarScript)
+
+    // Social Bar Ad
+    const socialScript = document.createElement('script')
+    socialScript.src = 'https://pl29087167.profitablecpmratenetwork.com/3b/a4/ce/3ba4ce928386d4ee553ae57212063c1d.js'
+    document.getElementById('social-bar-container')?.appendChild(socialScript)
+}
+
 // --- Scroll Logic for Navbar Shadow ---
 const handleScroll = () => {
     isScrolled.value = window.scrollY > 20
@@ -199,6 +258,9 @@ onMounted(() => {
     window.addEventListener('scroll', handleScroll);
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
+
+    // Load ads after DOM is ready
+    loadAds()
 })
 
 onUnmounted(() => {
@@ -271,5 +333,21 @@ body,
 .relative.min-h-screen {
     overflow: visible !important;
     height: auto !important;
+}
+
+/* Add padding to prevent content from hiding under social bar */
+body {
+    padding-bottom: 80px;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 60px;
+    }
+}
+
+#social-bar-container {
+    background: rgba(0, 0, 0, 0.03);
+    backdrop-filter: blur(8px);
 }
 </style>
