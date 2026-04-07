@@ -138,7 +138,7 @@
                     class="bg-gradient-to-br from-amber-500/10 to-yellow-500/10 backdrop-blur-sm border border-amber-500/30 rounded-xl p-3 hover:border-amber-500/50 transition-all">
                     <p class="text-[7px] font-black uppercase tracking-[0.12em] text-amber-400/80">Kyatthar (USD)</p>
                     <p class="font-mono text-sm font-black italic text-amber-300">${{ $formatNumber(usdPerKyattharNew)
-                        }}</p>
+                    }}</p>
                     <p class="text-[6px] text-white/40">16.329g · New</p>
                 </div>
 
@@ -147,7 +147,7 @@
                     class="bg-gradient-to-br from-orange-500/10 to-red-500/10 backdrop-blur-sm border border-orange-500/30 rounded-xl p-3 hover:border-orange-500/50 transition-all">
                     <p class="text-[7px] font-black uppercase tracking-[0.12em] text-orange-400/80">Kyatthar (USD)</p>
                     <p class="font-mono text-sm font-black italic text-orange-300">${{ $formatNumber(usdPerKyattharOld)
-                        }}</p>
+                    }}</p>
                     <p class="text-[6px] text-white/40">16.606g · Old</p>
                 </div>
 
@@ -252,9 +252,9 @@
                     <span class="text-[7px] font-black text-white/50 uppercase">24h Range</span>
                     <div class="flex flex-col">
                         <span class="text-[9px] font-mono font-black text-white/80">H: ${{ $formatNumber(dayHigh)
-                            }}</span>
+                        }}</span>
                         <span class="text-[9px] font-mono font-black text-white/60">L: ${{ $formatNumber(dayLow)
-                            }}</span>
+                        }}</span>
                     </div>
                     <p class="text-[6px] text-white/30">{{ ((dayHigh - dayLow) / dayLow * 100).toFixed(1) }}% swing</p>
                 </div>
@@ -311,7 +311,7 @@
                     <div class="flex flex-col">
                         <span class="text-[6px] font-black text-white/40">SGD Gold</span>
                         <span class="font-mono text-[10px] font-black text-white/80">S${{ $formatNumber(sgdGoldPrice)
-                            }}</span>
+                        }}</span>
                     </div>
                     <div class="flex flex-col">
                         <span class="text-[6px] font-black text-white/40">Conversion</span>
@@ -335,7 +335,7 @@
                 <div class="flex items-center gap-2">
                     <div class="w-1 h-1 bg-emerald-400 rounded-full animate-pulse"></div>
                     <span class="text-[6px] text-white/40 font-mono">Updated: {{ $formatTime24(snapshot?.fetched_at)
-                        }}</span>
+                    }}</span>
                 </div>
                 <span class="text-[8px] text-blue-400/60 uppercase">Dual Market Monitor</span>
             </div>

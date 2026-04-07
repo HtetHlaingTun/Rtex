@@ -1,6 +1,6 @@
 <template>
     <div
-        class="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 overflow-visible">
+        class="relative min-h-screen max-w-full bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 overflow-visible">
 
         <!-- Flash Messages with Auto-Dismiss -->
         <div v-if="showSuccessMessage"
@@ -41,21 +41,14 @@
             <PullToRefresh :message="globalLoadingMessage" />
 
             <div class="py-3 w-full">
-                <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 w-full box-border">
+                <div class="max-w-full mx-auto px-2 sm:px-6 lg:px-8 w-full box-border">
                     <div class="flex flex-col md:flex-row gap-6">
                         <!-- Main Content Area -->
                         <main class="flex-1 w-full">
                             <!-- Native Ad Banner Container -->
                             <div id="native-ad-container" class="native-ad-container my-6"></div>
 
-                            <!-- Affiliate Link -->
-                            <div class="my-4 text-center">
-                                <a href="https://www.profitablecpmratenetwork.com/w4mvfs44?key=eb7a97a683a089c9b8ae34e2d71f0d56"
-                                    target="_blank" rel="noopener noreferrer"
-                                    class="text-amber-600 hover:text-amber-700">
-                                    Compare Exchange Rates →
-                                </a>
-                            </div>
+
 
                             <GoogleAnalytics />
                             <slot />

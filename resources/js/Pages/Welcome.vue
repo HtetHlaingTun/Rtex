@@ -5,9 +5,7 @@
 
         <div
             class="min-h-screen bg-[#F7F7F5] dark:bg-zinc-950 font-mono text-[#111] dark:text-zinc-100 transition-colors duration-300">
-
-
-            <main class="max-w-[960px] mx-auto px-6 pb-20 pt-8 flex flex-col gap-12">
+            <main class="w-full max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20">
                 <!-- Combined Gold Market Card (USD + SGD together) -->
                 <WorldGoldMarket :snapshot="snapshot" :worldGoldSnapshot="worldGoldSnapshot" :sgdRate="sgdRate"
                     :sgdGoldPrice="sgdGoldPrice" :sgdPerGram="sgdPerGram" :sgdKyattharNew="sgdKyattharNew"
@@ -17,7 +15,7 @@
                     :momentum7d="momentum7d" :premium200d="premium200d" />
 
                 <!-- Myanmar Bullion Cards (New & Old Systems) -->
-                <div class="space-y-12">
+                <div class="space-y-12 mt-8">
                     <MyanmarGoldSystem :goldTypes="myanmarGoldNew" system="new" systemColor="amber"
                         systemLabel="New System" weight="16.329g" :isFresh="isFresh" />
 
@@ -31,8 +29,6 @@
                 <!-- Exchange Rates Section -->
                 <CurrencyExchangeList :rates="rates" />
             </main>
-
-
         </div>
     </GuestLayout>
 </template>
