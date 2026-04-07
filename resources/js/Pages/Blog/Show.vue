@@ -51,7 +51,8 @@
 
                         <!-- Content -->
                         <div class="prose prose-lg dark:prose-invert max-w-none" v-html="post.content"></div>
-
+                        <!-- Ad after content -->
+                        <AdUnit zone-id="BLOG_BOTTOM_ZONE" />
                         <!-- Share Section - Improved -->
                         <div class="border-t border-gray-200 dark:border-zinc-700 mt-8 pt-8">
                             <h3 class="text-lg font-semibold mb-4">Share this article</h3>

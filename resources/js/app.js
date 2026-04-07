@@ -26,6 +26,7 @@ import RateHistoryChart from "./Components/Charts/Rate/RateHistoryChart.vue";
 import UserBreadcrumbs from "./Components/Layouts/UserBreadcrumbs.vue";
 import NotificationsBell from "./Components/NotificationsBell.vue";
 import GoogleAnalytics from "./Components/GoogleAnalytics.vue";
+import AdUnit from "./Components/AdUnit.vue";
 
 window.Chart = Chart;
 let logoutTimer;
@@ -116,6 +117,7 @@ createInertiaApp({
             .component("UserBreadcrumbs", UserBreadcrumbs)
             .component("NotificationsBell", NotificationsBell)
             .component("GoogleAnalytics", GoogleAnalytics)
+            .component("AdUnit", AdUnit)
 
             .component("PublicBreadcrumb", PublicBreadcrumb)
             .component("Paginations", Paginations);

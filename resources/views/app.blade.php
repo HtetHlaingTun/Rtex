@@ -8,7 +8,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="user-role" content="{{ optional(Auth::user())->is_admin ? 'admin' : 'user' }}">
 
-
+    <meta name="monetag" content="b8ef70e5a3dcc05470eac54b6d5ace98">
 
     <!-- Viewport -->
     <meta name="viewport"

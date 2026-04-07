@@ -1,9 +1,6 @@
 <template>
-
     <div
         class="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 overflow-visible">
-
-
 
         <!-- Flash Messages with Auto-Dismiss -->
         <div v-if="showSuccessMessage"
@@ -18,14 +15,13 @@
             {{ errorMessageText }}
         </div>
 
-
-
         <Loader :show="isGlobalLoading" :message="globalLoadingMessage" />
 
         <header class="sticky top-0 z-[100] w-full">
-
             <UserNavbar />
         </header>
+
+        <!-- REMOVED the broken AdUnit component -->
 
         <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <div
@@ -37,9 +33,8 @@
         </div>
 
         <div class="relative z-10 flex flex-col w-full min-w-0">
-
-            <div class="sticky top-[64px] z-50 w-full backdrop-blur-md bg-white/70 dark:bg-zinc-900/70
-                transition-all duration-300">
+            <div
+                class="sticky top-[64px] z-50 w-full backdrop-blur-md bg-white/70 dark:bg-zinc-900/70 transition-all duration-300">
                 <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-2">
                     <PublicBreadcrumb :breadcrumbs="breadcrumbs" />
                 </div>
@@ -50,8 +45,6 @@
             <div class="py-3 w-full">
                 <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 w-full box-border">
                     <main class="w-full">
-
-
                         <GoogleAnalytics />
                         <slot />
                     </main>
@@ -59,7 +52,7 @@
             </div>
         </div>
 
-        <footer class="bg-gray-800 text-white py-8 mt-12 p-12">
+        <footer class="bg-gray-800 text-white py-8 mt-12">
             <div class="max-w-7xl mx-auto px-4">
                 <div class="grid md:grid-cols-4 gap-8">
                     <div>
@@ -134,11 +127,7 @@ watch(() => page.props.flash, (flash) => {
     if (flash?.success) {
         showSuccessMessage.value = true
         successMessageText.value = flash.success
-
-        // Clear existing timer
         if (successTimer) clearTimeout(successTimer)
-
-        // Auto-dismiss after 5 seconds
         successTimer = setTimeout(() => {
             showSuccessMessage.value = false
             successMessageText.value = ''
@@ -148,11 +137,7 @@ watch(() => page.props.flash, (flash) => {
     if (flash?.error) {
         showErrorMessage.value = true
         errorMessageText.value = flash.error
-
-        // Clear existing timer
         if (errorTimer) clearTimeout(errorTimer)
-
-        // Auto-dismiss after 5 seconds
         errorTimer = setTimeout(() => {
             showErrorMessage.value = false
             errorMessageText.value = ''
@@ -220,8 +205,6 @@ onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll);
     window.removeEventListener('online', updateOnlineStatus);
     window.removeEventListener('offline', updateOnlineStatus);
-
-    // Cleanup timers on unmount
     if (successTimer) clearTimeout(successTimer)
     if (errorTimer) clearTimeout(errorTimer)
 })
