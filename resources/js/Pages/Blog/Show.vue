@@ -1,27 +1,40 @@
 <template>
 
     <Head>
-        <title>{{ meta.title }} - MMRatePro</title>
-        <meta name="description" :content="meta.description">
+        <!-- Override the default title -->
+        <title>{{ pageTitle }} | MMRatePro</title>
 
-            <!-- Open Graph / Facebook -->
-            <meta property="og:type" content="article">
-                <meta property="og:url" :content="meta.url">
-                    <meta property="og:title" :content="meta.title">
-                        <meta property="og:description" :content="meta.description">
-                            <meta property="og:image" :content="meta.image">
-                                <meta property="og:image:width" content="1200">
-                                    <meta property="og:image:height" content="630">
-                                        <meta property="og:site_name" content="MMRatePro">
-                                            <meta property="og:locale" content="en_US">
+        <!-- Essential Meta Tags -->
+        <meta name="description" :content="pageDescription">
 
-                                                <!-- Twitter Card -->
-                                                <meta name="twitter:card" content="summary_large_image">
-                                                    <meta name="twitter:url" :content="meta.url">
-                                                        <meta name="twitter:title" :content="meta.title">
-                                                            <meta name="twitter:description"
-                                                                :content="meta.description">
-                                                                <meta name="twitter:image" :content="meta.image">
+        <!-- Open Graph / Facebook (MUST be absolute URLs) -->
+        <meta property="og:type" content="article">
+        <meta property="og:url" :content="currentUrl">
+        <meta property="og:title" :content="pageTitle">
+        <meta property="og:description" :content="pageDescription">
+        <meta property="og:image" :content="featuredImageUrl">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:alt" :content="pageTitle">
+        <meta property="og:site_name" content="MMRatePro">
+        <meta property="og:locale" content="en_US">
+
+        <!-- Article specific -->
+        <meta property="article:published_time" :content="post.published_at">
+        <meta property="article:author" content="MMRatePro">
+
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:url" :content="currentUrl">
+        <meta name="twitter:title" :content="pageTitle">
+        <meta name="twitter:description" :content="pageDescription">
+        <meta name="twitter:image" :content="featuredImageUrl">
+        <meta name="twitter:site" content="@MMRatePro">
+
+        <!-- Additional SEO -->
+        <meta name="keywords"
+            content="exchange rates, gold price, Myanmar, USD to MMK, SGD to MMK, EUR to MMK, THB to MMK">
+        <link rel="canonical" :href="currentUrl">
     </Head>
 
     <GuestLayout>
@@ -35,7 +48,8 @@
 
                 <!-- Blog Post -->
                 <article class="bg-white dark:bg-zinc-800 rounded-lg shadow-lg overflow-hidden">
-                    <img v-if="post.featured_image" :src="post.featured_image" :alt="post.title"
+                    <!-- Featured Image -->
+                    <img v-if="post.featured_image" :src="featuredImageUrl" :alt="post.title"
                         class="w-full h-64 md:h-96 object-cover">
 
                     <div class="p-6 md:p-8">
@@ -45,14 +59,16 @@
                             <div class="flex flex-wrap gap-3">
                                 <span>{{ formatDate(post.published_at) }}</span>
                                 <span>By {{ post.author || 'Admin' }}</span>
-                                <span>{{ post.views }} views</span>
+                                <span>{{ post.views || 0 }} views</span>
                             </div>
                         </div>
 
+                        <!-- Title -->
                         <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
                             {{ post.title }}
                         </h1>
 
+                        <!-- Content -->
                         <div class="prose prose-lg dark:prose-invert max-w-none dark:text-white" v-html="post.content">
                         </div>
 
@@ -60,7 +76,7 @@
                         <div class="border-t border-gray-200 dark:border-zinc-700 mt-8 pt-8">
                             <h3 class="text-lg font-semibold mb-4 dark:text-white">Share this article</h3>
                             <div class="flex flex-wrap gap-3">
-                                <!-- Facebook Share - FIXED -->
+                                <!-- Facebook Share -->
                                 <button @click="shareOnFacebook"
                                     class="flex items-center gap-2 bg-[#1877f2] text-white px-4 py-2 rounded-lg hover:bg-[#1877f2]/90 transition">
                                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -149,26 +165,78 @@ const props = defineProps({
 
 const copied = ref(false)
 
-// Use meta from controller (already has absolute URLs)
-const meta = computed(() => props.meta)
-const rawUrl = computed(() => meta.value.url)
-const encodedUrl = computed(() => encodeURIComponent(rawUrl.value))
-const encodedTitle = computed(() => encodeURIComponent(meta.value.title))
+// Page title and description for meta tags
+const pageTitle = computed(() => props.post?.meta_title || props.post?.title || 'MMRatePro')
+const pageDescription = computed(() => {
+    const desc = props.post?.meta_description || props.post?.excerpt
+    if (desc && desc.length > 160) {
+        return desc.substring(0, 157) + '...'
+    }
+    return desc || 'Real-time exchange rates and gold prices for Myanmar'
+})
 
-const shareOnFacebook = async () => {
-    // Trigger Facebook scrape
-    const scrapeUrl = `https://graph.facebook.com/?id=${encodeURIComponent(rawUrl.value)}&scrape=true`
-    try {
-        await fetch(scrapeUrl, { method: 'POST' })
-    } catch (e) { }
+// Generate absolute URL for featured image
+const featuredImageUrl = computed(() => {
+    // If post has featured image
+    if (props.post?.featured_image) {
+        if (props.post.featured_image.startsWith('http')) {
+            return props.post.featured_image
+        }
+        // Make sure it's absolute
+        return `https://luckeymm.online/${props.post.featured_image.replace(/^\/+/, '')}`
+    }
+    // Default OG image - create this image in your public folder
+    return 'https://luckeymm.online/default-og-image.jpg'
+})
 
-    setTimeout(() => {
-        const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl.value}`
-        window.open(shareUrl, '_blank', 'width=600,height=400')
-    }, 500)
+// Current URL for sharing
+const currentUrl = computed(() => {
+    return `https://luckeymm.online/blog/${props.post?.slug}`
+})
+
+// Encoded values for sharing
+const encodedUrl = computed(() => encodeURIComponent(currentUrl.value))
+const encodedTitle = computed(() => encodeURIComponent(pageTitle.value))
+
+// Share functions
+const shareOnFacebook = () => {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl.value}`, '_blank', 'width=600,height=400,noopener,noreferrer')
 }
 
-// ... rest of your share functions
+const shareOnTwitter = () => {
+    window.open(`https://twitter.com/intent/tweet?url=${encodedUrl.value}&text=${encodedTitle.value}`, '_blank', 'width=600,height=400,noopener,noreferrer')
+}
+
+const shareOnLinkedIn = () => {
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl.value}`, '_blank', 'width=600,height=400,noopener,noreferrer')
+}
+
+const shareOnWhatsApp = () => {
+    window.open(`https://wa.me/?text=${encodedTitle.value}%20${encodedUrl.value}`, '_blank', 'width=600,height=400,noopener,noreferrer')
+}
+
+const copyLink = async () => {
+    try {
+        await navigator.clipboard.writeText(currentUrl.value)
+        copied.value = true
+        setTimeout(() => {
+            copied.value = false
+        }, 2000)
+    } catch (err) {
+        console.error('Failed to copy:', err)
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea')
+        textarea.value = currentUrl.value
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+        copied.value = true
+        setTimeout(() => {
+            copied.value = false
+        }, 2000)
+    }
+}
 
 const formatDate = (date) => {
     if (!date) return ''
@@ -178,16 +246,6 @@ const formatDate = (date) => {
         day: 'numeric'
     })
 }
-
-const copyLink = async () => {
-    try {
-        await navigator.clipboard.writeText(rawUrl.value)
-        copied.value = true
-        setTimeout(() => { copied.value = false }, 2000)
-    } catch (err) {
-        console.error('Failed to copy:', err)
-    }
-}
 </script>
 
 <style scoped>
@@ -196,5 +254,54 @@ const copyLink = async () => {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+/* Prose styling for blog content */
+.prose {
+    max-width: none;
+}
+
+.prose h1 {
+    font-size: 2em;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.prose h2 {
+    font-size: 1.5em;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+}
+
+.prose h3 {
+    font-size: 1.25em;
+    margin-top: 0.8em;
+    margin-bottom: 0.4em;
+}
+
+.prose p {
+    margin-bottom: 1em;
+    line-height: 1.6;
+}
+
+.prose ul,
+.prose ol {
+    margin: 0.5em 0 1em 1.5em;
+}
+
+.prose li {
+    margin-bottom: 0.25em;
+}
+
+.prose a {
+    color: #f59e0b;
+    text-decoration: underline;
+}
+
+.prose img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    margin: 1em 0;
 }
 </style>
