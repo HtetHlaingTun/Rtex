@@ -11,6 +11,32 @@
 
     <meta property="og:image" content="{{ asset('default-og-image.jpg') }}">
 
+    <!-- Dynamic Meta Tags for SEO/Social Media -->
+    @if(isset($viewData['meta']))
+    <title>{{ $viewData['meta']['title'] }} - MMRatePro</title>
+    <meta name="description" content="{{ $viewData['meta']['description'] }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="{{ $viewData['meta']['url'] }}">
+    <meta property="og:title" content="{{ $viewData['meta']['title'] }}">
+    <meta property="og:description" content="{{ $viewData['meta']['description'] }}">
+    <meta property="og:image" content="{{ $viewData['meta']['image'] }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="MMRatePro">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ $viewData['meta']['url'] }}">
+    <meta name="twitter:title" content="{{ $viewData['meta']['title'] }}">
+    <meta name="twitter:description" content="{{ $viewData['meta']['description'] }}">
+    <meta name="twitter:image" content="{{ $viewData['meta']['image'] }}">
+    @else
+    <title inertia>{{ config('app.name', 'MMRatePro') }}</title>
+    @endif
+
     <!-- Viewport -->
     <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">

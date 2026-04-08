@@ -1,40 +1,12 @@
 <template>
 
     <Head>
-        <!-- Override the default title -->
-        <title>{{ pageTitle }} | MMRatePro</title>
-
-        <!-- Essential Meta Tags -->
-        <meta name="description" :content="pageDescription">
-
-        <!-- Open Graph / Facebook (MUST be absolute URLs) -->
-        <meta property="og:type" content="article">
-        <meta property="og:url" :content="currentUrl">
-        <meta property="og:title" :content="pageTitle">
-        <meta property="og:description" :content="pageDescription">
-        <meta property="og:image" :content="featuredImageUrl">
-        <meta property="og:image:width" content="1200">
-        <meta property="og:image:height" content="630">
-        <meta property="og:image:alt" :content="pageTitle">
-        <meta property="og:site_name" content="MMRatePro">
-        <meta property="og:locale" content="en_US">
-
-        <!-- Article specific -->
-        <meta property="article:published_time" :content="post.published_at">
-        <meta property="article:author" content="MMRatePro">
-
-        <!-- Twitter Card -->
-        <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:url" :content="currentUrl">
-        <meta name="twitter:title" :content="pageTitle">
-        <meta name="twitter:description" :content="pageDescription">
-        <meta name="twitter:image" :content="featuredImageUrl">
-        <meta name="twitter:site" content="@MMRatePro">
-
-        <!-- Additional SEO -->
-        <meta name="keywords"
-            content="exchange rates, gold price, Myanmar, USD to MMK, SGD to MMK, EUR to MMK, THB to MMK">
-        <link rel="canonical" :href="currentUrl">
+        <title>{{ meta.title }} | MMRatePro</title>
+        <meta name="description" :content="meta.description">
+        <meta property="og:title" :content="meta.title">
+        <meta property="og:description" :content="meta.description">
+        <meta property="og:image" :content="meta.image">
+        <meta property="og:url" :content="meta.url">
     </Head>
 
     <GuestLayout>
