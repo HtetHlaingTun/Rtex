@@ -27,6 +27,7 @@ return [
     */
 
     'env' => env('APP_ENV', 'production'),
+    'facebook_app_id' => env('FACEBOOK_APP_ID', ''),
 
     /*
     |--------------------------------------------------------------------------

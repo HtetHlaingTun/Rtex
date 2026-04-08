@@ -29,7 +29,7 @@
     <meta property="og:image:height" content="630">
     <meta property="og:site_name" content="MMRatePro">
     <meta property="og:locale" content="en_US">
-    <meta property="fb:app_id" content="{{ env('FACEBOOK_APP_ID') }}">
+    <meta property="fb:app_id" content="{{ config('app.facebook_app_id') }}">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
