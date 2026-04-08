@@ -38,31 +38,30 @@ class BlogController extends Controller
             ->limit(3)
             ->get();
 
-        // Generate absolute URL for featured image
-        $featuredImage = $post->featured_image
+        // Generate image URL
+        $image = $post->featured_image
             ? (filter_var($post->featured_image, FILTER_VALIDATE_URL)
                 ? $post->featured_image
                 : url($post->featured_image))
             : url('/default-og-image.jpg');
 
-        $metaTitle = $post->meta_title ?? $post->title;
-        $metaDescription = $post->meta_description ?? Str::limit(strip_tags($post->content), 160);
+        $title = $post->meta_title ?? $post->title;
+        $description = $post->meta_description ?? Str::limit(strip_tags($post->content), 160);
 
-        // Share meta data with Inertia
+        // Share meta data with Inertia and also make available to Blade
+        view()->share([
+            'metaTitle' => $title . ' | MMRatePro',
+            'metaDescription' => $description,
+            'metaImage' => $image,
+        ]);
+
         return Inertia::render('Blog/Show', [
             'post' => $post,
             'relatedPosts' => $relatedPosts,
             'meta' => [
-                'title' => $metaTitle,
-                'description' => $metaDescription,
-                'image' => $featuredImage,
-                'url' => url()->current(),
-            ]
-        ])->withViewData([
-            'meta' => [
-                'title' => $metaTitle,
-                'description' => $metaDescription,
-                'image' => $featuredImage,
+                'title' => $title,
+                'description' => $description,
+                'image' => $image,
                 'url' => url()->current(),
             ]
         ]);
