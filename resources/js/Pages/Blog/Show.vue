@@ -175,20 +175,16 @@ const pageDescription = computed(() => {
     return desc || 'Real-time exchange rates and gold prices for Myanmar'
 })
 
-// Generate absolute URL for featured image
 const featuredImageUrl = computed(() => {
-    // If post has featured image
     if (props.post?.featured_image) {
         if (props.post.featured_image.startsWith('http')) {
             return props.post.featured_image
         }
-        // Make sure it's absolute
         return `https://luckeymm.online/${props.post.featured_image.replace(/^\/+/, '')}`
     }
-    // Default OG image - create this image in your public folder
-    return 'https://luckeymm.online/default-og-image.jpg'
+    // Use the dynamic HTML OG image
+    return 'https://luckeymm.online/og-image'
 })
-
 // Current URL for sharing
 const currentUrl = computed(() => {
     return `https://luckeymm.online/blog/${props.post?.slug}`

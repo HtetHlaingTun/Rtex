@@ -23,7 +23,9 @@ use Symfony\Component\DomCrawler\Crawler;
 
 Route::post('/subscribe', [NewsletterController::class, 'subscribe'])->name('subscribe');
 
-
+Route::get('/og-image', function () {
+    return view('og-image');
+});
 Route::get('/terms', function () {
     return Inertia::render('TermOfServices');
 })->name('terms');
