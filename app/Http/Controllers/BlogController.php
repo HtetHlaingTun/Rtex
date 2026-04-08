@@ -48,17 +48,18 @@ class BlogController extends Controller
         $title = $post->meta_title ?? $post->title;
         $description = $post->meta_description ?? Str::limit(strip_tags($post->content), 160);
 
-        // Share meta data with Inertia and also make available to Blade
-        view()->share([
-            'metaTitle' => $title . ' | MMRatePro',
-            'metaDescription' => $description,
-            'metaImage' => $image,
+        // CRITICAL: Share meta data globally for Blade layout
+        view()->share('og_meta', [
+            'title' => $title,
+            'description' => $description,
+            'image' => $image,
+            'url' => url()->current(),
         ]);
 
         return Inertia::render('Blog/Show', [
             'post' => $post,
             'relatedPosts' => $relatedPosts,
-            'meta' => [
+            'og_meta' => [
                 'title' => $title,
                 'description' => $description,
                 'image' => $image,

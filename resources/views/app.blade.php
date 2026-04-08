@@ -11,17 +11,20 @@
 
     <meta property="og:image" content="{{ asset('default-og-image.jpg') }}">
 
-    <!-- Dynamic Meta Tags for SEO/Social Media -->
-    @if(isset($viewData['meta']))
-    <title>{{ $viewData['meta']['title'] }} - MMRatePro</title>
-    <meta name="description" content="{{ $viewData['meta']['description'] }}">
+    <!-- Dynamic Open Graph Meta Tags (Facebook will see these) -->
+    @php
+    $ogTitle = $og_meta['title'] ?? 'MMRatePro - Live Exchange Rates & Gold Prices';
+    $ogDescription = $og_meta['description'] ?? 'Real-time USD, SGD, EUR, THB exchange rates to MMK. Live gold prices in
+    Myanmar kyat.';
+    $ogImage = $og_meta['image'] ?? url('/default-og-image.jpg');
+    $ogUrl = $og_meta['url'] ?? url()->current();
+    @endphp
 
-    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="article">
-    <meta property="og:url" content="{{ $viewData['meta']['url'] }}">
-    <meta property="og:title" content="{{ $viewData['meta']['title'] }}">
-    <meta property="og:description" content="{{ $viewData['meta']['description'] }}">
-    <meta property="og:image" content="{{ $viewData['meta']['image'] }}">
+    <meta property="og:url" content="{{ $ogUrl }}">
+    <meta property="og:title" content="{{ $ogTitle }}">
+    <meta property="og:description" content="{{ $ogDescription }}">
+    <meta property="og:image" content="{{ $ogImage }}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:site_name" content="MMRatePro">
@@ -29,19 +32,18 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="{{ $viewData['meta']['url'] }}">
-    <meta name="twitter:title" content="{{ $viewData['meta']['title'] }}">
-    <meta name="twitter:description" content="{{ $viewData['meta']['description'] }}">
-    <meta name="twitter:image" content="{{ $viewData['meta']['image'] }}">
-    @else
-    <title inertia>{{ config('app.name', 'MMRatePro') }}</title>
-    @endif
+    <meta name="twitter:url" content="{{ $ogUrl }}">
+    <meta name="twitter:title" content="{{ $ogTitle }}">
+    <meta name="twitter:description" content="{{ $ogDescription }}">
+    <meta name="twitter:image" content="{{ $ogImage }}">
+
+    <title inertia>{{ $ogTitle }}</title>
 
     <!-- Viewport -->
     <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 
-    <title inertia>{{ config('app.name', 'MMRatePro') }}</title>
+    {{-- <title inertia>{{ config('app.name', 'MMRatePro') }}</title> --}}
 
     <!-- Prevent transition flicker -->
     <style>
