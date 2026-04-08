@@ -7,7 +7,8 @@
     <!-- CSRF -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="user-role" content="{{ optional(Auth::user())->is_admin ? 'admin' : 'user' }}">
-
+    <meta name="description"
+        content="Real-time USD, SGD, EUR, THB exchange rates to MMK. Live gold prices in Myanmar kyat.">
 
     <meta property="og:image" content="{{ asset('default-og-image.jpg') }}">
 
