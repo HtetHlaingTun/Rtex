@@ -9,10 +9,7 @@
     <meta name="user-role" content="{{ optional(Auth::user())->is_admin ? 'admin' : 'user' }}">
 
 
-    {{-- icon --}}
-    {{--
-    <link rel="icon" type="image/ico" href="/public/favicon.ico">
-    <link rel="apple-touch-icon" href="/public/favicon.ico"> --}}
+    <meta property="og:image" content="{{ asset('default-og-image.jpg') }}">
 
     <!-- Viewport -->
     <meta name="viewport"
