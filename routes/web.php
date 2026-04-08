@@ -13,6 +13,7 @@ use App\Http\Controllers\User\DashboardController;
 use App\Http\Controllers\User\NotificationController;
 use App\Http\Controllers\User\UserAssetController;
 use App\Http\Controllers\User\WatchlistController;
+use App\Models\BlogPost;
 use App\Services\BankAggregatorService;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -32,6 +33,26 @@ Route::get('/terms', function () {
 
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
+
+
+Route::get('/blog/{slug}/fb', function ($slug) {
+    $post = BlogPost::where('slug', $slug)->where('is_published', true)->firstOrFail();
+
+    $image = $post->featured_image
+        ? (filter_var($post->featured_image, FILTER_VALIDATE_URL)
+            ? $post->featured_image
+            : asset($post->featured_image))
+        : asset('default-og-image.jpg');
+
+    return response()->view('facebook-share', [
+        'post' => $post,
+        'metaTitle' => $post->meta_title ?? $post->title,
+        'metaDescription' => $post->meta_description ?? $post->excerpt,
+        'metaImage' => $image,
+        'metaUrl' => url()->current(),
+    ]);
+});
+
 
 Route::get('/generate-og-image', function () {
     // Create a simple image using GD (built into PHP, no package needed)
