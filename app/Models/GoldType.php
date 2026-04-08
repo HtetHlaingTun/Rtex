@@ -69,4 +69,25 @@ class GoldType extends Model
     {
         return $this->hasOne(GoldPrice::class)->where('status', 'verified')->latestOfMany();
     }
+
+    // Add this method to get yesterday's price
+    public function previousDayVerifiedPrice()
+    {
+        $yesterday = now()->subDay()->toDateString();
+
+        return $this->hasOne(GoldPrice::class)
+            ->where('status', 'verified')
+            ->whereDate('price_date', $yesterday)
+            ->latestOfMany();
+    }
+
+    // Alternative: get the second latest price (previous record)
+    public function previousVerifiedPrice()
+    {
+        return $this->hasOne(GoldPrice::class)
+            ->where('status', 'verified')
+            ->orderBy('price_date', 'desc')
+            ->skip(1)
+            ->take(1);
+    }
 }

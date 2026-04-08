@@ -54,10 +54,7 @@
                             <slot />
                         </main>
 
-                        <!-- Sidebar Banner Container (Desktop only) -->
-                        <aside class="md:w-48 hidden md:block">
-                            <div id="sidebar-ad-container" class="sticky top-24"></div>
-                        </aside>
+
                     </div>
                 </div>
             </div>
@@ -219,22 +216,7 @@ const loadAds = () => {
     nativeScript.src = 'https://pl29084878.profitablecpmratenetwork.com/bf7ea0869d15921e230d365bc66d753b/invoke.js'
     document.getElementById('native-ad-container')?.appendChild(nativeScript)
 
-    // Sidebar Banner Ad
-    const sidebarOptions = document.createElement('script')
-    sidebarOptions.innerHTML = `
-        atOptions = {
-            'key': '2a6c1da951959ae9b100cd1aa0786555',
-            'format': 'iframe',
-            'height': 300,
-            'width': 160,
-            'params': {}
-        };
-    `
-    document.getElementById('sidebar-ad-container')?.appendChild(sidebarOptions)
 
-    const sidebarScript = document.createElement('script')
-    sidebarScript.src = 'https://www.highperformanceformat.com/2a6c1da951959ae9b100cd1aa0786555/invoke.js'
-    document.getElementById('sidebar-ad-container')?.appendChild(sidebarScript)
 
     // Social Bar Ad
     const socialScript = document.createElement('script')

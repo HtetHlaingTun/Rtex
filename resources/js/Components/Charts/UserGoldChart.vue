@@ -362,7 +362,16 @@ const getChartOptions = () => {
                         const label = context.dataset.label || '';
                         const value = context.parsed.y;
                         const symbol = label.includes('USD') ? '$' : 'S$';
-                        return `${label}: ${symbol}${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+
+                        if (label === 'USD ') {
+                            return `${label}: $${value.toFixed(2)}`;
+                        } else if (label === 'SGD ') {
+                            return `${label}: S$${value.toFixed(2)}`;
+                        } else {
+                            // MMK Price - NO dollar symbol
+                            return `${label}: ${value.toLocaleString()} `;
+                        }
+                        // return `${label}: ${symbol}${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
                     }
                 }
             }
@@ -465,30 +474,41 @@ const buildChart = () => {
         chartInstance.destroy();
     }
 
+    // Determine the label and symbol based on type
+    let primaryLabel = '';
+    let primarySymbol = '';
 
-    // Base dataset (MMK or main price)
-
+    if (props.type === 'world_oz') {
+        primaryLabel = 'USD ';
+        primarySymbol = '$';
+    } else if (props.type === 'sgd_oz') {
+        primaryLabel = 'SGD ';
+        primarySymbol = 'S$';
+    } else {
+        primaryLabel = 'MMK ';
+        primarySymbol = ''; // No symbol for MMK
+    }
 
     const datasets = [
         {
-            label: props.type === 'world_oz' ? 'USD Price' : 'MMK Price',
+            label: primaryLabel,
             data: points.map(p => ({ x: p.date, y: p.price })),
             borderColor: primaryColor,
-            yAxisID: 'y', // Uses the left axis
+            yAxisID: 'y',
             backgroundColor: 'transparent',
             borderWidth: 3,
             tension: 0.3,
             pointRadius: 0,
         }
     ];
-    // Only add SGD dataset if we are on world_oz and have data
 
+    // Only add SGD dataset if we are on world_oz and have data
     if (props.type === 'world_oz' && points.some(p => p.sgd_price)) {
         datasets.push({
-            label: 'SGD Price',
+            label: 'SGD ',
             data: points.map(p => ({ x: p.date, y: p.sgd_price })),
             borderColor: secondaryColor,
-            yAxisID: 'y1', // <--- USES THE RIGHT AXIS
+            yAxisID: 'y1',
             backgroundColor: 'transparent',
             borderWidth: 2,
             borderDash: [5, 5],
@@ -497,12 +517,10 @@ const buildChart = () => {
         });
     }
 
-
-
     chartInstance = new Chart(ctx, {
         type: 'line',
         data: { datasets },
-        options: getChartOptions()
+        options: getChartOptions(primarySymbol) // Pass symbol to options
     });
 }
 

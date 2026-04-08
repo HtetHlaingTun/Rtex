@@ -9,6 +9,11 @@
     <meta name="user-role" content="{{ optional(Auth::user())->is_admin ? 'admin' : 'user' }}">
 
 
+    {{-- icon --}}
+    {{--
+    <link rel="icon" type="image/ico" href="/public/favicon.ico">
+    <link rel="apple-touch-icon" href="/public/favicon.ico"> --}}
+
     <!-- Viewport -->
     <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">

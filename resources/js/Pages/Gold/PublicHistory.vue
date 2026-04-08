@@ -72,7 +72,7 @@
                                                     </span>
                                                 </div>
                                                 <span class="text-[9px] text-slate-500">({{ Math.abs(stats.percent)
-                                                    }}%)</span>
+                                                }}%)</span>
                                             </div>
                                         </div>
                                     </div>
@@ -106,7 +106,7 @@
                                                     </span>
                                                 </div>
                                                 <span class="text-[9px] text-slate-500">({{ Math.abs(stats.percent_sgd)
-                                                    }}%)</span>
+                                                }}%)</span>
                                             </div>
                                         </div>
                                     </div>

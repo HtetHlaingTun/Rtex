@@ -4,23 +4,27 @@
         <Head title="Live Market Rates" />
 
         <div
-            class="min-h-screen bg-[#F7F7F5] dark:bg-zinc-950 font-mono text-[#111] dark:text-zinc-100 transition-colors duration-300">
+            class="min-h-screen bg-[#F7F7F5] dark:bg-zinc-950 font-mono text-slate-900 dark:text-zinc-100 transition-colors duration-300">
             <main class="w-full max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20">
-                <!-- Combined Gold Market Card (USD + SGD together) -->
+                <!-- Combined Gold Market Card -->
                 <WorldGoldMarket :snapshot="snapshot" :worldGoldSnapshot="worldGoldSnapshot" :sgdRate="sgdRate"
                     :sgdGoldPrice="sgdGoldPrice" :sgdPerGram="sgdPerGram" :sgdKyattharNew="sgdKyattharNew"
                     :sgdKyattharOld="sgdKyattharOld" :usdPerGram="usdPerGram" :usdPerKyattharNew="usdPerKyattharNew"
-                    :usdPerKyattharOld="usdPerKyattharOld" :priceFlash="priceFlash" :priceUp="priceUp"
-                    :changeAbs="changeAbs" :changePct="changePct" :dayHigh="dayHigh" :dayLow="dayLow"
-                    :momentum7d="momentum7d" :premium200d="premium200d" />
+                    :usdPerKyattharOld="usdPerKyattharOld" :priceFlash="priceFlash" :dayHigh="dayHigh" :dayLow="dayLow"
+                    :momentum7d="momentum7d" :premium200d="premium200d" :previousDayUsdPrice="previousDayUsdPrice"
+                    :previousDaySgdPrice="previousDaySgdPrice" :previousCloseDate="previousCloseDate" />
 
-                <!-- Myanmar Bullion Cards (New & Old Systems) -->
+                <!-- Myanmar Bullion Cards (New & Old Systems) - FIXED PROPS -->
                 <div class="space-y-12 mt-8">
                     <MyanmarGoldSystem :goldTypes="myanmarGoldNew" system="new" systemColor="amber"
-                        systemLabel="New System" weight="16.329g" :isFresh="isFresh" />
+                        systemLabel="New System" weight="16.329g" :isFresh="isFresh"
+                        :previousDayPrice="previousDayMmkNew" :previousCloseDate="previousCloseDate"
+                        :usdMmkRate="snapshot?.usd_mmk_rate || 4385" :sgdRate="sgdRate" />
 
                     <MyanmarGoldSystem :goldTypes="myanmarGoldOld" system="old" systemColor="orange"
-                        systemLabel="Old System" weight="16.606g" :isFresh="isFresh" />
+                        systemLabel="Old System" weight="16.606g" :isFresh="isFresh"
+                        :previousDayPrice="previousDayMmkOld" :previousCloseDate="previousCloseDate"
+                        :usdMmkRate="snapshot?.usd_mmk_rate || 4385" :sgdRate="sgdRate" />
                 </div>
 
                 <!-- International Markets -->
@@ -35,7 +39,7 @@
 
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue'
-import { Head, Link } from '@inertiajs/vue3'
+import { Head } from '@inertiajs/vue3'
 import { onMounted, onUnmounted, ref, computed } from 'vue'
 import WorldGoldMarket from '@/Components/gold/user/WorldGoldMarket.vue'
 import MyanmarGoldSystem from '@/Components/gold/user/MyanmarGoldSystem.vue'
@@ -54,6 +58,13 @@ const props = defineProps({
     pending_gold_count: Number,
     worldGoldSnapshot: Object,
     sgdRate: { type: Object, default: null },
+    previousDayUsdPrice: { type: Number, default: null },
+    previousDaySgdPrice: { type: Number, default: null },
+    previousCloseDate: { type: String, default: null },
+    previousDayMmkNew: { type: Number, default: null },
+    previousDayMmkOld: { type: Number, default: null },
+    myanmarGoldNew: { type: Array, default: () => [] },
+    myanmarGoldOld: { type: Array, default: () => [] },
     system_info: {
         type: Object,
         default: () => ({
@@ -77,9 +88,22 @@ const lastUpdateTime = ref(new Date())
 let snapshotInterval = null
 let timer
 
-const worldGold = computed(() => localGoldTypes.value.filter(t => t.category === 'world'))
-const myanmarGoldNew = computed(() => localGoldTypes.value.filter(t => t.category === 'myanmar' && t.system === 'new'))
-const myanmarGoldOld = computed(() => localGoldTypes.value.filter(t => t.category === 'myanmar' && t.system === 'old'))
+// Pass through previous day values from props
+const previousDayUsdPrice = computed(() => props.previousDayUsdPrice)
+const previousDaySgdPrice = computed(() => props.previousDaySgdPrice)
+const previousCloseDate = computed(() => props.previousCloseDate)
+
+// These are now numbers, not strings
+const previousDayMmkNew = computed(() => props.previousDayMmkNew)
+const previousDayMmkOld = computed(() => props.previousDayMmkOld)
+
+// Use the passed myanmarGoldNew/Old directly (not from goldTypes)
+const myanmarGoldNew = computed(() => props.myanmarGoldNew)
+const myanmarGoldOld = computed(() => props.myanmarGoldOld)
+
+const worldGold = computed(() => localGoldTypes.value?.filter(t => t.category === 'world') || [])
+const myanmarGoldNewFromTypes = computed(() => localGoldTypes.value?.filter(t => t.category === 'myanmar' && t.system === 'new') || [])
+const myanmarGoldOldFromTypes = computed(() => localGoldTypes.value?.filter(t => t.category === 'myanmar' && t.system === 'old') || [])
 
 // USD Calculations
 const usdPerGram = computed(() => (snapshot.value?.usd_price || 0) / 31.1035)
@@ -109,17 +133,15 @@ const sgdKyattharOld = computed(() => {
     return perGram * 16.606
 })
 
-// Price Change
+// Price Change (for other components)
 const priceUp = computed(() => (snapshot.value?.change ?? 0) >= 0)
 const changePct = computed(() => Math.abs(snapshot.value?.change_percent ?? 0))
 const changeAbs = computed(() => snapshot.value?.change ?? 0)
 
-// ============ NEW METRICS ============
-// 24h High/Low (from snapshot if available)
+// Metrics
 const dayHigh = computed(() => snapshot.value?.day_high || snapshot.value?.usd_price || 0)
 const dayLow = computed(() => snapshot.value?.day_low || snapshot.value?.usd_price || 0)
 
-// 7-day momentum - Using 7-day old price from controller
 const momentum7d = computed(() => {
     const currentPrice = snapshot.value?.usd_price || 0
     const sevenDayOldPrice = props.gold?.seven_day_old_price || currentPrice
@@ -131,7 +153,6 @@ const momentum7d = computed(() => {
     return 0
 })
 
-// Premium vs previous close - Return as NUMBER
 const premium200d = computed(() => {
     if (snapshot.value?.usd_price && snapshot.value?.previous_close) {
         const premium = ((snapshot.value.usd_price - snapshot.value.previous_close) / snapshot.value.previous_close) * 100
@@ -139,8 +160,6 @@ const premium200d = computed(() => {
     }
     return 0
 })
-
-// ============ END NEW METRICS ============
 
 // Helper Functions
 const fetchLatestSnapshot = async () => {
@@ -166,15 +185,10 @@ const isFresh = (timestamp) => {
     return (now.value - new Date(timestamp)) < 600000
 }
 
-const timeAgo = (ts) => {
-    if (!ts) return 'N/A'
-    const diff = Math.floor((now.value - new Date(ts)) / 60000)
-    if (diff < 1) return 'just now'
-    if (diff < 60) return `${diff}m ago`
-    return `${Math.floor(diff / 60)}h ago`
-}
-
+// Debug logs
 onMounted(() => {
+
+
     timer = setInterval(() => { now.value = new Date() }, 60000)
     fetchLatestSnapshot()
     snapshotInterval = setInterval(fetchLatestSnapshot, 60000)

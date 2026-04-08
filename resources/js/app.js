@@ -30,7 +30,8 @@ import AdUnit from "./Components/AdUnit.vue";
 
 window.Chart = Chart;
 let logoutTimer;
-const appName = import.meta.env.VITE_APP_NAME;
+
+const appName = import.meta.env.VITE_APP_NAME || "MMRatePro";
 
 function resetTimer() {
     clearTimeout(logoutTimer);
@@ -82,7 +83,7 @@ router.on("invalid", (event) => {
 });
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    title: (title) => (title ? `${title} - ${appName}` : appName),
     resolve: (name) =>
         resolvePageComponent(
             `./Pages/${name}.vue`,

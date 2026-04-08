@@ -80,6 +80,68 @@ class WelcomeController extends Controller
             $q->latest('price_date')->limit(1);
         }])->get();
 
+
+        // Get Myanmar gold with proper data formatting
+        // Get Myanmar gold with direct price queries (bypass relationship issues)
+        $myanmarGoldNew = GoldType::where('category', 'myanmar')
+            ->where('system', 'new')
+            ->get()
+            ->map(function ($goldType) {
+                // Get latest verified price directly
+                $latestPrice = GoldPrice::where('gold_type_id', $goldType->id)
+                    ->where('status', 'verified')
+                    ->orderBy('price_date', 'desc')
+                    ->first();
+
+                // Get yesterday's price
+                $yesterday = now()->subDay()->toDateString();
+                $previousPrice = GoldPrice::where('gold_type_id', $goldType->id)
+                    ->where('status', 'verified')
+                    ->whereDate('price_date', $yesterday)
+                    ->first();
+
+                return [
+                    'id' => $goldType->id,
+                    'name' => $goldType->name,
+                    'system' => $goldType->system,
+                    'purity' => $goldType->purity,
+                    'unit' => $goldType->unit,
+                    'latest_verified_price' => $latestPrice ? (float) $latestPrice->price : 0,
+                    'previous_day_price' => $previousPrice ? (float) $previousPrice->price : 0,
+                    'created_at' => $latestPrice?->created_at,
+                    'source_type' => $latestPrice?->source_type,
+                ];
+            });
+
+        $myanmarGoldOld = GoldType::where('category', 'myanmar')
+            ->where('system', 'old')
+            ->get()
+            ->map(function ($goldType) {
+                $latestPrice = GoldPrice::where('gold_type_id', $goldType->id)
+                    ->where('status', 'verified')
+                    ->orderBy('price_date', 'desc')
+                    ->first();
+
+                $yesterday = now()->subDay()->toDateString();
+                $previousPrice = GoldPrice::where('gold_type_id', $goldType->id)
+                    ->where('status', 'verified')
+                    ->whereDate('price_date', $yesterday)
+                    ->first();
+
+                return [
+                    'id' => $goldType->id,
+                    'name' => $goldType->name,
+                    'system' => $goldType->system,
+                    'purity' => $goldType->purity,
+                    'unit' => $goldType->unit,
+                    'latest_verified_price' => $latestPrice ? (float) $latestPrice->price : 0,
+                    'previous_day_price' => $previousPrice ? (float) $previousPrice->price : 0,
+                    'created_at' => $latestPrice?->created_at,
+                    'source_type' => $latestPrice?->source_type,
+                ];
+            });
+
+
         // Count pending gold prices
         $pendingGoldCount = GoldPrice::where('status', 'pending')->count();
 
@@ -97,6 +159,16 @@ class WelcomeController extends Controller
                 'fetched_at' => $worldGoldSnapshot->fetched_at,
             ];
         }
+
+        $today = now()->toDateString();
+        $yesterday = now()->subDay()->toDateString();
+
+        // Get the last record from yesterday
+        $previousDayClose = WorldGoldSnapshot::whereDate('fetched_at', $yesterday)
+            ->orderBy('fetched_at', 'desc')
+            ->first();
+
+
 
         return Inertia::render('Welcome', [
             'breadcrumbs' => [
@@ -134,6 +206,13 @@ class WelcomeController extends Controller
             'pending_gold_count' => $pendingGoldCount,
             'worldGoldSnapshot' => $worldGoldSnapshot,
             'sgdRate' => $sgdRate,
+            'previousDayUsdPrice' => $previousDayClose?->usd_price,
+            'previousDaySgdPrice' => $previousDayClose?->sgd_price,
+            'previousCloseDate' => $previousDayClose?->fetched_at,
+            'myanmarGoldNew' => $myanmarGoldNew,
+            'myanmarGoldOld' => $myanmarGoldOld,
+            'previousDayMmkNew' => $myanmarGoldNew->first()['previous_day_price'] ?? null,
+            'previousDayMmkOld' => $myanmarGoldOld->first()['previous_day_price'] ?? null,
         ]);
     }
 }
