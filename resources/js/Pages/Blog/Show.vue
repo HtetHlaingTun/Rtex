@@ -175,15 +175,23 @@ const pageDescription = computed(() => {
     return desc || 'Real-time exchange rates and gold prices for Myanmar'
 })
 
+const getBaseUrl = () => {
+    if (window.location.hostname === 'localhost') {
+        return 'http://localhost:8000'
+    }
+    return 'https://luckeymm.online'
+}
+
 const featuredImageUrl = computed(() => {
+    const baseUrl = getBaseUrl()
+
     if (props.post?.featured_image) {
         if (props.post.featured_image.startsWith('http')) {
             return props.post.featured_image
         }
-        return `https://luckeymm.online/${props.post.featured_image.replace(/^\/+/, '')}`
+        return `${baseUrl}/${props.post.featured_image.replace(/^\/+/, '')}`
     }
-    // Use the dynamic HTML OG image
-    return 'https://luckeymm.online/og-image'
+    return `${baseUrl}/default-og-image.jpg`
 })
 // Current URL for sharing
 const currentUrl = computed(() => {

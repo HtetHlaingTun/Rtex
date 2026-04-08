@@ -26,6 +26,65 @@ Route::post('/subscribe', [NewsletterController::class, 'subscribe'])->name('sub
 Route::get('/og-image', function () {
     return view('og-image');
 });
+
+
+Route::get('/generate-og-image', function () {
+    // Create a simple image using GD (built into PHP, no package needed)
+    $width = 1200;
+    $height = 630;
+
+    // Create image
+    $image = imagecreatetruecolor($width, $height);
+
+    // Colors
+    $bgColor = imagecolorallocate($image, 26, 26, 46); // #1a1a2e
+    $accentColor = imagecolorallocate($image, 245, 158, 11); // #f59e0b
+    $textColor = imagecolorallocate($image, 255, 255, 255);
+    $subColor = imagecolorallocate($image, 136, 136, 136); // #888888
+
+    // Fill background
+    imagefill($image, 0, 0, $bgColor);
+
+    // Add border
+    imagerectangle($image, 10, 10, $width - 10, $height - 10, $accentColor);
+
+    // Add main text
+    $text = "MMRatePro";
+    $fontSize = 5; // Built-in font size (1-5)
+    $textWidth = imagefontwidth($fontSize) * strlen($text);
+    $x = ($width - $textWidth) / 2;
+    $y = 280;
+    imagestring($image, $fontSize, $x, $y, $text, $accentColor);
+
+    // Add subtitle
+    $subtitle = "Real-time Exchange Rates & Gold Prices";
+    $subWidth = imagefontwidth(4) * strlen($subtitle);
+    $subX = ($width - $subWidth) / 2;
+    $subY = 380;
+    imagestring($image, 4, $subX, $subY, $subtitle, $textColor);
+
+    // Add domain
+    $domain = "luckeymm.online";
+    $domainWidth = imagefontwidth(3) * strlen($domain);
+    $domainX = ($width - $domainWidth) / 2;
+    $domainY = 520;
+    imagestring($image, 3, $domainX, $domainY, $domain, $subColor);
+
+    // Save the image
+    $path = public_path('default-og-image.jpg');
+    imagejpeg($image, $path, 90);
+    imagedestroy($image);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'OG image created at: ' . $path,
+        'url' => url('/default-og-image.jpg')
+    ]);
+});
+
+
+
+
 Route::get('/terms', function () {
     return Inertia::render('TermOfServices');
 })->name('terms');
