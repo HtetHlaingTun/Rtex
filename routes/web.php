@@ -26,7 +26,12 @@ Route::post('/subscribe', [NewsletterController::class, 'subscribe'])->name('sub
 Route::get('/og-image', function () {
     return view('og-image');
 });
+Route::get('/terms', function () {
+    return Inertia::render('TermOfServices');
+})->name('terms');
 
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
 Route::get('/generate-og-image', function () {
     // Create a simple image using GD (built into PHP, no package needed)
@@ -81,17 +86,6 @@ Route::get('/generate-og-image', function () {
         'url' => url('/default-og-image.jpg')
     ]);
 });
-
-
-
-
-Route::get('/terms', function () {
-    return Inertia::render('TermOfServices');
-})->name('terms');
-
-Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
-Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
-
 
 
 // Public pages

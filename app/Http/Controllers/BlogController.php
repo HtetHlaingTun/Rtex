@@ -3,11 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\BlogPost;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 
 class BlogController extends Controller
 {
+    public function index()
+    {
+        $posts = BlogPost::published()
+            ->orderBy('published_at', 'desc')
+            ->paginate(12);
+
+        return Inertia::render('Blog/Index', [
+            'posts' => $posts,
+            'meta' => [
+                'title' => 'Exchange Rate Blog - Market Insights & Updates',
+                'description' => 'Latest updates on Myanmar exchange rates, gold prices, and market analysis. Expert insights on USD, SGD, EUR, THB to MMK.'
+            ]
+        ]);
+    }
+
     public function show($slug)
     {
         $post = BlogPost::where('slug', $slug)
