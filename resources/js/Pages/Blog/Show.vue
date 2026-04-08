@@ -1,23 +1,29 @@
 <template>
 
     <Head>
-        <title>{{ post.meta_title || post.title }} - MMRatePro</title>
-        <meta name="description" :content="post.meta_description || post.excerpt">
+        <title>{{ meta.title }} - MMRatePro</title>
+        <meta name="description" :content="meta.description">
 
-        <!-- Open Graph / Facebook -->
-        <meta property="og:type" content="article">
-        <meta property="og:url" :content="currentUrl">
-        <meta property="og:title" :content="post.meta_title || post.title">
-        <meta property="og:description" :content="post.meta_description || post.excerpt">
-        <meta property="og:image" :content="post.featured_image || '/og-image.jpg'">
+            <!-- Open Graph / Facebook -->
+            <meta property="og:type" content="article">
+                <meta property="og:url" :content="meta.url">
+                    <meta property="og:title" :content="meta.title">
+                        <meta property="og:description" :content="meta.description">
+                            <meta property="og:image" :content="meta.image">
+                                <meta property="og:image:width" content="1200">
+                                    <meta property="og:image:height" content="630">
+                                        <meta property="og:site_name" content="MMRatePro">
+                                            <meta property="og:locale" content="en_US">
 
-        <!-- Twitter -->
-        <meta property="twitter:card" content="summary_large_image">
-        <meta property="twitter:url" :content="currentUrl">
-        <meta property="twitter:title" :content="post.meta_title || post.title">
-        <meta property="twitter:description" :content="post.meta_description || post.excerpt">
-        <meta property="twitter:image" :content="post.featured_image || '/og-image.jpg'">
+                                                <!-- Twitter Card -->
+                                                <meta name="twitter:card" content="summary_large_image">
+                                                    <meta name="twitter:url" :content="meta.url">
+                                                        <meta name="twitter:title" :content="meta.title">
+                                                            <meta name="twitter:description"
+                                                                :content="meta.description">
+                                                                <meta name="twitter:image" :content="meta.image">
     </Head>
+
     <GuestLayout>
         <div class="min-h-screen bg-gray-50 dark:bg-zinc-900 py-12">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -29,7 +35,6 @@
 
                 <!-- Blog Post -->
                 <article class="bg-white dark:bg-zinc-800 rounded-lg shadow-lg overflow-hidden">
-                    <!-- Featured Image (if exists) -->
                     <img v-if="post.featured_image" :src="post.featured_image" :alt="post.title"
                         class="w-full h-64 md:h-96 object-cover">
 
@@ -44,58 +49,56 @@
                             </div>
                         </div>
 
-                        <!-- Title -->
                         <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
                             {{ post.title }}
                         </h1>
 
-                        <!-- Content -->
-                        <div class="prose prose-lg dark:prose-invert max-w-none" v-html="post.content"></div>
-                        <!-- Ad after content -->
-                        <AdUnit zone-id="BLOG_BOTTOM_ZONE" />
-                        <!-- Share Section - Improved -->
+                        <div class="prose prose-lg dark:prose-invert max-w-none dark:text-white" v-html="post.content">
+                        </div>
+
+                        <!-- Share Section -->
                         <div class="border-t border-gray-200 dark:border-zinc-700 mt-8 pt-8">
-                            <h3 class="text-lg font-semibold mb-4">Share this article</h3>
+                            <h3 class="text-lg font-semibold mb-4 dark:text-white">Share this article</h3>
                             <div class="flex flex-wrap gap-3">
-                                <!-- Facebook Share -->
-                                <a :href="facebookShareUrl" target="_blank" rel="noopener noreferrer"
+                                <!-- Facebook Share - FIXED -->
+                                <button @click="shareOnFacebook"
                                     class="flex items-center gap-2 bg-[#1877f2] text-white px-4 py-2 rounded-lg hover:bg-[#1877f2]/90 transition">
                                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                         <path
                                             d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                                     </svg>
                                     Facebook
-                                </a>
+                                </button>
 
                                 <!-- Twitter/X Share -->
-                                <a :href="twitterShareUrl" target="_blank" rel="noopener noreferrer"
+                                <button @click="shareOnTwitter"
                                     class="flex items-center gap-2 bg-[#1da1f2] text-white px-4 py-2 rounded-lg hover:bg-[#1da1f2]/90 transition">
                                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                         <path
                                             d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                                     </svg>
                                     Twitter
-                                </a>
+                                </button>
 
                                 <!-- LinkedIn Share -->
-                                <a :href="linkedinShareUrl" target="_blank" rel="noopener noreferrer"
+                                <button @click="shareOnLinkedIn"
                                     class="flex items-center gap-2 bg-[#0a66c2] text-white px-4 py-2 rounded-lg hover:bg-[#0a66c2]/90 transition">
                                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                         <path
                                             d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451c.979 0 1.771-.773 1.771-1.729V1.729C24 .774 23.227 0 22.225 0z" />
                                     </svg>
                                     LinkedIn
-                                </a>
+                                </button>
 
                                 <!-- WhatsApp Share -->
-                                <a :href="whatsappShareUrl" target="_blank" rel="noopener noreferrer"
+                                <button @click="shareOnWhatsApp"
                                     class="flex items-center gap-2 bg-[#25d366] text-white px-4 py-2 rounded-lg hover:bg-[#25d366]/90 transition">
                                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                         <path
-                                            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12.004 21.6c-1.096 0-2.162-.2-3.15-.59a8.76 8.76 0 0 1-2.56-1.7 8.76 8.76 0 0 1-1.7-2.56 8.76 8.76 0 0 1-.59-3.15c0-1.096.2-2.162.59-3.15a8.76 8.76 0 0 1 1.7-2.56 8.76 8.76 0 0 1 2.56-1.7 8.76 8.76 0 0 1 3.15-.59c1.096 0 2.162.2 3.15.59a8.76 8.76 0 0 1 2.56 1.7 8.76 8.76 0 0 1 1.7 2.56 8.76 8.76 0 0 1 .59 3.15c0 1.096-.2 2.162-.59 3.15a8.76 8.76 0 0 1-1.7 2.56 8.76 8.76 0 0 1-2.56 1.7 8.76 8.76 0 0 1-3.15.59zM12.004 0C5.374 0 0 5.374 0 12c0 2.29.642 4.439 1.76 6.292L0 24l5.942-1.752A11.96 11.96 0 0 0 12.004 24c6.626 0 12-5.374 12-12 0-6.626-5.374-12-12-12z" />
+                                            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
                                     </svg>
                                     WhatsApp
-                                </a>
+                                </button>
 
                                 <!-- Copy Link Button -->
                                 <button @click="copyLink"
@@ -135,7 +138,7 @@
 
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, Head } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 
 const props = defineProps({
@@ -146,29 +149,26 @@ const props = defineProps({
 
 const copied = ref(false)
 
-// Get current URL
-const currentUrl = computed(() => encodeURIComponent(window.location.href))
-const currentUrlRaw = computed(() => window.location.href)
+// Use meta from controller (already has absolute URLs)
+const meta = computed(() => props.meta)
+const rawUrl = computed(() => meta.value.url)
+const encodedUrl = computed(() => encodeURIComponent(rawUrl.value))
+const encodedTitle = computed(() => encodeURIComponent(meta.value.title))
 
-// Encoded title for sharing
-const encodedTitle = computed(() => encodeURIComponent(props.post.title))
+const shareOnFacebook = async () => {
+    // Trigger Facebook scrape
+    const scrapeUrl = `https://graph.facebook.com/?id=${encodeURIComponent(rawUrl.value)}&scrape=true`
+    try {
+        await fetch(scrapeUrl, { method: 'POST' })
+    } catch (e) { }
 
-// Share URLs with better preview support
-const facebookShareUrl = computed(() =>
-    `https://www.facebook.com/sharer/sharer.php?u=${currentUrl.value}`
-)
+    setTimeout(() => {
+        const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl.value}`
+        window.open(shareUrl, '_blank', 'width=600,height=400')
+    }, 500)
+}
 
-const twitterShareUrl = computed(() =>
-    `https://twitter.com/intent/tweet?url=${currentUrl.value}&text=${encodedTitle.value}`
-)
-
-const linkedinShareUrl = computed(() =>
-    `https://www.linkedin.com/sharing/share-offsite/?url=${currentUrl.value}`
-)
-
-const whatsappShareUrl = computed(() =>
-    `https://wa.me/?text=${encodedTitle.value}%20${currentUrl.value}`
-)
+// ... rest of your share functions
 
 const formatDate = (date) => {
     if (!date) return ''
@@ -181,11 +181,9 @@ const formatDate = (date) => {
 
 const copyLink = async () => {
     try {
-        await navigator.clipboard.writeText(currentUrlRaw.value)
+        await navigator.clipboard.writeText(rawUrl.value)
         copied.value = true
-        setTimeout(() => {
-            copied.value = false
-        }, 2000)
+        setTimeout(() => { copied.value = false }, 2000)
     } catch (err) {
         console.error('Failed to copy:', err)
     }

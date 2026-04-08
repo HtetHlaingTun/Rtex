@@ -24,7 +24,9 @@ use Symfony\Component\DomCrawler\Crawler;
 Route::post('/subscribe', [NewsletterController::class, 'subscribe'])->name('subscribe');
 
 
-
+Route::get('/terms', function () {
+    return Inertia::render('TermOfServices');
+})->name('terms');
 
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');

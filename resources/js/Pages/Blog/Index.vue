@@ -30,7 +30,7 @@
                             </p>
                             <div class="flex items-center justify-between text-sm">
                                 <span class="text-gray-500 dark:text-gray-500">
-                                    By {{ post.author }}
+                                    By {{ post.author ? post.author : 'Admin' }}
                                 </span>
                                 <span class="text-amber-600 group-hover:underline">
                                     Read More →
