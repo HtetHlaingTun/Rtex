@@ -1,6 +1,6 @@
 <template>
     <Link :href="route('user.gold.history', { type: system === 'new' ? 'new_system' : 'traditional' })"
-        class="group block">
+        :data-gold="`myanmar-${system}`" :data-gold-system="system" class="group block">
         <section class="space-y-6">
             <!-- Section Header -->
             <div class="flex items-center justify-between px-2">
@@ -310,7 +310,7 @@
                             </span>
                             <Link
                                 :href="route('user.gold.history', { type: system === 'new' ? 'new_system' : 'traditional' })"
-                                :class="`text-[9px] font-black uppercase tracking-widest flex items-center gap-1 transition-all duration-300 hover:gap-2 ${systemColor === 'amber'
+                                :data-gold="`myanmar-${system}-history`" :data-gold-system="system" :class="`text-[9px] font-black uppercase tracking-widest flex items-center gap-1 transition-all duration-300 hover:gap-2 ${systemColor === 'amber'
                                     ? 'text-amber-500 dark:text-amber-400'
                                     : 'text-orange-500 dark:text-orange-400'
                                     }`">

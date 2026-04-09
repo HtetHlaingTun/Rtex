@@ -27,6 +27,7 @@
             <div class="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-white/[0.05]">
 
                 <Link v-for="type in goldTypes" :key="type.id" :href="route('gold.public-history', type.id)"
+                    :data-gold="type.name" data-gold-system="international"
                     class="group/item relative flex flex-col p-6 sm:p-8 hover:bg-white/[0.02] transition-all duration-500">
                     <span
                         class="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6 group-hover/item:text-amber-500 transition-colors">

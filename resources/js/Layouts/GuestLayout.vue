@@ -121,8 +121,10 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
 import { useDarkMode } from '@/Composables/useDarkMode';
 import axios from 'axios';
+import { useGA4 } from '@/Composables/useGA4';
 
 const { isDark, toggleDark } = useDarkMode()
+const { trackFormStart, trackFormSubmit, trackSubscribe, trackScroll, trackClick } = useGA4();
 const page = usePage()
 
 // --- Flash Message State with Auto-Dismiss ---
@@ -132,6 +134,50 @@ const successMessageText = ref('')
 const errorMessageText = ref('')
 let successTimer = null
 let errorTimer = null
+
+// --- Scroll depth tracking ---
+const maxScrollDepth = ref(0);
+const scrollThresholds = [25, 50, 75, 90];
+
+// Track scroll depth for GA4
+const trackScrollDepth = () => {
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+    const scrollTop = window.scrollY;
+    const scrollPercent = (scrollTop / (documentHeight - windowHeight)) * 100;
+    const roundedScroll = Math.round(scrollPercent);
+
+    for (const threshold of scrollThresholds) {
+        if (roundedScroll >= threshold && maxScrollDepth.value < threshold) {
+            maxScrollDepth.value = threshold;
+            trackScroll(threshold, document.title);
+        }
+    }
+};
+
+// Track form interactions
+const trackFormInteraction = (event, formType) => {
+    const target = event.target;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'FORM') {
+        trackFormStart(formType);
+    }
+};
+
+// Track all link clicks
+const trackLinkClicks = (event) => {
+    const link = event.target.closest('a');
+    if (link && link.href && !link.href.startsWith('javascript:')) {
+        // Don't track internal anchor links
+        if (link.getAttribute('href') === '#') return;
+
+        trackClick(
+            link.innerText?.trim() || link.getAttribute('aria-label') || 'link',
+            link.id || null,
+            link.className || null,
+            link.href
+        );
+    }
+};
 
 // Watch for flash messages from server
 watch(() => page.props.flash, (flash) => {
@@ -172,9 +218,12 @@ const updateOnlineStatus = () => {
     isOnline.value = navigator.onLine;
 };
 
-// --- Newsletter Subscribe Function ---
+// --- Newsletter Subscribe Function with GA4 tracking ---
 const subscribeEmail = async () => {
     if (!subscriberEmail.value) return;
+
+    // Track form start
+    trackFormStart('newsletter_subscribe');
 
     subscribing.value = true
     subscribeSuccess.value = false
@@ -187,15 +236,24 @@ const subscribeEmail = async () => {
 
         if (response.data.success) {
             subscribeSuccess.value = true
+            // Track successful subscription (without sending actual email to GA4)
+            trackSubscribe(true);
+            trackFormSubmit('newsletter_subscribe', true);
             subscriberEmail.value = ''
             setTimeout(() => {
                 subscribeSuccess.value = false
             }, 3000)
         } else {
             subscribeError.value = response.data.message || 'Subscription failed'
+            // Track failed subscription
+            trackSubscribe(false);
+            trackFormSubmit('newsletter_subscribe', false, subscribeError.value);
         }
     } catch (error) {
         subscribeError.value = error.response?.data?.message || 'Something went wrong. Please try again.'
+        // Track error
+        trackSubscribe(false);
+        trackFormSubmit('newsletter_subscribe', false, subscribeError.value);
     } finally {
         subscribing.value = false
     }
@@ -216,23 +274,47 @@ const loadAds = () => {
     nativeScript.src = 'https://pl29084878.profitablecpmratenetwork.com/bf7ea0869d15921e230d365bc66d753b/invoke.js'
     document.getElementById('native-ad-container')?.appendChild(nativeScript)
 
-
-
     // Social Bar Ad
     const socialScript = document.createElement('script')
     socialScript.src = 'https://pl29087167.profitablecpmratenetwork.com/3b/a4/ce/3ba4ce928386d4ee553ae57212063c1d.js'
     document.getElementById('social-bar-container')?.appendChild(socialScript)
 }
 
-// --- Scroll Logic for Navbar Shadow ---
+// --- Scroll Logic for Navbar Shadow and GA4 tracking ---
 const handleScroll = () => {
     isScrolled.value = window.scrollY > 20
+    trackScrollDepth(); // Track scroll depth for GA4
 }
+
+
+
+
+let previousPage = '';
+
+const trackPageView = () => {
+    const currentPage = window.location.pathname;
+
+    // Only send if page actually changed
+    if (currentPage !== previousPage && typeof window !== 'undefined' && window.gtag) {
+        window.gtag('config', 'G-ZSY1190X65', {
+            page_title: document.title,
+            page_location: window.location.href
+        });
+        previousPage = currentPage;
+        console.log(`GA4 Page View: ${document.title}`);
+    }
+};
+
 
 onMounted(() => {
     window.addEventListener('scroll', handleScroll);
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
+    document.addEventListener('click', trackLinkClicks);
+    document.addEventListener('focusin', (e) => trackFormInteraction(e, 'footer_newsletter'));
+
+    // Track initial page view
+    trackPageView();
 
     // Load ads after DOM is ready
     loadAds()
@@ -242,6 +324,7 @@ onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll);
     window.removeEventListener('online', updateOnlineStatus);
     window.removeEventListener('offline', updateOnlineStatus);
+    document.removeEventListener('click', trackLinkClicks);
     if (successTimer) clearTimeout(successTimer)
     if (errorTimer) clearTimeout(errorTimer)
 })
@@ -274,7 +357,26 @@ router.on('start', (event) => {
 
 router.on('finish', () => {
     isGlobalLoading.value = false;
+    // Track page view after navigation completes
+    setTimeout(() => {
+        trackPageView();
+    }, 100);
 });
+
+// Track currency rate clicks if they exist on the page
+const trackRateClick = (currency, rateType) => {
+    if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'view_item', {
+            currency: currency,
+            rate_type: rateType,
+            engagement_time_msec: 500
+        });
+    }
+};
+
+// Expose rate tracking to child components via provide/inject if needed
+import { provide } from 'vue';
+provide('trackRateClick', trackRateClick);
 </script>
 
 <style>

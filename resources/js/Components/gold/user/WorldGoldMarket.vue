@@ -1,5 +1,9 @@
 <template>
-    <Link :href="route('user.gold.history', { type: 'world_oz' })">
+
+
+    <Link :href="route('user.gold.history', { type: 'world_oz' })" data-gold="World Gold Spot"
+        data-gold-system="international">
+
         <div
             class="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl shadow-black/20 group transition-all duration-500 hover:shadow-2xl hover:shadow-amber-500/5">
 
@@ -20,7 +24,8 @@
 
             <!-- Decorative corner accents -->
             <div class="absolute top-4 left-4 w-20 h-20 border-l-2 border-t-2 border-white/5 rounded-tl-2xl"></div>
-            <div class="absolute bottom-4 right-4 w-20 h-20 border-r-2 border-b-2 border-white/5 rounded-br-2xl"></div>
+            <div class="absolute bottom-4 right-4 w-20 h-20 border-r-2 border-b-2 border-white/5 rounded-br-2xl">
+            </div>
 
             <!-- Dual Currency Header -->
             <div class="relative px-6 pt-6 pb-2 border-b border-white/10">
@@ -147,7 +152,8 @@
                         <span class="text-[7px] text-white/40">24h:</span>
                         <span :class="sgdRate.change >= 0 ? 'text-emerald-400' : 'text-rose-400'"
                             class="text-[8px] font-black">
-                            {{ sgdRate.change >= 0 ? '▲' : '▼' }} {{ formatNumber(Math.abs(sgdRate.change), 4) }} ({{
+                            {{ sgdRate.change >= 0 ? '▲' : '▼' }} {{ formatNumber(Math.abs(sgdRate.change), 4) }}
+                            ({{
                                 formatNumber(Math.abs(sgdRate.change_percent), 2) }}%)
                         </span>
                     </div>
@@ -158,29 +164,37 @@
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 px-6 pb-4">
                 <div
                     class="bg-gradient-to-br from-amber-500/10 to-yellow-500/10 backdrop-blur-sm border border-amber-500/30 rounded-xl p-3">
-                    <p class="text-[7px] font-black uppercase tracking-[0.12em] text-amber-400/80">Kyatthar (USD)</p>
-                    <p class="font-mono text-sm font-black italic text-amber-300">${{ formatNumber(usdPerKyattharNew) }}
+                    <p class="text-[7px] font-black uppercase tracking-[0.12em] text-amber-400/80">Kyatthar (USD)
+                    </p>
+                    <p class="font-mono text-sm font-black italic text-amber-300">${{
+                        formatNumber(usdPerKyattharNew) }}
                     </p>
                     <p class="text-[6px] text-white/40">16.329g · New</p>
                 </div>
                 <div
                     class="bg-gradient-to-br from-orange-500/10 to-red-500/10 backdrop-blur-sm border border-orange-500/30 rounded-xl p-3">
-                    <p class="text-[7px] font-black uppercase tracking-[0.12em] text-orange-400/80">Kyatthar (USD)</p>
-                    <p class="font-mono text-sm font-black italic text-orange-300">${{ formatNumber(usdPerKyattharOld)
+                    <p class="text-[7px] font-black uppercase tracking-[0.12em] text-orange-400/80">Kyatthar (USD)
+                    </p>
+                    <p class="font-mono text-sm font-black italic text-orange-300">${{
+                        formatNumber(usdPerKyattharOld)
                     }}</p>
                     <p class="text-[6px] text-white/40">16.606g · Old</p>
                 </div>
                 <div
                     class="bg-gradient-to-br from-amber-500/10 to-yellow-500/10 backdrop-blur-sm border border-amber-500/30 rounded-xl p-3">
-                    <p class="text-[7px] font-black uppercase tracking-[0.12em] text-amber-400/80">Kyatthar (SGD)</p>
-                    <p class="font-mono text-sm font-black italic text-amber-300">S${{ formatNumber(sgdKyattharNew) }}
+                    <p class="text-[7px] font-black uppercase tracking-[0.12em] text-amber-400/80">Kyatthar (SGD)
+                    </p>
+                    <p class="font-mono text-sm font-black italic text-amber-300">S${{ formatNumber(sgdKyattharNew)
+                    }}
                     </p>
                     <p class="text-[6px] text-white/40">16.329g · New</p>
                 </div>
                 <div
                     class="bg-gradient-to-br from-orange-500/10 to-red-500/10 backdrop-blur-sm border border-orange-500/30 rounded-xl p-3">
-                    <p class="text-[7px] font-black uppercase tracking-[0.12em] text-orange-400/80">Kyatthar (SGD)</p>
-                    <p class="font-mono text-sm font-black italic text-orange-300">S${{ formatNumber(sgdKyattharOld) }}
+                    <p class="text-[7px] font-black uppercase tracking-[0.12em] text-orange-400/80">Kyatthar (SGD)
+                    </p>
+                    <p class="font-mono text-sm font-black italic text-orange-300">S${{ formatNumber(sgdKyattharOld)
+                    }}
                     </p>
                     <p class="text-[6px] text-white/40">16.606g · Old</p>
                 </div>
@@ -199,21 +213,25 @@
                         <span class="text-[10px] font-black text-white/70">1 Gram</span>
                         <div class="flex items-center justify-center gap-3 mt-1">
                             <span class="text-[8px] text-white/40">USD</span>
-                            <p class="text-lg font-mono font-black text-amber-300">${{ formatNumber(usdPerGram) }}</p>
+                            <p class="text-lg font-mono font-black text-amber-300">${{ formatNumber(usdPerGram) }}
+                            </p>
                             <span class="text-white/30">|</span>
                             <span class="text-[8px] text-white/40">SGD</span>
-                            <p class="text-lg font-mono font-black text-blue-300">S${{ formatNumber(sgdPerGram) }}</p>
+                            <p class="text-lg font-mono font-black text-blue-300">S${{ formatNumber(sgdPerGram) }}
+                            </p>
                         </div>
                     </div>
                     <div class="bg-white/5 rounded-xl p-4 text-center">
                         <span class="text-[10px] font-black text-white/70">50 Grams</span>
                         <div class="flex items-center justify-center gap-3 mt-1">
                             <span class="text-[8px] text-white/40">USD</span>
-                            <p class="text-lg font-mono font-black text-amber-300">${{ formatNumber(usdPerGram * 50) }}
+                            <p class="text-lg font-mono font-black text-amber-300">${{ formatNumber(usdPerGram * 50)
+                            }}
                             </p>
                             <span class="text-white/30">|</span>
                             <span class="text-[8px] text-white/40">SGD</span>
-                            <p class="text-lg font-mono font-black text-blue-300">S${{ formatNumber(sgdPerGram * 50) }}
+                            <p class="text-lg font-mono font-black text-blue-300">S${{ formatNumber(sgdPerGram * 50)
+                            }}
                             </p>
                         </div>
                     </div>
@@ -221,11 +239,13 @@
                         <span class="text-[10px] font-black text-white/70">100 Grams</span>
                         <div class="flex items-center justify-center gap-3 mt-1">
                             <span class="text-[8px] text-white/40">USD</span>
-                            <p class="text-lg font-mono font-black text-amber-300">${{ formatNumber(usdPerGram * 100) }}
+                            <p class="text-lg font-mono font-black text-amber-300">${{ formatNumber(usdPerGram *
+                                100) }}
                             </p>
                             <span class="text-white/30">|</span>
                             <span class="text-[8px] text-white/40">SGD</span>
-                            <p class="text-lg font-mono font-black text-blue-300">S${{ formatNumber(sgdPerGram * 100) }}
+                            <p class="text-lg font-mono font-black text-blue-300">S${{ formatNumber(sgdPerGram *
+                                100) }}
                             </p>
                         </div>
                     </div>

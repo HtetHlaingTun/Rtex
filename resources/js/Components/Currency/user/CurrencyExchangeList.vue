@@ -44,6 +44,7 @@
 
             <div class="space-y-3">
                 <Link v-for="rate in rates" :key="rate.id" :href="route('history', rate.currency?.id || rate.id)"
+                    :data-currency="rate.currency?.code" data-rate-type="exchange"
                     class="group block rounded-2xl transition-all duration-300
             bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800
             hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-xl hover:shadow-orange-500/10 hover:-translate-y-0.5">
@@ -131,7 +132,7 @@
                                 <div class="mt-1 flex items-center gap-1 text-[9px] text-slate-400">
                                     <span class="font-black">Spread:</span>
                                     <span class="font-mono font-bold">{{ $formatMoney(rate.sell_rate - rate.buy_rate)
-                                        }}</span>
+                                    }}</span>
                                     <span>MMK</span>
                                 </div>
                             </div>

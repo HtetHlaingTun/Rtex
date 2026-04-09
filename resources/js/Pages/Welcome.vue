@@ -185,6 +185,46 @@ const isFresh = (timestamp) => {
     return (now.value - new Date(timestamp)) < 600000
 }
 
+
+// ========== ADD THIS TRACKING FUNCTION ==========
+const trackCurrencyGoldClick = (event) => {
+    // Track currency clicks
+    const currencyElement = event.target.closest('[data-currency]');
+    if (currencyElement) {
+        const currency = currencyElement.dataset.currency;
+        const rateType = currencyElement.dataset.rateType || 'live';
+
+        if (typeof window !== 'undefined' && window.gtag) {
+            window.gtag('event', 'view_item', {
+                currency: currency,
+                rate_type: rateType,
+                page_location: window.location.href,
+                engagement_time_msec: 500
+            });
+            console.log(`GA4 Tracked: ${currency} - ${rateType}`);
+        }
+    }
+
+    // Track gold clicks
+    const goldElement = event.target.closest('[data-gold]');
+    if (goldElement) {
+        const goldType = goldElement.dataset.gold;
+        const goldSystem = goldElement.dataset.goldSystem || 'world';
+
+        if (typeof window !== 'undefined' && window.gtag) {
+            window.gtag('event', 'view_item', {
+                item_type: 'gold',
+                gold_type: goldType,
+                gold_system: goldSystem,
+                engagement_time_msec: 500
+            });
+            console.log(`GA4 Tracked: Gold - ${goldType} (${goldSystem})`);
+        }
+    }
+};
+
+
+
 // Debug logs
 onMounted(() => {
 
@@ -192,10 +232,14 @@ onMounted(() => {
     timer = setInterval(() => { now.value = new Date() }, 60000)
     fetchLatestSnapshot()
     snapshotInterval = setInterval(fetchLatestSnapshot, 60000)
+
+    document.addEventListener('click', trackCurrencyGoldClick);
 })
 
 onUnmounted(() => {
     clearInterval(snapshotInterval)
     clearInterval(timer)
+
+    document.removeEventListener('click', trackCurrencyGoldClick);
 })
 </script>
