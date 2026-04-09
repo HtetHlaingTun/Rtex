@@ -1,5 +1,7 @@
 <template>
     <GuestLayout>
+
+        <Head title="Live Market Rates" />
         <div class="min-h-screen bg-gray-50 dark:bg-zinc-950 py-12">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="bg-white dark:bg-zinc-900 rounded-lg shadow-lg p-8">
@@ -321,6 +323,7 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { computed } from 'vue'
+import { Head } from '@inertiajs/vue3';
 
 const formattedDate = computed(() => {
     return new Date().toLocaleDateString('en-US', {

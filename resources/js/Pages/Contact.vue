@@ -1,5 +1,8 @@
 <template>
     <GuestLayout>
+
+
+        <Head title="Live Market Rates" />
         <div class="min-h-screen bg-gray-50 dark:bg-zinc-900 py-12">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -119,7 +122,7 @@
 
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue'
-import { useForm } from '@inertiajs/vue3'
+import { useForm, Head } from '@inertiajs/vue3'
 import { ref } from 'vue'  // ← IMPORTANT: This was missing!
 
 const form = useForm({
