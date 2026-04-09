@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\BreadcrumbHelper;
 use App\Models\BlogPost;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class BlogController extends Controller
 {
@@ -20,7 +21,8 @@ class BlogController extends Controller
             'meta' => [
                 'title' => 'Exchange Rate Blog - Market Insights & Updates',
                 'description' => 'Latest updates on Myanmar exchange rates, gold prices, and market analysis. Expert insights on USD, SGD, EUR, THB to MMK.'
-            ]
+            ],
+            'breadcrumbs' => BreadcrumbHelper::generate('Blog')
         ]);
     }
 
@@ -64,6 +66,11 @@ class BlogController extends Controller
                 'description' => $description,
                 'image' => $image,
                 'url' => url()->current(),
+            ],
+            'breadcrumbs' => [
+                ['label' => 'Home', 'route' => 'welcome'],
+                ['label' => 'Blog', 'route' => 'blog.index'],
+                ['label' => $post->title, 'route' => null]  // ✅ Shows actual post title
             ]
         ]);
     }

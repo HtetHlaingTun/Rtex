@@ -205,7 +205,7 @@
                         </div>
 
                         <!-- Spread & Details Row -->
-                        <div class="flex items-center justify-between pt-1 text-[8px] text-slate-400">
+                        <!-- <div class="flex items-center justify-between pt-1 text-[8px] text-slate-400">
                             <div class="flex items-center gap-1">
                                 <span class="font-bold">Spread:</span>
                                 <span class="font-mono">{{ $formatMoney(rate.sell_rate - rate.buy_rate) }}</span>
@@ -218,7 +218,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 5l7 7-7 7" />
                             </svg>
-                        </div>
+                        </div> -->
                     </div>
                 </Link>
             </div>

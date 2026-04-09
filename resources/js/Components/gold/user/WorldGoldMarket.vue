@@ -177,7 +177,7 @@
                     </p>
                     <p class="font-mono text-sm font-black italic text-orange-300">${{
                         formatNumber(usdPerKyattharOld)
-                    }}</p>
+                        }}</p>
                     <p class="text-[6px] text-white/40">16.606g · Old</p>
                 </div>
                 <div
@@ -185,7 +185,7 @@
                     <p class="text-[7px] font-black uppercase tracking-[0.12em] text-amber-400/80">Kyatthar (SGD)
                     </p>
                     <p class="font-mono text-sm font-black italic text-amber-300">S${{ formatNumber(sgdKyattharNew)
-                    }}
+                        }}
                     </p>
                     <p class="text-[6px] text-white/40">16.329g · New</p>
                 </div>
@@ -194,7 +194,7 @@
                     <p class="text-[7px] font-black uppercase tracking-[0.12em] text-orange-400/80">Kyatthar (SGD)
                     </p>
                     <p class="font-mono text-sm font-black italic text-orange-300">S${{ formatNumber(sgdKyattharOld)
-                    }}
+                        }}
                     </p>
                     <p class="text-[6px] text-white/40">16.606g · Old</p>
                 </div>
@@ -226,12 +226,12 @@
                         <div class="flex items-center justify-center gap-3 mt-1">
                             <span class="text-[8px] text-white/40">USD</span>
                             <p class="text-lg font-mono font-black text-amber-300">${{ formatNumber(usdPerGram * 50)
-                            }}
+                                }}
                             </p>
                             <span class="text-white/30">|</span>
                             <span class="text-[8px] text-white/40">SGD</span>
                             <p class="text-lg font-mono font-black text-blue-300">S${{ formatNumber(sgdPerGram * 50)
-                            }}
+                                }}
                             </p>
                         </div>
                     </div>
@@ -252,39 +252,7 @@
                 </div>
             </div>
 
-            <!-- Metrics Section -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 px-6 pb-4">
-                <div class="bg-white/5 rounded-xl p-2 text-center">
-                    <span class="text-[7px] font-black text-white/50 uppercase">24h Range</span>
-                    <div class="flex flex-col">
-                        <span class="text-[9px] font-mono font-black text-white/80">H: ${{ formatNumber(dayHigh)
-                        }}</span>
-                        <span class="text-[9px] font-mono font-black text-white/60">L: ${{ formatNumber(dayLow)
-                        }}</span>
-                    </div>
-                </div>
-                <div class="bg-white/5 rounded-xl p-2 text-center">
-                    <span class="text-[7px] font-black text-white/50 uppercase">7d Momentum</span>
-                    <p class="text-sm font-mono font-black"
-                        :class="momentum7d > 0 ? 'text-emerald-400' : 'text-rose-400'">
-                        {{ momentum7d > 0 ? '+' : '' }}{{ momentum7d }}%
-                    </p>
-                </div>
-                <div class="bg-white/5 rounded-xl p-2 text-center">
-                    <span class="text-[7px] font-black text-white/50 uppercase">FX Impact</span>
-                    <p class="text-[10px] font-mono font-black text-white/90">
-                        {{ sgdRate?.change >= 0 ? 'SGD +' : 'SGD -' }}{{ Math.abs(sgdRate?.change_percent ||
-                            0).toFixed(2) }}%
-                    </p>
-                </div>
-                <div class="bg-white/5 rounded-xl p-2 text-center">
-                    <span class="text-[7px] font-black text-white/50 uppercase">vs Prev Close</span>
-                    <p class="text-sm font-mono font-black"
-                        :class="premium200d > 0 ? 'text-amber-400' : 'text-emerald-400'">
-                        {{ premium200d > 0 ? '+' : '' }}{{ premium200d }}%
-                    </p>
-                </div>
-            </div>
+
 
             <!-- Analysis Strip -->
             <div v-if="worldGoldSnapshot && sgdRate"
@@ -307,7 +275,7 @@
                     <div class="flex flex-col">
                         <span class="text-[6px] font-black text-white/40">SGD Gold</span>
                         <span class="font-mono text-[10px] font-black text-white/80">S${{ formatNumber(sgdGoldPrice)
-                        }}</span>
+                            }}</span>
                     </div>
                     <div class="flex flex-col">
                         <span class="text-[6px] font-black text-white/40">Conversion</span>
@@ -331,7 +299,7 @@
                 <div class="flex items-center gap-2">
                     <div class="w-1 h-1 bg-emerald-400 rounded-full animate-pulse"></div>
                     <span class="text-[6px] text-white/40 font-mono">Updated: {{ formatTime24(snapshot?.fetched_at)
-                    }}</span>
+                        }}</span>
                 </div>
                 <span class="text-[8px] text-blue-400/60 uppercase">Dual Market Monitor</span>
             </div>

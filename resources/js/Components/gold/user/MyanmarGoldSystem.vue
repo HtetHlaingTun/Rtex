@@ -304,10 +304,7 @@
                             </span>
                         </div>
                         <div class="flex items-center gap-3">
-                            <span v-if="type.source_type === 'auto'"
-                                class="text-[9px] font-black text-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">
-                                Auto-sync
-                            </span>
+
                             <Link
                                 :href="route('user.gold.history', { type: system === 'new' ? 'new_system' : 'traditional' })"
                                 :data-gold="`myanmar-${system}-history`" :data-gold-system="system" :class="`text-[9px] font-black uppercase tracking-widest flex items-center gap-1 transition-all duration-300 hover:gap-2 ${systemColor === 'amber'

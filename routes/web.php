@@ -1,5 +1,6 @@
 <?php
 
+use App\Helpers\BreadcrumbHelper;
 use App\Http\Controllers\AdminBlogController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
@@ -28,7 +29,9 @@ Route::get('/og-image', function () {
     return view('og-image');
 });
 Route::get('/terms', function () {
-    return Inertia::render('TermOfServices');
+    return Inertia::render('TermOfServices', [
+        'breadcrumbs' => BreadcrumbHelper::generate('Term Of Services')
+    ]);
 })->name('terms');
 
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
@@ -111,12 +114,17 @@ Route::get('/generate-og-image', function () {
 
 // Public pages
 Route::get('/privacy', function () {
-    return Inertia::render('Privacy');
+
+    return Inertia::render('Privacy', [
+        'breadcrumbs' => BreadcrumbHelper::generate('Privacy')
+    ]);
 })->name('privacy');
 
 // Public routes
 Route::get('/contact', function () {
-    return Inertia::render('Contact');
+    return Inertia::render('Contact', [
+        'breadcrumbs' => BreadcrumbHelper::generate('Contact')
+    ]);
 })->name('contact');
 
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
