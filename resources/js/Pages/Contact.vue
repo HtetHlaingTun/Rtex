@@ -25,7 +25,7 @@
                                         <input type="text" v-model="form.name" required
                                             class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-amber-500 focus:border-amber-500 dark:bg-zinc-700 dark:text-white">
                                         <p v-if="form.errors.name" class="text-red-500 text-sm mt-1">{{ form.errors.name
-                                            }}</p>
+                                        }}</p>
                                     </div>
 
                                     <div>
@@ -77,7 +77,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                             </svg>
-                                            <span>support@luckeymm.online</span>
+                                            <span>mmratepro@gmail.com</span>
                                         </div>
                                         <div class="flex items-start">
                                             <svg class="w-5 h-5 text-amber-600 mt-0.5 mr-3" fill="none"

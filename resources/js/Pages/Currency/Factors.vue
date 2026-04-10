@@ -68,7 +68,6 @@
                                 <div>
                                     <h3 class="font-bold text-slate-900">{{ currency.name }}</h3>
                                     <p class="text-xs text-slate-500">{{ currency.code }}</p>
-                                    <!-- Last sync info moved here -->
                                     <div class="text-[10px] text-slate-400 mt-1">
                                         Last sync: {{ currency.banks_last_synced_at ? new
                                             Date(currency.banks_last_synced_at).toLocaleString() : 'Never' }}
@@ -87,7 +86,6 @@
                         </div>
                     </div>
 
-
                     <!-- Current Settings Badges -->
                     <div class="px-4 py-2 bg-slate-50 border-b border-slate-100">
                         <div class="flex flex-wrap gap-2 text-[10px]">
@@ -98,6 +96,10 @@
                                 class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">
                                 Markup: {{ Number(editing[currency.id]?.bank_markup ?? currency.bank_markup_percentage
                                     ?? 0).toFixed(1) }}%
+                            </span>
+                            <span v-if="editing[currency.id]?.source_mode === 'cross_usd'"
+                                class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
+                                Cross Rate (USD Bridge)
                             </span>
                             <span v-if="editing[currency.id]?.source_mode === 'cbm'"
                                 class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
@@ -117,25 +119,28 @@
                         <!-- Source Mode Selection -->
                         <div>
                             <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Source Mode</label>
-                            <div class="grid grid-cols-3 gap-2 p-1 bg-slate-100 rounded-xl">
-                                <button v-for="mode in ['bank_avg', 'cbm', 'manual']" :key="mode"
+                            <div class="grid grid-cols-4 gap-2 p-1 bg-slate-100 rounded-xl">
+                                <button v-for="mode in ['bank_avg', 'cross_usd', 'cbm', 'manual']" :key="mode"
                                     @click="editing[currency.id].source_mode = mode"
                                     class="py-2 rounded-lg text-[11px] font-bold transition-all"
                                     :class="editing[currency.id].source_mode === mode ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'">
-                                    {{ mode === 'bank_avg' ? 'Bank Average' : mode === 'cbm' ? 'CBM Rate' : 'Manual' }}
+                                    {{ mode === 'bank_avg' ? 'Bank Average' : mode === 'cross_usd' ? 'Cross Rate' : mode
+                                        ===
+                                        'cbm' ? 'CBM Rate' : 'Manual' }}
                                 </button>
                             </div>
                             <p class="text-[10px] text-slate-400 mt-1">
                                 <span v-if="editing[currency.id].source_mode === 'bank_avg'">Uses average of 4 banks
-                                    (KBZ, Yoma,
-                                    CB, AYA)</span>
+                                    (KBZ, Yoma, CB, AYA)</span>
+                                <span v-else-if="editing[currency.id].source_mode === 'cross_usd'">Calculates using
+                                    USD/MMK ÷ USD/Currency (from Yahoo Finance)</span>
                                 <span v-else-if="editing[currency.id].source_mode === 'cbm'">Uses CBM rate × conversion
                                     factor</span>
                                 <span v-else>Manually entered rate</span>
                             </p>
                         </div>
 
-                        <!-- Bank Markup (only for bank_avg mode) -->
+                        <!-- Bank Markup (for bank_avg mode) -->
                         <div v-if="editing[currency.id].source_mode === 'bank_avg'" class="pt-2">
                             <div class="flex items-center justify-between mb-1.5">
                                 <label class="text-xs font-bold text-slate-500 uppercase">Bank Markup (%)</label>
@@ -152,7 +157,24 @@
                             </p>
                         </div>
 
-                        <!-- Manual Rate (only for manual mode) -->
+                        <!-- Cross Rate Markup (for cross_usd mode) -->
+                        <div v-if="editing[currency.id].source_mode === 'cross_usd'" class="pt-2">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Bank Markup (%)</label>
+                                <button @click="setMarkupToZero(currency)"
+                                    class="text-[10px] text-indigo-600 font-bold underline">
+                                    Set to 0%
+                                </button>
+                            </div>
+                            <input type="number" v-model="editing[currency.id].bank_markup" step="0.1"
+                                class="w-full px-3 py-2.5 border border-slate-200 rounded-lg font-mono text-sm bg-white focus:ring-2 focus:ring-indigo-500/20"
+                                placeholder="Markup percentage (e.g., 2 for 2%)">
+                            <p class="text-[10px] text-slate-400 mt-1">
+                                Formula: Base Rate = (USD/MMK ÷ USD/Currency) × (1 + Markup%)
+                            </p>
+                        </div>
+
+                        <!-- Manual Rate (for manual mode) -->
                         <div v-if="editing[currency.id].source_mode === 'manual'" class="pt-2">
                             <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Manual Base
                                 Rate</label>
@@ -161,7 +183,7 @@
                                 placeholder="Enter manual rate">
                         </div>
 
-                        <!-- CBM Factor (only for cbm mode) -->
+                        <!-- CBM Factor (for cbm mode) -->
                         <div v-if="editing[currency.id].source_mode === 'cbm'" class="pt-2">
                             <div class="flex items-center justify-between mb-1.5">
                                 <label class="text-xs font-bold text-slate-500 uppercase">CBM Conversion Factor</label>
@@ -208,6 +230,36 @@
                             </div>
                         </div>
 
+                        <!-- Cross Rate Preview (for cross_usd mode) -->
+                        <div v-if="editing[currency.id].source_mode === 'cross_usd' && crossRatePreviews[currency.code]"
+                            class="bg-purple-50 border border-purple-200 rounded-xl p-4 mt-2">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-[10px] font-black text-purple-600 uppercase">Cross Rate
+                                    Calculation</span>
+                            </div>
+                            <div class="space-y-2 text-xs">
+                                <div class="flex justify-between">
+                                    <span class="text-purple-700">USD/MMK (Current):</span>
+                                    <span class="font-mono font-bold text-purple-900">{{
+                                        crossRatePreviews[currency.code].usd_mmk_rate }} MMK</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-purple-700">USD/{{ currency.code }}:</span>
+                                    <span class="font-mono font-bold text-purple-900">{{
+                                        crossRatePreviews[currency.code].usd_to_target }}</span>
+                                </div>
+                                <div class="flex justify-between border-t border-purple-200 pt-2 mt-1">
+                                    <span class="text-purple-700 font-bold">Calculated Base Rate:</span>
+                                    <span class="font-mono font-bold text-purple-900">{{
+                                        crossRatePreviews[currency.code].calculated_rate }} MMK</span>
+                                </div>
+                                <div class="flex justify-between text-[10px] text-purple-500">
+                                    <span>Formula:</span>
+                                    <span class="font-mono">{{ crossRatePreviews[currency.code].formula }}</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Preview Section -->
                         <div class="bg-slate-900 p-4 rounded-xl shadow-inner mt-auto">
                             <div class="text-center mb-2">
@@ -234,7 +286,8 @@
 
                         <!-- Auto-fetch & Save -->
                         <div class="flex flex-col gap-3 pt-2">
-                            <label class="flex items-center gap-3 cursor-pointer group">
+                            <label v-if="editing[currency.id].source_mode !== 'cross_usd'"
+                                class="flex items-center gap-3 cursor-pointer group">
                                 <div class="relative">
                                     <input type="checkbox" v-model="editing[currency.id].auto_fetch"
                                         class="sr-only peer">
@@ -278,7 +331,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import axios from 'axios'
@@ -305,8 +358,21 @@ const currencyBreadcrumbs = [
 ]
 
 const editing = reactive({})
+const crossRatePreviews = reactive({})
 const saving = ref(false)
 const loading = ref(true)
+
+// Fetch cross rate preview for a currency
+const fetchCrossRatePreview = async (currency) => {
+    if (!currency.code) return
+
+    try {
+        const response = await axios.get(`/api/cross-rate-preview/${currency.code}`)
+        crossRatePreviews[currency.code] = response.data
+    } catch (error) {
+        console.error(`Failed to fetch cross rate for ${currency.code}:`, error)
+    }
+}
 
 onMounted(() => {
     if (props.currencies && Array.isArray(props.currencies) && props.currencies.length > 0) {
@@ -314,7 +380,7 @@ onMounted(() => {
             editing[currency.id] = {
                 source_mode: currency.source_mode || 'bank_avg',
                 factor: currency.cbm_conversion_factor || props.default_factor,
-                bank_markup: currency.bank_markup_percentage ?? 0,
+                bank_markup: currency.bank_markup_percentage ?? 2.0,
                 manual_base_rate: currency.manual_base_rate || 0,
                 spread_type: currency.spread_type || 'percentage',
                 buy_spread: currency.buy_spread_percentage ?? 0.5,
@@ -324,17 +390,25 @@ onMounted(() => {
                 auto_fetch: currency.use_cbm_auto_fetch !== false,
             }
 
-            // Debug: Log what was loaded
-            // console.log(`Loaded ${currency.code}:`, {
-            //     source_mode: editing[currency.id].source_mode,
-            //     bank_markup: editing[currency.id].bank_markup,
-            //     buy_spread: editing[currency.id].buy_spread,
-            //     sell_spread: editing[currency.id].sell_spread
-            // })
+            // Fetch cross rate preview for ALL cross_usd currencies
+            if (currency.source_mode === 'cross_usd') {
+                fetchCrossRatePreview(currency)
+            }
         })
     }
     loading.value = false
 })
+
+// Watch for source_mode changes to fetch cross rate preview
+watch(() => props.currencies, (newCurrencies) => {
+    if (newCurrencies) {
+        newCurrencies.forEach(currency => {
+            if (editing[currency.id]?.source_mode === 'cross_usd') {
+                fetchCrossRatePreview(currency)
+            }
+        })
+    }
+}, { deep: true })
 
 const previewBaseRate = (currency) => {
     const mode = editing[currency.id].source_mode
@@ -343,6 +417,33 @@ const previewBaseRate = (currency) => {
         const bankAvg = Number(currency.avg_bank_rate) || 0
         const markup = Number(editing[currency.id].bank_markup) || 0
         return bankAvg * (1 + markup / 100)
+    } else if (mode === 'cross_usd') {
+        // Calculate using USD rate from props
+        const usdCurrency = props.currencies?.find(c => c.code === 'USD')
+        if (!usdCurrency) return 0
+
+        // Get latest USD/MMK rate from exchange_rates or avg_bank_rate
+        const usdMmk = usdCurrency.avg_bank_rate || 0
+        if (usdMmk === 0) return 0
+
+        // Hardcoded USD/JPY for now (you can make dynamic)
+        const usdToTargetRates = {
+            'JPY': 158.94,
+            'CNY': 6.84,
+            'MYR': 3.98,
+            'INR': 92.63,
+            'KRW': 1450.00,
+            'HKD': 7.82,
+            'NZD': 1.63,
+            'AUD': 1.52,
+            'CAD': 1.38,
+            'CHF': 0.91,
+        }
+
+        const usdToTarget = usdToTargetRates[currency.code] || 1
+        const baseRate = usdMmk / usdToTarget
+        const markup = Number(editing[currency.id].bank_markup) || 2.0
+        return baseRate * (1 + markup / 100)
     } else if (mode === 'cbm') {
         const cbmRate = Number(currency.current_cbm_rate) || 0
         const factor = Number(editing[currency.id].factor) || 1
@@ -351,7 +452,6 @@ const previewBaseRate = (currency) => {
         return Number(editing[currency.id].manual_base_rate) || 0
     }
 }
-
 
 const previewBuyRate = (currency) => {
     const baseRate = previewBaseRate(currency)
@@ -402,6 +502,10 @@ const saveCurrency = async (currency) => {
             use_cbm_auto_fetch: editing[currency.id].auto_fetch,
         })
         alert(`✅ Saved settings for ${currency.code}`)
+        // Refresh cross rate preview after save
+        if (editing[currency.id].source_mode === 'cross_usd') {
+            await fetchCrossRatePreview(currency)
+        }
     } catch (error) {
         console.error('Failed to save:', error)
         alert('Failed to save. Please try again.')

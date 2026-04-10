@@ -355,21 +355,38 @@ class CurrencyExchangeRate extends Controller
 
     public function storeType(Request $request)
     {
+        // $validated = $request->validate([
+        //     'code' => 'required|string|size:3|unique:currencies,code',
+        //     'name' => 'required|string|max:100',
+        //     'symbol' => 'required|string|max:10',
+        //     'decimal_places' => 'required|integer|min:0|max:4',
+        //     'display_order' => 'nullable|integer',
+        // ]);
+
+        // $validated['code'] = strtoupper($validated['code']);
+        // $validated['created_by'] = Auth::id();
+        // $validated['updated_by'] = Auth::id();
+
+        // Currency::create($validated);
+
+        // return redirect()->back()->with('success', "{$validated['code']} has been added.");
         $validated = $request->validate([
-            'code' => 'required|string|size:3|unique:currencies,code',
+            'code' => 'required|string|max:3|unique:currencies',
             'name' => 'required|string|max:100',
-            'symbol' => 'required|string|max:10',
-            'decimal_places' => 'required|integer|min:0|max:4',
-            'display_order' => 'nullable|integer',
+            'symbol' => 'nullable|string|max:10',
+            'decimal_places' => 'integer|min:0|max:4',
+            'source_mode' => 'required|in:bank_avg,cross_usd,cbm,manual',
+            'bank_markup_percentage' => 'nullable|numeric|min:0|max:100',
+            'buy_spread_percentage' => 'nullable|numeric|min:0|max:100',
+            'sell_spread_percentage' => 'nullable|numeric|min:0|max:100',
+            'spread_type' => 'required|in:percentage,fixed',
+            'is_active' => 'boolean',
         ]);
 
-        $validated['code'] = strtoupper($validated['code']);
-        $validated['created_by'] = Auth::id();
-        $validated['updated_by'] = Auth::id();
+        $currency = Currency::create($validated);
 
-        Currency::create($validated);
-
-        return redirect()->back()->with('success', "{$validated['code']} has been added.");
+        return redirect()->route('currencies.index')
+            ->with('success', "Currency {$currency->code} created successfully!");
     }
 
     // public function destroy(Currency $currency)

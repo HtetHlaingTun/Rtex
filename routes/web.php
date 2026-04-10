@@ -24,6 +24,8 @@ use Symfony\Component\DomCrawler\Crawler;
 
 
 Route::post('/subscribe', [NewsletterController::class, 'subscribe'])->name('subscribe');
+Route::get('/unsubscribe/{email}', [NewsletterController::class, 'unsubscribe'])
+    ->name('unsubscribe');
 
 Route::get('/og-image', function () {
     return view('og-image');
@@ -256,7 +258,7 @@ if (app()->environment('local')) {
         ]);
 
         try {
-            $response = $client->request('GET', 'https://www.yomabank.com/en/rates/');
+            $response = $client->request('GET', 'https://www.kbzbank.com/en/');
             $html = $response->getBody()->getContents();
 
             $crawler = new Crawler($html);
@@ -304,4 +306,104 @@ require __DIR__ . '/auth.php';
 // ============================================
 Route::fallback(function () {
     return redirect('/');
+});
+
+
+
+
+
+
+Route::get('/test-yahoo-direct', function () {
+    // All currencies you want to fetch - easily expandable
+    $currencies = [
+        'USD',
+        'SGD',
+        'EUR',
+        'THB',  // Your existing ones
+        'JPY',
+        'CNY',
+        'NZD',         // New ones you requested
+        'AUD',
+        'CAD',
+        'CHF',
+        'GBP',  // Additional major currencies
+        'MYR',
+        'INR',
+        'KRW',
+        'HKD'   // Asian currencies
+    ];
+
+    $results = [];
+
+    foreach ($currencies as $currency) {
+        // Yahoo Finance symbol format: CURRENCYMMK=X
+        $symbol = $currency . 'MMK=X';
+        $url = "https://query1.finance.yahoo.com/v8/finance/chart/{$symbol}";
+
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->get($url, [
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                ],
+                'timeout' => 10
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+
+            // Extract the current price from the response
+            $result = $data['chart']['result'][0] ?? null;
+            $meta = $result['meta'] ?? null;
+            $quote = $result['indicators']['quote'][0] ?? null;
+
+            if ($meta && $quote) {
+                $currentPrice = $meta['regularMarketPrice'] ?? ($quote['close'][0] ?? null);
+                $previousClose = $meta['previousClose'] ?? null;
+                $change = $currentPrice ? $currentPrice - ($previousClose ?? $currentPrice) : null;
+                $changePercent = ($previousClose && $change) ? ($change / $previousClose) * 100 : null;
+
+                $results[$currency] = [
+                    'symbol' => $symbol,
+                    'rate' => $currentPrice,
+                    'previous_close' => $previousClose,
+                    'change' => $change,
+                    'change_percent' => $changePercent,
+                    'market_trend' => $change > 0 ? 'up' : ($change < 0 ? 'down' : 'stable'),
+                    'fetched_at' => now()->toIso8601String(),
+                    'success' => true
+                ];
+            } else {
+                $results[$currency] = [
+                    'success' => false,
+                    'error' => 'Invalid response structure',
+                    'symbol' => $symbol
+                ];
+            }
+        } catch (\Exception $e) {
+            $results[$currency] = [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'symbol' => $symbol
+            ];
+        }
+
+        // Add delay to avoid rate limiting
+        usleep(300000); // 0.3 second delay (faster now)
+    }
+
+    // Summary statistics
+    $successCount = count(array_filter($results, fn($r) => isset($r['success']) && $r['success'] === true));
+    $failCount = count($currencies) - $successCount;
+
+    return response()->json([
+        'success' => true,
+        'source' => 'Yahoo Finance',
+        'fetched_at' => now()->toIso8601String(),
+        'summary' => [
+            'total' => count($currencies),
+            'successful' => $successCount,
+            'failed' => $failCount
+        ],
+        'rates' => $results
+    ]);
 });

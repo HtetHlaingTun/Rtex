@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Currency;
 use App\Models\ExchangeRate;
+use App\Services\YahooFinanceService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\DomCrawler\Crawler;
@@ -17,6 +18,7 @@ class BankAggregatorService
     ];
 
     protected $cbmService;
+    protected $yahooService;
 
     // Expected rate ranges for each currency (MMK per 1 unit)
     protected $expectedRanges = [
@@ -29,7 +31,104 @@ class BankAggregatorService
     public function __construct(CBMRateService $cbmService)
     {
         $this->cbmService = $cbmService;
+        $this->yahooService = new YahooFinanceService();
     }
+
+    /**
+     * Calculate rates using USD cross rate for currencies without direct bank data
+     */
+    protected function calculateCrossUsdRate(Currency $currency): array
+    {
+        $decimal = $currency->decimal_places ?? 2;
+
+        // Get latest USD/MMK rate
+        $usdCurrency = Currency::where('code', 'USD')->first();
+        if (!$usdCurrency) {
+            Log::warning("USD currency not found for cross rate calculation");
+            return ['buy_rate' => 0, 'sell_rate' => 0];
+        }
+
+        $usdRate = ExchangeRate::where('currency_id', $usdCurrency->id)
+            ->latest('rate_date')
+            ->first();
+
+        if (!$usdRate) {
+            Log::warning("USD/MMK rate not available for cross rate calculation");
+            return ['buy_rate' => 0, 'sell_rate' => 0];
+        }
+
+        // Calculate mid rate for USD/MMK
+        $usdMmkMid = ($usdRate->buy_rate + $usdRate->sell_rate) / 2;
+
+        // Get USD to target currency from Yahoo
+        $usdToTarget = $this->yahooService->getUsdToTargetRate($currency->code);
+
+        if (!$usdToTarget || $usdToTarget <= 0) {
+            Log::warning("USD/{$currency->code} rate not available from Yahoo");
+            return ['buy_rate' => 0, 'sell_rate' => 0];
+        }
+
+        // Cross rate calculation: Target/MMK = USD/MMK ÷ USD/Target
+        $baseRate = $usdMmkMid / $usdToTarget;
+
+        // Apply bank markup if configured
+        $markup = $currency->bank_markup_percentage ?? 0;
+        $baseRateWithMarkup = $baseRate * (1 + ($markup / 100));
+
+        // Apply spreads
+        if ($currency->spread_type === 'percentage') {
+            $buyRate = $baseRateWithMarkup * (1 - (($currency->buy_spread_percentage ?? 0.5) / 100));
+            $sellRate = $baseRateWithMarkup * (1 + (($currency->sell_spread_percentage ?? 0.5) / 100));
+        } else {
+            $buyRate = $baseRateWithMarkup - ($currency->fixed_buy_margin ?? 0);
+            $sellRate = $baseRateWithMarkup + ($currency->fixed_sell_margin ?? 0);
+        }
+
+        Log::info("Cross rate calculated for {$currency->code}: USD/MMK={$usdMmkMid}, USD/{$currency->code}={$usdToTarget}, Base={$baseRate}, Buy={$buyRate}, Sell={$sellRate}");
+
+        return [
+            'buy_rate' => round(max(0, $buyRate), $decimal),
+            'sell_rate' => round(max(0, $sellRate), $decimal)
+        ];
+    }
+
+
+    protected function calculateFinalBuySellRates(Currency $currency, float $baseRate, float $cbmRate, float $avgBankRate): array
+    {
+        $decimal = $currency->decimal_places ?? 2;
+
+        // ADD THIS BLOCK - Handle cross_usd mode
+        if ($currency->source_mode === 'cross_usd') {
+            return $this->calculateCrossUsdRate($currency);
+        }
+
+        // Rest of your existing code below...
+        if ($baseRate <= 0) {
+            return ['buy_rate' => 0, 'sell_rate' => 0];
+        }
+
+        if ($currency->source_mode === 'cbm' && $cbmRate > 0) {
+            $calculated = $currency->calculateRatesFromCBM($cbmRate);
+            return [
+                'buy_rate' => $calculated['buy_rate'],
+                'sell_rate' => $calculated['sell_rate']
+            ];
+        }
+
+        if ($currency->spread_type === 'percentage') {
+            $buyRate = $baseRate * (1 - (($currency->buy_spread_percentage ?? 0.5) / 100));
+            $sellRate = $baseRate * (1 + (($currency->sell_spread_percentage ?? 0.5) / 100));
+        } else {
+            $buyRate = $baseRate - ($currency->fixed_buy_margin ?? 0);
+            $sellRate = $baseRate + ($currency->fixed_sell_margin ?? 0);
+        }
+
+        return [
+            'buy_rate' => round(max(0, $buyRate), $decimal),
+            'sell_rate' => round(max(0, $sellRate), $decimal)
+        ];
+    }
+
 
     public function syncRates()
     {
@@ -199,24 +298,87 @@ class BankAggregatorService
                 'expected_range' => $expectedRange ?? ['min' => 0, 'max' => 10000]
             ];
 
-            ExchangeRate::create([
-                'currency_id' => $currency->id,
-                'rate_date' => now(),
-                'buy_rate' => $finalRates['buy_rate'],
-                'sell_rate' => $finalRates['sell_rate'],
-                'cbm_rate' => $cbmRate,
-                'previous_buy_rate' => $previousRecord->buy_rate ?? 0,
-                'previous_sell_rate' => $previousRecord->sell_rate ?? 0,
-                'change_percentage' => $changePercent,
-                'market_trend' => $finalRates['buy_rate'] > ($previousRecord->buy_rate ?? 0) ? 'up' : ($finalRates['buy_rate'] < ($previousRecord->buy_rate ?? 0) ? 'down' : 'stable'),
-                'source_name' => $this->getSourceName($currency->source_mode, $totalSources),
-                'status' => $status,
-                'is_verified' => $isVerified,
-                'verified_at' => $isVerified ? now() : null,
-                'factors' => $factors,
-                'created_by' => 1,
-                'updated_by' => 1,
-            ]);
+
+
+            // ----- 
+            // AFTER your bank sync, handle cross_usd currencies
+            $crossCurrencies = Currency::where('source_mode', 'cross_usd')
+                ->where('is_active', true)
+                ->get();
+
+            foreach ($crossCurrencies as $currency) {
+                $code = $currency->code;
+
+                // Skip if already synced via banks (shouldn't happen)
+                if (in_array($code, ['USD', 'SGD', 'EUR', 'THB'])) {
+                    continue;
+                }
+
+                // Calculate rates using cross method
+                $finalRates = $this->calculateCrossUsdRate($currency);
+
+                if ($finalRates['buy_rate'] <= 0 || $finalRates['sell_rate'] <= 0) {
+                    Log::warning("Failed to calculate cross rate for {$code}");
+                    continue;
+                }
+
+                // Get previous record for change calculation
+                $previousRecord = ExchangeRate::where('currency_id', $currency->id)
+                    ->latest('rate_date')
+                    ->first();
+
+                $changePercent = ($previousRecord && $previousRecord->buy_rate > 0 && $finalRates['buy_rate'] > 0)
+                    ? (($finalRates['buy_rate'] - $previousRecord->buy_rate) / $previousRecord->buy_rate) * 100
+                    : 0;
+
+                // Create exchange rate record
+                ExchangeRate::create([
+                    'currency_id' => $currency->id,
+                    'rate_date' => now(),
+                    'buy_rate' => $finalRates['buy_rate'],
+                    'sell_rate' => $finalRates['sell_rate'],
+                    'cbm_rate' => $currency->cbm_rate ?? 0,
+                    'previous_buy_rate' => $previousRecord->buy_rate ?? 0,
+                    'previous_sell_rate' => $previousRecord->sell_rate ?? 0,
+                    'change_percentage' => $changePercent,
+                    'market_trend' => $finalRates['buy_rate'] > ($previousRecord->buy_rate ?? 0) ? 'up' : ($finalRates['buy_rate'] < ($previousRecord->buy_rate ?? 0) ? 'down' : 'stable'),
+                    'source_name' => 'Cross Rate (USD Bridge)',
+                    'status' => 'verified',
+                    'is_verified' => true,
+                    'verified_at' => now(),
+                    'factors' => [
+                        'method' => 'cross_usd',
+                        'usd_mmk_rate' => $usdMmkMid ?? null,
+                    ],
+                    'created_by' => 1,
+                    'updated_by' => 1,
+                ]);
+
+                Log::info("Synced {$code} via cross rate: Buy={$finalRates['buy_rate']}, Sell={$finalRates['sell_rate']}");
+            }
+
+
+
+
+
+            // ExchangeRate::create([
+            //     'currency_id' => $currency->id,
+            //     'rate_date' => now(),
+            //     'buy_rate' => $finalRates['buy_rate'],
+            //     'sell_rate' => $finalRates['sell_rate'],
+            //     'cbm_rate' => $cbmRate,
+            //     'previous_buy_rate' => $previousRecord->buy_rate ?? 0,
+            //     'previous_sell_rate' => $previousRecord->sell_rate ?? 0,
+            //     'change_percentage' => $changePercent,
+            //     'market_trend' => $finalRates['buy_rate'] > ($previousRecord->buy_rate ?? 0) ? 'up' : ($finalRates['buy_rate'] < ($previousRecord->buy_rate ?? 0) ? 'down' : 'stable'),
+            //     'source_name' => $this->getSourceName($currency->source_mode, $totalSources),
+            //     'status' => $status,
+            //     'is_verified' => $isVerified,
+            //     'verified_at' => $isVerified ? now() : null,
+            //     'factors' => $factors,
+            //     'created_by' => 1,
+            //     'updated_by' => 1,
+            // ]);
 
             $currency->update([
                 'avg_bank_rate' => $avgBankMidRate,
@@ -305,37 +467,37 @@ class BankAggregatorService
     }
 
     /**
-     * Calculate final buy and sell rates using currency's spread logic
+     * Calculate final buy and sell rates using currency's spreadlogic
      */
-    protected function calculateFinalBuySellRates(Currency $currency, float $baseRate, float $cbmRate, float $avgBankRate): array
-    {
-        $decimal = $currency->decimal_places ?? 2;
+    // protected function calculateFinalBuySellRates(Currency $currency, float $baseRate, float $cbmRate, float $avgBankRate): array
+    // {
+    //     $decimal = $currency->decimal_places ?? 2;
 
-        if ($baseRate <= 0) {
-            return ['buy_rate' => 0, 'sell_rate' => 0];
-        }
+    //     if ($baseRate <= 0) {
+    //         return ['buy_rate' => 0, 'sell_rate' => 0];
+    //     }
 
-        if ($currency->source_mode === 'cbm' && $cbmRate > 0) {
-            $calculated = $currency->calculateRatesFromCBM($cbmRate);
-            return [
-                'buy_rate' => $calculated['buy_rate'],
-                'sell_rate' => $calculated['sell_rate']
-            ];
-        }
+    //     if ($currency->source_mode === 'cbm' && $cbmRate > 0) {
+    //         $calculated = $currency->calculateRatesFromCBM($cbmRate);
+    //         return [
+    //             'buy_rate' => $calculated['buy_rate'],
+    //             'sell_rate' => $calculated['sell_rate']
+    //         ];
+    //     }
 
-        if ($currency->spread_type === 'percentage') {
-            $buyRate = $baseRate * (1 - (($currency->buy_spread_percentage ?? 0.5) / 100));
-            $sellRate = $baseRate * (1 + (($currency->sell_spread_percentage ?? 0.5) / 100));
-        } else {
-            $buyRate = $baseRate - ($currency->fixed_buy_margin ?? 0);
-            $sellRate = $baseRate + ($currency->fixed_sell_margin ?? 0);
-        }
+    //     if ($currency->spread_type === 'percentage') {
+    //         $buyRate = $baseRate * (1 - (($currency->buy_spread_percentage ?? 0.5) / 100));
+    //         $sellRate = $baseRate * (1 + (($currency->sell_spread_percentage ?? 0.5) / 100));
+    //     } else {
+    //         $buyRate = $baseRate - ($currency->fixed_buy_margin ?? 0);
+    //         $sellRate = $baseRate + ($currency->fixed_sell_margin ?? 0);
+    //     }
 
-        return [
-            'buy_rate' => round(max(0, $buyRate), $decimal),
-            'sell_rate' => round(max(0, $sellRate), $decimal)
-        ];
-    }
+    //     return [
+    //         'buy_rate' => round(max(0, $buyRate), $decimal),
+    //         'sell_rate' => round(max(0, $sellRate), $decimal)
+    //     ];
+    // }
 
     /**
      * Get minimum expected rate for validation (prevents CBM rates)
