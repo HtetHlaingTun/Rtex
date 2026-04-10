@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "getbrevo/brevo-php": "^4.0",
         "guzzlehttp/guzzle": "^7.10",
         "inertiajs/inertia-laravel": "^2.0",
         "intervention/image": "^4.0",
@@ -17,7 +18,9 @@
         "laravel/ui": "^4.6",
         "spatie/laravel-sitemap": "^8.1",
         "symfony/dom-crawler": "^8.0",
-        "tightenco/ziggy": "^2.0"
+        "symfony/mailer": "^7.4",
+        "tightenco/ziggy": "^2.0",
+        "yieldstudio/laravel-brevo-notifier": "^1.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

@@ -200,8 +200,9 @@
                                 <li><strong>Restriction:</strong> Limit how we process your data</li>
                                 <li><strong>Objection:</strong> Opt-out of marketing communications</li>
                             </ul>
-                            <p class="mt-3">To exercise these rights, email us at <a href="mailto:mmratepro@gmail.com"
-                                    class="text-amber-600 hover:text-amber-700">mmratepro@gmail.com</a></p>
+                            <p class="mt-3">To exercise these rights, email us at <a
+                                    href="mailto:support@luckeymm.online"
+                                    class="text-amber-600 hover:text-amber-700">support@luckeymm.online</a></p>
                         </section>
 
                         <section>
@@ -276,12 +277,12 @@
                             </h2>
                             <div class="bg-gray-50 dark:bg-zinc-800 p-4 rounded-lg mt-3">
                                 <p><strong>Data Controller:</strong> MMRatePro</p>
-                                <p><strong>Email:</strong> <a href="mailto:mmratepro@gmail.com"
-                                        class="text-amber-600 hover:text-amber-700">mmratepro@gmail.com</a></p>
-                                <p><strong>Support:</strong> <a href="mailto:mmratepro@gmail.com"
-                                        class="text-amber-600 hover:text-amber-700">mmratepro@gmail.com</a></p>
+                                <p><strong>Email:</strong> <a href="mailto:support@luckeymm.online"
+                                        class="text-amber-600 hover:text-amber-700">support@luckeymm.online</a></p>
+                                <p><strong>Support:</strong> <a href="mailto:support@luckeymm.online"
+                                        class="text-amber-600 hover:text-amber-700">support@luckeymm.online</a></p>
                                 <p><strong>Address:</strong> Yangon, Myanmar</p>
-                                <p><strong>Data Protection Officer:</strong> Available at mmratepro@gmail.com</p>
+                                <p><strong>Data Protection Officer:</strong> Available at support@luckeymm.online</p>
                             </div>
                         </section>
 

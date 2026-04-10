@@ -9,6 +9,7 @@ use App\Http\Controllers\GoldPriceController;
 use App\Http\Controllers\GoldTypeController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TestEmailController;
 use App\Http\Controllers\User\AlertController;
 use App\Http\Controllers\User\DashboardController;
 use App\Http\Controllers\User\NotificationController;
@@ -410,6 +411,8 @@ Route::get('/test-yahoo-direct', function () {
         'rates' => $results
     ]);
 });
+
+Route::get('/test-brevo', [TestEmailController::class, 'sendTestEmail']);
 
 
 Route::get('/api/cross-rate-preview/{code}', function ($code) {

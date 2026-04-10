@@ -2,16 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\NewsletterUnsubscribe;
-use App\Mail\NewsletterWelcome;
 use App\Models\Subscriber;
+use App\Services\BrevoMailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class NewsletterController extends Controller
 {
+    protected $brevoMail;
+
+    public function __construct(BrevoMailService $brevoMail)
+    {
+        $this->brevoMail = $brevoMail;
+    }
+
     public function subscribe(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -31,12 +36,20 @@ class NewsletterController extends Controller
             'is_active' => true
         ]);
 
-        // Send welcome email
+        // Send welcome email using Brevo API
         try {
-            Mail::to($request->email)->send(new NewsletterWelcome($subscriber));
+            $htmlContent = view('emails.newsletter-welcome', ['subscriber' => $subscriber])->render();
+
+            $this->brevoMail->send(
+                $request->email,
+                'Valued Subscriber',
+                'Welcome to MMRatePro Daily Rate Alerts!',
+                $htmlContent
+            );
+
+            Log::info('Welcome email sent to: ' . $request->email);
         } catch (\Exception $e) {
             Log::error('Welcome email failed: ' . $e->getMessage());
-            // Don't fail the subscription - just log the error
         }
 
         return response()->json([
@@ -45,7 +58,6 @@ class NewsletterController extends Controller
         ]);
     }
 
-    // Optional: Unsubscribe method
     public function unsubscribe($email)
     {
         $subscriber = Subscriber::where('email', $email)->first();
@@ -63,14 +75,22 @@ class NewsletterController extends Controller
         // Update subscriber
         $subscriber->update(['is_active' => false]);
 
-        // Send unsubscribe confirmation email
+        // Send unsubscribe confirmation email using Brevo API
         try {
-            Mail::to($email)->send(new NewsletterUnsubscribe($subscriber));
+            $htmlContent = view('emails.newsletter-unsubscribe', ['subscriber' => $subscriber])->render();
+
+            $this->brevoMail->send(
+                $email,
+                'Valued Subscriber',
+                'You have been unsubscribed from MMRatePro',
+                $htmlContent
+            );
+
+            Log::info('Unsubscribe confirmation sent to: ' . $email);
         } catch (\Exception $e) {
             Log::error('Unsubscribe email failed: ' . $e->getMessage());
         }
 
-        // Redirect to home page with success message
         return redirect()->to('/')
             ->with('success', 'You have been unsubscribed from MMRatePro daily rate alerts.');
     }

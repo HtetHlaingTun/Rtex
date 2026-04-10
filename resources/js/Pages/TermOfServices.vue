@@ -297,11 +297,11 @@
                             </h2>
                             <div class="bg-gray-50 dark:bg-zinc-800 p-4 rounded-lg mt-3">
                                 <p><strong>For legal or terms-related inquiries:</strong></p>
-                                <p>Email: <a href="mailto:mmratepro@gmail.com"
-                                        class="text-amber-600 hover:text-amber-700">mmratepro@gmail.com</a></p>
+                                <p>Email: <a href="mailto:support@luckeymm.online"
+                                        class="text-amber-600 hover:text-amber-700">support@luckeymm.online</a></p>
                                 <p class="mt-2"><strong>For support or technical issues:</strong></p>
-                                <p>Email: <a href="mailto:mmratepro@gmail.com"
-                                        class="text-amber-600 hover:text-amber-700">mmratepro@gmail.com</a></p>
+                                <p>Email: <a href="mailto:support@luckeymm.online"
+                                        class="text-amber-600 hover:text-amber-700">support@luckeymm.online</a></p>
                                 <p class="mt-2"><strong>Address:</strong> Yangon, Myanmar</p>
                             </div>
                         </section>
