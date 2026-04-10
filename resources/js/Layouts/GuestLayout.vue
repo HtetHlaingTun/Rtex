@@ -6,33 +6,9 @@
         <meta name="description"
             content="Real-time USD, SGD, EUR, THB exchange rates to MMK. Live gold prices in Myanmar kyat.">
 
-        <!-- JSON-LD Structured Data for SEO -->
-        <script type="application/ld+json">
-        {
-            "@context": "https://schema.org",
-            "@type": "FinancialService",
-            "name": "MMRatePro",
-            "description": "Real-time Myanmar Kyat exchange rates and gold prices from local banks",
-            "url": "https://luckeymm.online",
-            "logo": "https://luckeymm.online/logo.png",
-            "sameAs": [
-                "https://facebook.com/mmratepro",
-                "https://twitter.com/mmratepro"
-            ],
-            "address": {
-                "@type": "PostalAddress",
-                "addressCountry": "MM"
-            },
-            "areaServed": {
-                "@type": "Country",
-                "name": "Myanmar"
-            },
-            "currency": "MMK",
-            "openingHours": "24/7"
-        }
-        </script>
+        <!-- JSON-LD Structured Data for SEO - Using v-html -->
+        <meta v-html="jsonLd" />
     </Head>
-
     <div
         class="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 overflow-visible">
 
@@ -190,6 +166,33 @@ const trackScrollDepth = () => {
         }
     }
 };
+
+const jsonLd = computed(() => {
+    const data = {
+        "@context": "https://schema.org",
+        "@type": "FinancialService",
+        "name": "MMRatePro",
+        "description": "Real-time Myanmar Kyat exchange rates and gold prices from local banks",
+        "url": "https://luckeymm.online",
+        "logo": "https://luckeymm.online/logo.png",
+        "sameAs": [
+            "https://facebook.com/mmratepro",
+            "https://twitter.com/mmratepro"
+        ],
+        "address": {
+            "@type": "PostalAddress",
+            "addressCountry": "MM"
+        },
+        "areaServed": {
+            "@type": "Country",
+            "name": "Myanmar"
+        },
+        "currency": "MMK",
+        "openingHours": "24/7"
+    };
+
+    return `<script type="application/ld+json">${JSON.stringify(data)}<\/script>`;
+});
 
 // Track form interactions
 const trackFormInteraction = (event, formType) => {
