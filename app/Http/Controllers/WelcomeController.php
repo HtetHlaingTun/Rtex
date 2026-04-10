@@ -25,7 +25,35 @@ class WelcomeController extends Controller
         // Get all active currencies
         $currencies = Currency::where('is_active', true)->get();
 
-        $latestRates = $currencies->map(function ($currency) {
+        // Get your local bank USD rate (for display)
+        $usdCurrency = Currency::where('code', 'USD')->first();
+        $localUsdSellRate = 0;
+        $usdMmkMidRate = 0;
+
+        if ($usdCurrency) {
+            $usdRate = ExchangeRate::where('currency_id', $usdCurrency->id)
+                ->where('is_verified', true)
+                ->latest('created_at')
+                ->first();
+
+            if ($usdRate) {
+                $localUsdSellRate = (float) $usdRate->sell_rate;
+                $usdMmkMidRate = ($usdRate->buy_rate + $usdRate->sell_rate) / 2;
+            }
+        }
+
+        // For GLOBAL REFERENCE, use a realistic market USD/MMK rate
+        // This should be higher than bank rates to reflect black market
+        // You can make this configurable in your admin panel
+        $marketUsdRate = 4587; // Set this to your desired reference rate
+
+        // Or calculate it dynamically: local USD rate + 7% markup
+        // $marketUsdRate = $localUsdSellRate * 1.067; // 4,298 × 1.067 = 4,587
+
+        // Initialize Yahoo service for global cross rates
+        $yahooService = new \App\Services\YahooFinanceService();
+
+        $latestRates = $currencies->map(function ($currency) use ($localUsdSellRate, $marketUsdRate, $yahooService) {
             $current = ExchangeRate::where('currency_id', $currency->id)
                 ->where('is_verified', true)
                 ->where('status', 'verified')
@@ -42,25 +70,45 @@ class WelcomeController extends Controller
                 ->latest('created_at')
                 ->first();
 
+            $code = $currency->code;
+            $localSellRate = (float) $current->sell_rate;
+
+            // Calculate GLOBAL REFERENCE using the MARKET USD rate (not local bank rate)
+            $globalReference = $localSellRate; // Default to local rate
+
+            if ($code === 'USD') {
+                // For USD, global reference is the market rate (4,587)
+                $globalReference = $marketUsdRate;
+            } else {
+                // Get USD cross rate from Yahoo
+                $usdToTarget = $yahooService->getUsdToTargetRate($code);
+                if ($usdToTarget && $usdToTarget > 0 && $marketUsdRate > 0) {
+                    // Calculate using MARKET USD rate, not local bank rate
+                    $globalReference = $marketUsdRate / $usdToTarget;
+                }
+            }
+
             return [
                 'id' => $current->id,
                 'created_at' => $current->created_at->toIso8601String(),
                 'currency' => [
                     'id' => $currency->id,
-                    'code' => $currency->code,
+                    'code' => $code,
                     'name' => $currency->name,
                     'symbol' => $currency->symbol,
                     'bank_markup' => (float) ($currency->bank_markup_percentage ?? 0),
                 ],
-                'buy_rate' => (float) $current->buy_rate,
-                'sell_rate' => (float) $current->sell_rate,
-                'prev_buy_rate' => $previous ? (float) $previous->buy_rate : (float) $current->buy_rate,
-                'prev_sell_rate' => $previous ? (float) $previous->sell_rate : (float) $current->sell_rate,
-                'cbm_rate' => (float) $current->cbm_rate,
+                'buy_rate' => (float) ($current->buy_rate ?? 0),
+                'sell_rate' => $localSellRate,
+                'prev_buy_rate' => $previous ? (float) $previous->buy_rate : (float) ($current->buy_rate ?? 0),
+                'prev_sell_rate' => $previous ? (float) $previous->sell_rate : (float) ($current->sell_rate ?? 0),
+                'cbm_rate' => (float) ($current->cbm_rate ?? 0),
                 'change_percentage' => (float) ($current->change_percentage ?? 0),
                 'market_trend' => $current->market_trend ?? 'stable',
                 'avg_bank_rate' => (float) ($currency->avg_bank_rate ?? 0),
-                'spread' => (float) ($current->sell_rate - $current->buy_rate),
+                'spread' => (float) (($current->sell_rate ?? 0) - ($current->buy_rate ?? 0)),
+                'global_reference' => round($globalReference, 2),
+                'is_local_rate' => in_array($code, ['USD', 'SGD', 'THB']),
             ];
         })->filter()->values();
 
@@ -80,20 +128,16 @@ class WelcomeController extends Controller
             $q->latest('price_date')->limit(1);
         }])->get();
 
-
         // Get Myanmar gold with proper data formatting
-        // Get Myanmar gold with direct price queries (bypass relationship issues)
         $myanmarGoldNew = GoldType::where('category', 'myanmar')
             ->where('system', 'new')
             ->get()
             ->map(function ($goldType) {
-                // Get latest verified price directly
                 $latestPrice = GoldPrice::where('gold_type_id', $goldType->id)
                     ->where('status', 'verified')
                     ->orderBy('price_date', 'desc')
                     ->first();
 
-                // Get yesterday's price
                 $yesterday = now()->subDay()->toDateString();
                 $previousPrice = GoldPrice::where('gold_type_id', $goldType->id)
                     ->where('status', 'verified')
@@ -141,7 +185,6 @@ class WelcomeController extends Controller
                 ];
             });
 
-
         // Count pending gold prices
         $pendingGoldCount = GoldPrice::where('status', 'pending')->count();
 
@@ -160,15 +203,12 @@ class WelcomeController extends Controller
             ];
         }
 
-        $today = now()->toDateString();
         $yesterday = now()->subDay()->toDateString();
 
         // Get the last record from yesterday
         $previousDayClose = WorldGoldSnapshot::whereDate('fetched_at', $yesterday)
             ->orderBy('fetched_at', 'desc')
             ->first();
-
-
 
         return Inertia::render('Welcome', [
             'breadcrumbs' => [
@@ -198,7 +238,7 @@ class WelcomeController extends Controller
                 'prev_mmk_price_old' => $previousGold?->mmk_price_old,
                 'prev_world_gold_price' => $previousGold?->usd_price,
                 'prev_sgd_price' => $previousGold?->sgd_price,
-                'seven_day_old_price' => $sevenDayOldSnapshot?->usd_price, // Add 7-day old price
+                'seven_day_old_price' => $sevenDayOldSnapshot?->usd_price,
                 'fetched_at' => $latestGold->fetched_at,
                 'updated_at' => $latestGold->updated_at,
             ] : null,

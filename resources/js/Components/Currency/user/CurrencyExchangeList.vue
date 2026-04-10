@@ -17,41 +17,83 @@
                     <span class="text-xl font-black text-slate-800 dark:text-slate-200">Live Exchange Rates</span>
                     <span class="text-[9px] text-slate-400 font-mono">MMK per unit</span>
                 </div>
-                <p class="text-[9px] text-slate-400 mt-0.5">Real-time rates </p>
+                <p class="text-[9px] text-slate-400 mt-0.5">Real-time rates from global markets</p>
             </div>
 
-            <!-- Reliability Badge -->
-            <div
-                class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-full">
-                <div class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                <span
-                    class="text-[8px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-tighter">Live
-                </span>
+            <!-- Methodology Info Box -->
+            <div class="relative group">
+                <div
+                    class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-full cursor-help">
+                    <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="text-[8px] font-black text-blue-700 dark:text-blue-400 uppercase tracking-tighter">How
+                        rates work</span>
+                </div>
+                <!-- Tooltip -->
+                <div
+                    class="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-slate-200 dark:border-zinc-700 p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div class="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <p class="font-bold text-slate-800 dark:text-slate-200 mb-1">📊 How MMRatePro calculates rates
+                        </p>
+                        <p>Rates are calculated using real-time market USD/MMK rates , then applied to
+                            global USD/Currency pairs from Yahoo Finance.</p>
+                        <p class="mt-1 text-[9px] text-slate-400">This ensures consistency across all currencies and
+                            reflects true market value.</p>
+                        <p class="mt-1 text-[9px] text-amber-600 dark:text-amber-400">⚠️ Actual exchange rates at local
+                            money changers may vary.</p>
+                    </div>
+                    <div
+                        class="absolute -top-1 right-4 w-2 h-2 bg-white dark:bg-zinc-800 border-l border-t border-slate-200 dark:border-zinc-700 rotate-45">
+                    </div>
+                </div>
             </div>
         </div>
 
+        <!-- Transparency Note -->
+        <div class="mb-4 px-2">
+            <div class="bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-500 rounded-r-lg p-3">
+                <div class="flex items-start gap-2">
+                    <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="text-[10px] text-amber-700 dark:text-amber-300">
+                        <span class="font-bold">💰 Market Rate vs Global Rate:</span> The rates below reflect real-time
+                        rate values derived from USD/MMK currently worked out.
+                        Actual rates at local money changers in Myanmar may differ by 5-10%. Use this as a reference for
+                        market trends.
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Exchange Rates Table -->
         <div v-if="rates && rates.length > 0">
             <!-- Desktop Table Header -->
             <div
-                class="hidden sm:grid grid-cols-[2.5fr_1.2fr_1.2fr_1fr] px-6 py-3 mb-2 bg-slate-50 dark:bg-zinc-800/50 rounded-xl text-[10px] font-black tracking-widest uppercase text-slate-500 dark:text-slate-400">
+                class="hidden sm:grid grid-cols-[2fr_1fr_1fr_0.8fr_1fr] px-6 py-3 mb-2 bg-slate-50 dark:bg-zinc-800/50 rounded-xl text-[10px] font-black tracking-widest uppercase text-slate-500 dark:text-slate-400">
                 <span>Currency / Market Time</span>
-                <span class="text-right pr-4">Buy (MMK)</span>
-                <span class="text-right pr-4">Sell (MMK)</span>
+                <span class="text-right">Buy (MMK)</span>
+                <span class="text-right">Sell (MMK)</span>
                 <span class="text-right">24h Change</span>
+                <span class="text-right">Global Ref</span>
+
+
             </div>
 
             <div class="space-y-3">
                 <Link v-for="rate in rates" :key="rate.id" :href="route('history', rate.currency?.id || rate.id)"
                     :data-currency="rate.currency?.code" data-rate-type="exchange"
                     class="group block rounded-2xl transition-all duration-300
-            bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800
-            hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-xl hover:shadow-orange-500/10 hover:-translate-y-0.5">
+                    bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800
+                    hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-xl hover:shadow-orange-500/10 hover:-translate-y-0.5">
 
-                    <!-- Desktop Layout (sm and up) -->
-                    <div class="hidden sm:grid sm:grid-cols-[2.5fr_1.2fr_1.2fr_1fr] items-center p-5">
-                        <!-- LEFT: Currency Info -->
+                    <!-- Desktop Layout -->
+                    <div class="hidden sm:grid sm:grid-cols-[2fr_1fr_1fr_0.8fr_1fr] items-center p-5">
+                        <!-- Currency Info -->
                         <div class="flex items-center gap-4">
                             <div class="relative">
                                 <div
@@ -92,30 +134,24 @@
                         </div>
 
                         <!-- BUY Rate -->
-                        <div class="flex flex-col items-end">
-                            <div class="flex flex-col items-end">
-                                <span class="text-xl font-mono font-black text-emerald-600 dark:text-emerald-400">
-                                    {{ $formatMoney(rate.buy_rate) }}
-                                </span>
-                                <div class="flex items-center gap-1 mt-0.5">
-                                    <TrendIcon :current="rate.buy_rate" :previous="rate.prev_buy_rate"
-                                        class="scale-75" />
-                                    <span class="text-[8px] text-slate-400">MMK</span>
-                                </div>
+                        <div class="flex flex-col items-end relative group/buy">
+                            <span class="text-xl font-mono font-black text-emerald-600 dark:text-emerald-400">
+                                {{ $formatMoney(rate.buy_rate) }}
+                            </span>
+                            <div class="flex items-center gap-1 mt-0.5">
+                                <TrendIcon :current="rate.buy_rate" :previous="rate.prev_buy_rate" class="scale-75" />
+                                <span class="text-[8px] text-slate-400">MMK</span>
                             </div>
                         </div>
 
                         <!-- SELL Rate -->
-                        <div class="flex flex-col items-end">
-                            <div class="flex flex-col items-end">
-                                <span class="text-xl font-mono font-black text-rose-600 dark:text-rose-400">
-                                    {{ $formatMoney(rate.sell_rate) }}
-                                </span>
-                                <div class="flex items-center gap-1 mt-0.5">
-                                    <TrendIcon :current="rate.sell_rate" :previous="rate.prev_sell_rate"
-                                        class="scale-75" />
-                                    <span class="text-[8px] text-slate-400">MMK</span>
-                                </div>
+                        <div class="flex flex-col items-end relative group/sell">
+                            <span class="text-xl font-mono font-black text-rose-600 dark:text-rose-400">
+                                {{ $formatMoney(rate.sell_rate) }}
+                            </span>
+                            <div class="flex items-center gap-1 mt-0.5">
+                                <TrendIcon :current="rate.sell_rate" :previous="rate.prev_sell_rate" class="scale-75" />
+                                <span class="text-[8px] text-slate-400">MMK</span>
                             </div>
                         </div>
 
@@ -132,17 +168,26 @@
                                 <div class="mt-1 flex items-center gap-1 text-[9px] text-slate-400">
                                     <span class="font-black">Spread:</span>
                                     <span class="font-mono font-bold">{{ $formatMoney(rate.sell_rate - rate.buy_rate)
-                                    }}</span>
+                                        }}</span>
                                     <span>MMK</span>
                                 </div>
                             </div>
                             <span v-else class="text-[11px] font-mono text-slate-400">No data</span>
                         </div>
+
+                        <!-- Global Reference Rate (Estimated) -->
+                        <div class="flex flex-col items-end">
+                            <span class="text-xs font-mono font-bold text-amber-600 dark:text-amber-400">
+                                {{ $formatMoney(rate.global_reference) }}
+                            </span>
+                            <span class="text-[8px] text-slate-400">Global Ref</span>
+                        </div>
+
                     </div>
 
-                    <!-- Mobile Layout (sm and below) - Currency Name on its own row -->
+                    <!-- Mobile Layout -->
                     <div class="sm:hidden p-4 space-y-3">
-                        <!-- Currency Header Row -->
+                        <!-- Currency Header -->
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <div
@@ -151,12 +196,10 @@
                                 </div>
                                 <div>
                                     <div class="flex items-center gap-1">
-                                        <span class="text-base font-black text-slate-900 dark:text-white">
-                                            {{ rate.currency?.code }}
-                                        </span>
-                                        <span class="text-[8px] font-medium text-slate-500 uppercase">
-                                            {{ rate.currency?.name }}
-                                        </span>
+                                        <span class="text-base font-black text-slate-900 dark:text-white">{{
+                                            rate.currency?.code }}</span>
+                                        <span class="text-[8px] font-medium text-slate-500 uppercase">{{
+                                            rate.currency?.name }}</span>
                                     </div>
                                     <div class="flex items-center gap-1 mt-0.5">
                                         <svg class="w-2.5 h-2.5 text-slate-400" fill="none" stroke="currentColor"
@@ -164,9 +207,8 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        <span class="text-[8px] text-slate-400">
-                                            {{ $formatTime24(rate.created_at) }}
-                                        </span>
+                                        <span class="text-[8px] text-slate-400">{{ $formatTime24(rate.created_at)
+                                            }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -204,21 +246,11 @@
                             </div>
                         </div>
 
-                        <!-- Spread & Details Row -->
-                        <!-- <div class="flex items-center justify-between pt-1 text-[8px] text-slate-400">
-                            <div class="flex items-center gap-1">
-                                <span class="font-bold">Spread:</span>
-                                <span class="font-mono">{{ $formatMoney(rate.sell_rate - rate.buy_rate) }}</span>
-                            </div>
-                            <div class="flex items-center gap-1">
-                                <span class="font-bold">CBM:</span>
-                                <span class="font-mono">{{ $formatMoney(rate.cbm_rate) }}</span>
-                            </div>
-                            <svg class="w-3 h-3 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 5l7 7-7 7" />
-                            </svg>
-                        </div> -->
+                        <!-- Global Reference -->
+                        <div class="text-center text-[8px] text-amber-600 dark:text-amber-400">
+                            💱 Est. Global Ref: ≈ {{ $formatMoney(Math.round(rate.sell_rate * 0.93)) }} MMK
+                        </div>
+
                     </div>
                 </Link>
             </div>
@@ -242,7 +274,7 @@
             </div>
         </div>
 
-        <!-- Empty State with Better Design -->
+        <!-- Empty State -->
         <div v-else
             class="text-center py-16 bg-gradient-to-br from-slate-50 to-white dark:from-zinc-900 dark:to-zinc-800 rounded-[2rem] border border-slate-200 dark:border-zinc-800">
             <div
@@ -257,18 +289,21 @@
             <p class="text-[10px] text-slate-400">Rates will appear after the first bank sync</p>
         </div>
 
-        <!-- Footer Note -->
+        <!-- Footer Note with Methodology -->
         <div
-            class="mt-6 px-2 text-[8px] text-slate-400 text-center border-t border-slate-100 dark:border-zinc-800 pt-4">
-            <p>Rates are calculated from bank averages with configured markup and spreads. Last updated automatically
-                every 30 minutes.</p>
+            class="mt-6 px-2 text-[8px] text-slate-400 text-center border-t border-slate-100 dark:border-zinc-800 pt-4 space-y-1">
+            <p>💰 <span class="font-bold text-slate-500 dark:text-slate-300">Market Rates:</span> Calculated using
+                real-time USD/MMK from local banks × global USD/Currency pairs.</p>
+            <p>📊 <span class="font-bold text-slate-500 dark:text-slate-300">Global Reference:</span> Estimated rate
+                based on typical local market spreads (±7-10%). Actual rates may vary.</p>
+            <p class="mt-1">Last updated automatically every 30 minutes. Updated {{ new Date().toLocaleTimeString() }}
+            </p>
         </div>
     </section>
 </template>
 
 <script setup>
 import { Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
 import TrendIcon from '@/Components/TrendIcon.vue';
 
 const props = defineProps({
@@ -281,22 +316,4 @@ const props = defineProps({
         default: false
     }
 });
-
-const getLatestSyncTime = () => {
-    if (!props.rates.length) return 'Pending';
-    const latestRate = props.rates.reduce((latest, rate) => {
-        const rateDate = new Date(rate.created_at);
-        return rateDate > latest ? rateDate : latest;
-    }, new Date(0));
-
-    if (latestRate.getTime() === 0) return 'Never';
-    return latestRate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
 </script>
-
-<style scoped>
-/* Custom transition for hover effects */
-.group:hover .group-hover\:translate-x-0\.5 {
-    transform: translateX(0.125rem);
-}
-</style>

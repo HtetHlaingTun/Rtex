@@ -135,6 +135,7 @@ class BankAggregatorService
         $cbmRates = $this->cbmService->fetchCurrentRates();
         $codes = ['USD', 'SGD', 'EUR', 'THB'];
 
+        // ========== PROCESS BANK AVERAGE CURRENCIES ==========
         foreach ($codes as $code) {
             $currency = Currency::where('code', $code)->first();
             if (!$currency) continue;
@@ -157,24 +158,22 @@ class BankAggregatorService
             $expectedRange = $this->expectedRanges[$code] ?? ['min' => 0, 'max' => 10000];
 
             foreach ($allRates as $bank => $rates) {
-                // Validate buy rate
                 if ($rates['buy'] > 0) {
                     if ($rates['buy'] >= $expectedRange['min'] && $rates['buy'] <= $expectedRange['max']) {
                         $validRates[$bank]['buy'] = $rates['buy'];
                     } else {
-                        Log::warning("Filtered out {$bank} buy rate for {$code}: {$rates['buy']} (outside range {$expectedRange['min']}-{$expectedRange['max']})");
+                        Log::warning("Filtered out {$bank} buy rate for {$code}: {$rates['buy']}");
                         $validRates[$bank]['buy'] = 0;
                     }
                 } else {
                     $validRates[$bank]['buy'] = 0;
                 }
 
-                // Validate sell rate
                 if ($rates['sell'] > 0) {
                     if ($rates['sell'] >= $expectedRange['min'] && $rates['sell'] <= $expectedRange['max']) {
                         $validRates[$bank]['sell'] = $rates['sell'];
                     } else {
-                        Log::warning("Filtered out {$bank} sell rate for {$code}: {$rates['sell']} (outside range {$expectedRange['min']}-{$expectedRange['max']})");
+                        Log::warning("Filtered out {$bank} sell rate for {$code}: {$rates['sell']}");
                         $validRates[$bank]['sell'] = 0;
                     }
                 } else {
@@ -207,26 +206,22 @@ class BankAggregatorService
             $avgBankBuyRate = !empty($bankBuyRates) ? array_sum($bankBuyRates) / count($bankBuyRates) : 0;
             $avgBankSellRate = !empty($bankSellRates) ? array_sum($bankSellRates) / count($bankSellRates) : 0;
 
-            // ============ CRITICAL: VALIDATE BEFORE SAVING ============
             // For bank_avg mode, ensure we have valid bank data
             if ($currency->source_mode === 'bank_avg') {
                 $hasFreshRates = $avgBankMidRate > 0;
                 $hasStoredRates = $currency->avg_bank_rate > 0;
 
-                // No bank data available at all - skip save completely
                 if (!$hasFreshRates && !$hasStoredRates) {
-                    Log::warning("NO BANK RATES available for {$code}. Skipping save to prevent bad CBM rates.");
+                    Log::warning("NO BANK RATES available for {$code}. Skipping save.");
                     $currency->update(['banks_last_synced_at' => now()]);
-                    continue; // Skip this sync - don't save anything
+                    continue;
                 }
 
-                // Use stored rates as fallback if fresh rates are 0
                 if ($avgBankMidRate == 0 && $currency->avg_bank_rate > 0) {
                     $avgBankMidRate = $currency->avg_bank_rate;
                     Log::info("Using stored avg_bank_rate for {$code}: {$avgBankMidRate}");
                 }
             }
-            // =========================================================
 
             // Get CBM rate
             $cbmRateData = $cbmRates[$code] ?? null;
@@ -240,19 +235,17 @@ class BankAggregatorService
                 $cbmRate = $currency->cbm_rate;
             }
 
-            // For currencies with source_mode = 'cbm', use that
+            // Determine final rates
             $finalRate = $this->determineFinalRate($currency, $avgBankMidRate, $cbmRate);
             $finalRates = $this->calculateFinalBuySellRates($currency, $finalRate, $cbmRate, $avgBankMidRate);
 
-            // ============ FINAL RATE VALIDATION ============
-            // Ensure calculated rates are within expected range (not CBM-based)
+            // Final rate validation
             $minExpectedRate = $this->getExpectedMinRate($code);
             if ($currency->source_mode === 'bank_avg' && $finalRates['buy_rate'] < $minExpectedRate) {
                 Log::warning("CALCULATED RATE TOO LOW for {$code}: Buy={$finalRates['buy_rate']} < {$minExpectedRate}. Skipping save.");
                 $currency->update(['banks_last_synced_at' => now()]);
                 continue;
             }
-            // ===============================================
 
             // Get previous record
             $previousRecord = ExchangeRate::where('currency_id', $currency->id)
@@ -263,20 +256,13 @@ class BankAggregatorService
                 ? (($finalRates['buy_rate'] - (float)$previousRecord->buy_rate) / (float)$previousRecord->buy_rate) * 100
                 : 0;
 
-            // Determine status based on available sources
             $validSources = count(array_filter($validRates, fn($r) => $r['buy'] > 0 || $r['sell'] > 0));
             $hasCbm = $cbmRate > 0;
             $totalSources = $validSources + ($hasCbm ? 1 : 0);
 
-
-
-            // Use ONLY values from your ENUM: 'draft', 'pending', 'verified', 'rejected'
-            // Use the shouldAutoVerify method for smarter verification
             $shouldVerify = $this->shouldAutoVerify($code, $validRates, $cbmRate, $previousRecord);
-
             $status = $shouldVerify ? 'verified' : 'pending';
             $isVerified = $shouldVerify;
-
 
             $factors = [
                 'raw_rates' => $allRates,
@@ -298,87 +284,25 @@ class BankAggregatorService
                 'expected_range' => $expectedRange ?? ['min' => 0, 'max' => 10000]
             ];
 
-
-
-            // ----- 
-            // AFTER your bank sync, handle cross_usd currencies
-            $crossCurrencies = Currency::where('source_mode', 'cross_usd')
-                ->where('is_active', true)
-                ->get();
-
-            foreach ($crossCurrencies as $currency) {
-                $code = $currency->code;
-
-                // Skip if already synced via banks (shouldn't happen)
-                if (in_array($code, ['USD', 'SGD', 'EUR', 'THB'])) {
-                    continue;
-                }
-
-                // Calculate rates using cross method
-                $finalRates = $this->calculateCrossUsdRate($currency);
-
-                if ($finalRates['buy_rate'] <= 0 || $finalRates['sell_rate'] <= 0) {
-                    Log::warning("Failed to calculate cross rate for {$code}");
-                    continue;
-                }
-
-                // Get previous record for change calculation
-                $previousRecord = ExchangeRate::where('currency_id', $currency->id)
-                    ->latest('rate_date')
-                    ->first();
-
-                $changePercent = ($previousRecord && $previousRecord->buy_rate > 0 && $finalRates['buy_rate'] > 0)
-                    ? (($finalRates['buy_rate'] - $previousRecord->buy_rate) / $previousRecord->buy_rate) * 100
-                    : 0;
-
-                // Create exchange rate record
-                ExchangeRate::create([
-                    'currency_id' => $currency->id,
-                    'rate_date' => now(),
-                    'buy_rate' => $finalRates['buy_rate'],
-                    'sell_rate' => $finalRates['sell_rate'],
-                    'cbm_rate' => $currency->cbm_rate ?? 0,
-                    'previous_buy_rate' => $previousRecord->buy_rate ?? 0,
-                    'previous_sell_rate' => $previousRecord->sell_rate ?? 0,
-                    'change_percentage' => $changePercent,
-                    'market_trend' => $finalRates['buy_rate'] > ($previousRecord->buy_rate ?? 0) ? 'up' : ($finalRates['buy_rate'] < ($previousRecord->buy_rate ?? 0) ? 'down' : 'stable'),
-                    'source_name' => 'Cross Rate (USD Bridge)',
-                    'status' => 'verified',
-                    'is_verified' => true,
-                    'verified_at' => now(),
-                    'factors' => [
-                        'method' => 'cross_usd',
-                        'usd_mmk_rate' => $usdMmkMid ?? null,
-                    ],
-                    'created_by' => 1,
-                    'updated_by' => 1,
-                ]);
-
-                Log::info("Synced {$code} via cross rate: Buy={$finalRates['buy_rate']}, Sell={$finalRates['sell_rate']}");
-            }
-
-
-
-
-
-            // ExchangeRate::create([
-            //     'currency_id' => $currency->id,
-            //     'rate_date' => now(),
-            //     'buy_rate' => $finalRates['buy_rate'],
-            //     'sell_rate' => $finalRates['sell_rate'],
-            //     'cbm_rate' => $cbmRate,
-            //     'previous_buy_rate' => $previousRecord->buy_rate ?? 0,
-            //     'previous_sell_rate' => $previousRecord->sell_rate ?? 0,
-            //     'change_percentage' => $changePercent,
-            //     'market_trend' => $finalRates['buy_rate'] > ($previousRecord->buy_rate ?? 0) ? 'up' : ($finalRates['buy_rate'] < ($previousRecord->buy_rate ?? 0) ? 'down' : 'stable'),
-            //     'source_name' => $this->getSourceName($currency->source_mode, $totalSources),
-            //     'status' => $status,
-            //     'is_verified' => $isVerified,
-            //     'verified_at' => $isVerified ? now() : null,
-            //     'factors' => $factors,
-            //     'created_by' => 1,
-            //     'updated_by' => 1,
-            // ]);
+            // ✅ SAVE exchange rate for bank_avg currency
+            ExchangeRate::create([
+                'currency_id' => $currency->id,
+                'rate_date' => now(),
+                'buy_rate' => $finalRates['buy_rate'],
+                'sell_rate' => $finalRates['sell_rate'],
+                'cbm_rate' => $cbmRate,
+                'previous_buy_rate' => $previousRecord->buy_rate ?? 0,
+                'previous_sell_rate' => $previousRecord->sell_rate ?? 0,
+                'change_percentage' => $changePercent,
+                'market_trend' => $finalRates['buy_rate'] > ($previousRecord->buy_rate ?? 0) ? 'up' : ($finalRates['buy_rate'] < ($previousRecord->buy_rate ?? 0) ? 'down' : 'stable'),
+                'source_name' => $this->getSourceName($currency->source_mode, $totalSources),
+                'status' => $status,
+                'is_verified' => $isVerified,
+                'verified_at' => $isVerified ? now() : null,
+                'factors' => $factors,
+                'created_by' => 1,
+                'updated_by' => 1,
+            ]);
 
             $currency->update([
                 'avg_bank_rate' => $avgBankMidRate,
@@ -388,8 +312,61 @@ class BankAggregatorService
 
             Log::info("Synced {$currency->code}: Buy={$finalRates['buy_rate']}, Sell={$finalRates['sell_rate']}, Banks={$validSources}, CBM=" . ($hasCbm ? $cbmRate : 'none'));
         }
-    }
 
+        // ========== PROCESS CROSS USD CURRENCIES ==========
+        $crossCurrencies = Currency::where('source_mode', 'cross_usd')
+            ->where('is_active', true)
+            ->get();
+
+        foreach ($crossCurrencies as $currency) {
+            // Skip currencies already processed by bank_avg
+            if (in_array($currency->code, ['USD', 'SGD', 'EUR', 'THB'])) {
+                continue;
+            }
+
+            // Calculate rates using cross method
+            $finalRates = $this->calculateCrossUsdRate($currency);
+
+            if ($finalRates['buy_rate'] <= 0 || $finalRates['sell_rate'] <= 0) {
+                Log::warning("Failed to calculate cross rate for {$currency->code}");
+                continue;
+            }
+
+            // Get previous record for change calculation
+            $previousRecord = ExchangeRate::where('currency_id', $currency->id)
+                ->latest('rate_date')
+                ->first();
+
+            $changePercent = ($previousRecord && $previousRecord->buy_rate > 0 && $finalRates['buy_rate'] > 0)
+                ? (($finalRates['buy_rate'] - $previousRecord->buy_rate) / $previousRecord->buy_rate) * 100
+                : 0;
+
+            // ✅ SAVE exchange rate for cross_usd currency
+            ExchangeRate::create([
+                'currency_id' => $currency->id,
+                'rate_date' => now(),
+                'buy_rate' => $finalRates['buy_rate'],
+                'sell_rate' => $finalRates['sell_rate'],
+                'cbm_rate' => $currency->cbm_rate ?? 0,
+                'previous_buy_rate' => $previousRecord->buy_rate ?? 0,
+                'previous_sell_rate' => $previousRecord->sell_rate ?? 0,
+                'change_percentage' => $changePercent,
+                'market_trend' => $finalRates['buy_rate'] > ($previousRecord->buy_rate ?? 0) ? 'up' : ($finalRates['buy_rate'] < ($previousRecord->buy_rate ?? 0) ? 'down' : 'stable'),
+                'source_name' => 'Cross Rate (USD Bridge)',
+                'status' => 'verified',
+                'is_verified' => true,
+                'verified_at' => now(),
+                'factors' => [
+                    'method' => 'cross_usd',
+                    'usd_mmk_rate' => $usdMmkMid ?? null,
+                ],
+                'created_by' => 1,
+                'updated_by' => 1,
+            ]);
+
+            Log::info("Synced {$currency->code} via cross rate: Buy={$finalRates['buy_rate']}, Sell={$finalRates['sell_rate']}");
+        }
+    }
 
 
 

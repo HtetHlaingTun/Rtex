@@ -270,7 +270,7 @@ class CurrencyExchangeRate extends Controller
             ]);
 
             $validated = $request->validate([
-                'source_mode' => 'required|in:bank_avg,cbm,manual',
+                'source_mode' => 'required|in:bank_avg,cross_usd,cbm,manual',  // ✅ ADD 'cross_usd'
                 'cbm_conversion_factor' => 'nullable|numeric',
                 'bank_markup_percentage' => 'nullable|numeric|min:0|max:100',
                 'manual_base_rate' => 'nullable|numeric',

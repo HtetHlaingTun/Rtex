@@ -397,6 +397,12 @@ onMounted(() => {
         })
     }
     loading.value = false
+
+    props.currencies.forEach(currency => {
+        if (currency.source_mode === 'cross_usd') {
+            fetchCrossRatePreview(currency);
+        }
+    });
 })
 
 // Watch for source_mode changes to fetch cross rate preview
