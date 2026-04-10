@@ -89,3 +89,25 @@ Schedule::command('watch:alerts-check --cleanup')
     ->dailyAt('00:05')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/alerts-check-cleanup.log'));
+
+
+// send daily rate mail 
+// Schedule::command('mail:send-daily-rates')
+//     ->dailyAt('08:00')
+//     ->withoutOverlapping()
+//     ->appendOutputTo(storage_path('logs/daily-rates.log'));
+
+Schedule::command('mail:send-daily-rates --batch=1 --batch-size=100')
+    ->dailyAt('10:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/daily-rates-batch1.log'));
+
+Schedule::command('mail:send-daily-rates --batch=2 --batch-size=100')
+    ->dailyAt('11:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/daily-rates-batch2.log'));
+
+Schedule::command('mail:send-daily-rates --batch=3 --batch-size=100')
+    ->dailyAt('12:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/daily-rates-batch3.log'));

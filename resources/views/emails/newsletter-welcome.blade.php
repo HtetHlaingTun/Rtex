@@ -90,12 +90,12 @@
                 <a href="{{ config('app.url') }}" class="button">Visit MMRatePro</a>
             </p>
 
+            <!-- At the bottom of the email -->
             <p style="font-size: 12px; color: #666; margin-top: 30px;">
                 You're receiving this because you subscribed to daily rate alerts at MMRatePro.
                 <br>
-                <!-- Unsubscribe link -->
-                <a href="{{ config('app.url') }}/unsubscribe/{{ $subscriber->email }}">
-                    Unsubscribe
+                <a href="{{ route('unsubscribe', $subscriber->email) }}" style="color: #f59e0b;">
+                    Click here to unsubscribe
                 </a>
             </p>
         </div>
