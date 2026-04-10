@@ -1,4 +1,58 @@
 <template>
+    <!-- ADD THIS HEAD COMPONENT AT THE VERY TOP -->
+
+    <Head>
+        <title>MMRatePro - Live Exchange Rates & Gold Prices</title>
+        <meta name="description"
+            content="Real-time USD, SGD, EUR, THB exchange rates to MMK. Live gold prices in Myanmar kyat.">
+        <meta name="keywords" content="exchange rates, Myanmar kyat, MMK, USD, SGD, EUR, THB, gold prices">
+
+        <!-- Open Graph -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="https://luckeymm.online">
+        <meta property="og:title" content="MMRatePro - Live Exchange Rates & Gold Prices">
+        <meta property="og:description" content="Real-time exchange rates for Myanmar">
+        <meta property="og:image" content="https://luckeymm.online/default-og-image.jpg">
+
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="MMRatePro">
+        <meta name="twitter:description" content="Real-time exchange rates for Myanmar">
+        <meta name="twitter:image" content="https://luckeymm.online/default-og-image.jpg">
+
+        <!-- JSON-LD Structured Data for SEO -->
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "FinancialService",
+            "name": "MMRatePro",
+            "description": "Real-time Myanmar Kyat exchange rates and gold prices from local banks",
+            "url": "https://luckeymm.online",
+            "logo": "https://luckeymm.online/logo.png",
+            "sameAs": [
+                "https://facebook.com/mmratepro",
+                "https://twitter.com/mmratepro"
+            ],
+            "address": {
+                "@type": "PostalAddress",
+                "addressCountry": "MM"
+            },
+            "areaServed": {
+                "@type": "Country",
+                "name": "Myanmar"
+            },
+            "currency": "MMK",
+            "openingHours": "24/7",
+            "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://luckeymm.online/search?q={search_term_string}",
+                "query-input": "required name=search_term_string"
+            }
+        }
+        </script>
+    </Head>
+
+
     <div
         class="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 overflow-visible">
 
@@ -126,6 +180,8 @@ import { useGA4 } from '@/Composables/useGA4';
 const { isDark, toggleDark } = useDarkMode()
 const { trackFormStart, trackFormSubmit, trackSubscribe, trackScroll, trackClick } = useGA4();
 const page = usePage()
+
+
 
 // --- Flash Message State with Auto-Dismiss ---
 const showSuccessMessage = ref(false)
@@ -378,6 +434,8 @@ const trackRateClick = (currency, rateType) => {
 import { provide } from 'vue';
 provide('trackRateClick', trackRateClick);
 </script>
+
+
 
 <style>
 @keyframes float {
