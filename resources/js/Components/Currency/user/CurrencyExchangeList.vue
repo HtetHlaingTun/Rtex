@@ -248,8 +248,15 @@
 
                         <!-- Global Reference -->
                         <div class="text-center text-[8px] text-amber-600 dark:text-amber-400">
-                            💱 Est. Global Ref: ≈ {{ $formatMoney(Math.round(rate.sell_rate * 0.93)) }} MMK
+                            💱 Est. Global Ref: ≈ {{ $formatMoney(rate.global_reference) }}MMK
                         </div>
+
+                        <!-- <div class="flex flex-col items-end">
+                            <span class="text-xs font-mono font-bold text-amber-600 dark:text-amber-400">
+                                {{ $formatMoney(rate.global_reference) }}
+                            </span>
+                            <span class="text-[8px] text-slate-400">Global Ref</span>
+                        </div> -->
 
                     </div>
                 </Link>
