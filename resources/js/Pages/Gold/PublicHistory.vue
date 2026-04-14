@@ -72,7 +72,7 @@
                                                     </span>
                                                 </div>
                                                 <span class="text-[9px] text-slate-500">({{ Math.abs(stats.percent)
-                                                    }}%)</span>
+                                                }}%)</span>
                                             </div>
                                         </div>
                                     </div>
@@ -96,17 +96,17 @@
                                                 <div class="flex items-center gap-1">
                                                     <!-- Invert the condition for SGD only -->
                                                     <span
-                                                        :class="stats.diff_sgd <= 0 ? 'text-emerald-600' : 'text-rose-600'"
-                                                        class="text-[9px] font-black">
-                                                        {{ stats.diff_sgd <= 0 ? '▲' : '▼' }} </span>
-                                                            <span
-                                                                :class="stats.diff_sgd <= 0 ? 'text-emerald-600' : 'text-rose-600'"
-                                                                class="text-[10px] font-mono font-bold">
-                                                                S${{ $formatMoney(Math.abs(stats.diff_sgd), 0) }}
-                                                            </span>
+                                                        :class="stats.diff_sgd >= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                                                        {{ stats.diff_sgd >= 0 ? '▲' : '▼' }}
+                                                    </span>
+                                                    <span
+                                                        :class="stats.diff_sgd >= 0 ? 'text-emerald-600' : 'text-rose-600'"
+                                                        class="text-[10px] font-mono font-bold">
+                                                        S${{ $formatMoney(Math.abs(stats.diff_sgd), 0) }}
+                                                    </span>
                                                 </div>
                                                 <span
-                                                    :class="stats.diff_sgd <= 0 ? 'text-emerald-600' : 'text-rose-600'"
+                                                    :class="stats.diff_sgd >= 0 ? 'text-emerald-600' : 'text-rose-600'"
                                                     class="text-[9px] font-black">
                                                     ({{ stats.percent_sgd >= 0 ? '+' : '' }}{{
                                                         Math.abs(stats.percent_sgd) }}%)
@@ -116,6 +116,8 @@
                                     </div>
                                 </div>
                             </template>
+
+
 
                             <!-- For Myanmar Gold: Show MMK only -->
                             <template v-else>
