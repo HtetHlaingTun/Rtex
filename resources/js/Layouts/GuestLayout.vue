@@ -9,6 +9,9 @@
         <meta v-html="jsonLd" />
     </Head>
 
+
+    <GoogleAnalytics />
+
     <div
         class="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 overflow-visible">
 
@@ -146,6 +149,7 @@
                         </ul>
                     </div>
 
+
                     <!-- Newsletter -->
                     <div>
                         <h3 class="text-sm font-black uppercase tracking-wider text-amber-500 mb-4">Daily Rate Alerts
@@ -206,6 +210,7 @@ import { router, usePage, Head } from '@inertiajs/vue3'
 import { useDarkMode } from '@/Composables/useDarkMode';
 import axios from 'axios';
 import { useGA4 } from '@/Composables/useGA4';
+import GoogleAnalytics from '@/Components/GoogleAnalytics.vue';
 
 
 
