@@ -191,130 +191,24 @@
                         :symbol="selectedType === 'world_oz' ? '$' : ''" />
                 </div>
 
-                <!-- History Table - Enhanced -->
-                <div
-                    class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
-                    <div v-if="historyData.length">
-                        <!-- Table Header -->
-                        <div
-                            class="grid grid-cols-2 sm:grid-cols-[2fr_1.4fr_1fr] px-6 py-3.5 bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-800">
-                            <span
-                                class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">Date
-                                & Time</span>
-                            <span
-                                class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500 text-right">Price</span>
-                            <span
-                                class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500 text-right hidden sm:block">24h
-                                Change</span>
-                        </div>
 
-                        <!-- Table Rows -->
-                        <div class="divide-y divide-slate-100 dark:divide-zinc-800">
-                            <div v-for="(entry, index) in historyData" :key="entry.id"
-                                class="group grid grid-cols-2 sm:grid-cols-[2fr_1.4fr_1fr] items-center px-6 py-4 transition-all duration-200 hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 hover:pl-7">
+                <!-- ==================== BIND THE COMPONENTS HERE ==================== -->
 
-                                <!-- Date Column -->
-                                <div class="flex flex-col">
-                                    <span class="text-sm font-bold text-slate-900 dark:text-zinc-100">
-                                        {{ formatDate(entry.price_date || entry.created_at) }}
-                                    </span>
-                                    <div class="flex items-center gap-1.5 mt-0.5">
-                                        <svg class="w-2.5 h-2.5 text-slate-400" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span class="text-[10px] font-mono text-slate-400">{{
-                                            formatTime(entry.created_at) }}</span>
-                                    </div>
-                                </div>
+                <!-- For World Gold -->
+                <WorldGoldHistoryList v-if="selectedType === 'world_oz'" :history="history" />
 
-                                <!-- Price Column -->
-                                <div class="text-right">
-                                    <div class="flex flex-col items-end gap-1">
-                                        <div class="flex items-baseline gap-1"
-                                            :class="getTextColor(pageInfo.colorClass)">
-                                            <span class="text-[9px] font-bold opacity-60">{{ pageInfo.symbol }}</span>
-                                            <span class="text-base font-mono font-black tabular-nums">
-                                                {{ $formatMoney(entry.price, 2, pageInfo.currency === 'MMK') }}
-                                            </span>
-                                        </div>
-                                        <TrendIcon :current="entry.price" :previous="historyData[index + 1]?.price"
-                                            :show-amount="true" class="scale-90" />
-                                    </div>
+                <!-- For Myanmar Gold - New System -->
+                <MyanmarGoldHistoryList v-if="selectedType === 'new_system'" :history="history" system-type="new" />
 
-                                    <!-- SGD Price for World Gold -->
-                                    <div v-if="selectedType === 'world_oz' && entry.sgd_price"
-                                        class="mt-1.5 pt-1 border-t border-slate-100 dark:border-zinc-700">
-                                        <div class="flex items-center justify-end gap-1">
-                                            <span class="text-[9px] font-bold text-blue-600/60">S$</span>
-                                            <span class="text-xs font-mono font-bold text-blue-600 dark:text-blue-400">
-                                                {{ $formatMoney(entry.sgd_price, 2) }}
-                                            </span>
-                                            <TrendIcon :current="entry.sgd_price"
-                                                :previous="historyData[index + 1]?.sgd_price" class="scale-75" />
-                                        </div>
-                                    </div>
-                                </div>
+                <!-- For Myanmar Gold - Traditional -->
+                <MyanmarGoldHistoryList v-else-if="selectedType === 'traditional'" :history="history"
+                    system-type="old" />
 
-                                <!-- Change Column -->
-                                <div class="text-right hidden sm:block">
-                                    <span v-if="index < historyData.length - 1"
-                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black border"
-                                        :class="getBadgeClass(getRowChange(entry.price, historyData[index + 1]?.price).dir)">
-                                        <span>{{ getRowChange(entry.price, historyData[index + 1]?.price).dir === 'up' ?
-                                            '▲' : getRowChange(entry.price, historyData[index + 1]?.price).dir ===
-                                                'down' ? '▼' : '—' }}</span>
-                                        {{ getRowChange(entry.price, historyData[index + 1]?.price).text }}
-                                    </span>
-                                    <span v-else class="text-slate-300 dark:text-zinc-700 text-[9px]">—</span>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Pagination -->
-                        <div v-if="history.last_page > 1"
-                            class="flex flex-col sm:flex-row justify-between items-center gap-4 px-6 py-4 bg-slate-50/50 dark:bg-zinc-800/20 border-t border-slate-200 dark:border-zinc-800">
-                            <span class="text-[10px] font-bold text-slate-400 dark:text-zinc-500">
-                                {{ history.total }} records · Page {{ history.current_page }} of {{ history.last_page }}
-                            </span>
-                            <div class="flex gap-1.5 flex-wrap justify-center">
-                                <Link v-for="link in history.links" :key="link.label" :href="link.url || '#'"
-                                    class="min-w-[32px] h-7 flex items-center justify-center px-2 text-[10px] font-black rounded-lg transition-all"
-                                    :class="link.active
-                                        ? 'bg-slate-800 text-white border-slate-800 dark:bg-white dark:text-zinc-900'
-                                        : 'bg-white text-slate-500 border-slate-200 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-zinc-600',
-                                        !link.url && 'opacity-30 pointer-events-none'" v-html="link.label" />
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Empty State -->
-                    <div v-else class="py-20 text-center">
-                        <div
-                            class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-zinc-800 mb-4">
-                            <svg class="w-8 h-8 text-slate-300 dark:text-zinc-600" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <p class="text-sm text-slate-400 dark:text-zinc-500 font-medium">No price history available</p>
-                        <p class="text-[10px] text-slate-400 dark:text-zinc-600 mt-1">Data will appear after the first
-                            price sync</p>
-                    </div>
-                </div>
 
-                <!-- Info Footer -->
-                <div
-                    class="text-center text-[10px] text-slate-400 dark:text-zinc-600 px-4 py-3 bg-slate-50 dark:bg-zinc-800/30 rounded-xl">
-                    <p v-if="isWorldGold">
-                        World gold prices sourced from Yahoo Finance · Real-time updates every 2 minutes
-                    </p>
-                    <p v-else>
-                        Local gold prices based on market rates · Updated daily with bank averages
-                    </p>
-                </div>
+
+
 
             </main>
         </div>
@@ -377,6 +271,18 @@ const pageInfo = computed(() => typeMap[props.selectedType] ?? { title: 'Gold Hi
 const isWorldGold = computed(() => props.selectedType === 'world_oz')
 const historyData = computed(() => props.history?.data ?? [])
 
+// Change this back to use the direct history data
+const olderRecords = computed(() => props.history.data || []);
+// Helper to filter out today's records
+// const olderRecords = computed(() => {
+//     const today = new Date().toDateString();
+
+//     return historyData.value.filter(entry => {
+//         // Check both price_date (local gold) and created_at (world spot)
+//         const recordDate = new Date(entry.price_date || entry.created_at).toDateString();
+//         return recordDate !== today;
+//     });
+// });
 // ── Helpers ──────────────────────────────────────────
 const formatDate = (s) => s ? new Date(s).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'
 const formatTime = (s) => s && s.length > 10 ? new Date(s).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) : ''

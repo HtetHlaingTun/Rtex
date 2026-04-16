@@ -1,42 +1,68 @@
 <template>
-    <div
-        class="grid grid-cols-4 divide-x divide-[#EBEBEA] dark:divide-zinc-800 border-t border-[#EBEBEA] dark:border-zinc-800 bg-[#FAFAF9] dark:bg-zinc-800/30">
-        <div class="px-4 py-3 text-center">
-            <p class="text-[9px] font-bold uppercase tracking-wider text-[#C0C0BC] dark:text-zinc-600">High</p>
-            <p class="text-xs font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
-                {{ stats.high }}
-            </p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="text-center p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/30">
+            <div class="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-2">High (MMK)</div>
+            <div class="text-sm font-mono font-bold text-slate-800 dark:text-white">
+                {{ formatNumber(stats.high) }}
+            </div>
         </div>
-        <div class="px-4 py-3 text-center">
-            <p class="text-[9px] font-bold uppercase tracking-wider text-[#C0C0BC] dark:text-zinc-600">Low</p>
-            <p class="text-xs font-bold tabular-nums text-rose-600 dark:text-rose-400">
-                {{ stats.low }}
-            </p>
+
+        <div class="text-center p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/30">
+            <div class="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-2">Low (MMK)</div>
+            <div class="text-sm font-mono font-bold text-slate-800 dark:text-white">
+                {{ formatNumber(stats.low) }}
+            </div>
         </div>
-        <div class="px-4 py-3 text-center">
-            <p class="text-[9px] font-bold uppercase tracking-wider text-[#C0C0BC] dark:text-zinc-600">Avg</p>
-            <p class="text-xs font-bold tabular-nums text-[#666] dark:text-zinc-400">
-                {{ stats.avg }}
-            </p>
+
+        <div class="text-center p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/30">
+            <div class="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-2">Avg (MMK)</div>
+            <div class="text-sm font-mono font-bold text-slate-800 dark:text-white">
+                {{ formatNumber(stats.avg) }}
+            </div>
         </div>
-        <div class="px-4 py-3 text-center">
-            <p class="text-[9px] font-bold uppercase tracking-wider text-[#C0C0BC] dark:text-zinc-600">Points</p>
-            <p class="text-xs font-bold tabular-nums text-[#666] dark:text-zinc-400">
+
+        <div class="text-center p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/30">
+            <div class="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-2">Volatility</div>
+            <div class="text-sm font-mono font-bold text-slate-800 dark:text-white">
+                {{ stats.volatility || '—' }}%
+            </div>
+        </div>
+
+        <div class="text-center p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/30">
+            <div class="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-2">Days</div>
+            <div class="text-sm font-mono font-bold text-slate-800 dark:text-white">
                 {{ pointsCount }}
-            </p>
+            </div>
+            <div class="text-[8px] text-slate-400 mt-1">
+                Based on {{ pointsCount }} {{ pointsCount === 1 ? 'day' : 'days' }} of data
+            </div>
         </div>
     </div>
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
     stats: {
         type: Object,
-        required: true
+        required: true,
+        default: () => ({
+            high: null,
+            low: null,
+            avg: null,
+            volatility: null
+        })
     },
     pointsCount: {
         type: Number,
-        required: true
+        default: 0
     }
 })
+
+const formatNumber = (value) => {
+    if (value === null || value === undefined) return '—'
+    return Number(value).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })
+}
 </script>

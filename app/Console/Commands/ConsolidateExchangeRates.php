@@ -76,20 +76,23 @@ class ConsolidateExchangeRates extends Command
             }
         }
 
-        // Step 2: Get dates that need consolidation
+        // IMPORTANT: Get dates that are BEFORE today (not including today)
+        $today = now()->startOfDay();
+
+        // Get all dates that have records before today
         $dates = ExchangeRate::where('currency_id', $currencyId)
-            ->where('created_at', '<', $keepFromDate)
+            ->where('created_at', '<', $today)  // Only records before today
             ->selectRaw('DATE(created_at) as date')
             ->groupBy('date')
             ->orderBy('date', 'desc')
             ->get();
 
         if ($dates->isEmpty()) {
-            $this->info("   ✅ No records need consolidation");
+            $this->info("   ✅ No records need consolidation (no records before today)");
             return 0;
         }
 
-        $this->info("   Found " . $dates->count() . " days to process");
+        $this->info("   Found " . $dates->count() . " days to process (before today)");
         $progressBar = $this->output->createProgressBar($dates->count());
         $progressBar->start();
 
@@ -98,26 +101,30 @@ class ConsolidateExchangeRates extends Command
         foreach ($dates as $dateData) {
             $date = $dateData->date;
 
-            // 1. Define the exact start and end of that day
+            // Define the exact start and end of that day
             $startOfDay = \Carbon\Carbon::parse($date)->startOfDay();
             $endOfDay = \Carbon\Carbon::parse($date)->endOfDay();
 
-            // 2. Get all records between those two timestamps
+            // Get all records for that day
             $records = ExchangeRate::where('currency_id', $currencyId)
-                ->whereBetween('created_at', [$startOfDay, $endOfDay]) // Use whereBetween
+                ->whereBetween('created_at', [$startOfDay, $endOfDay])
                 ->orderBy('created_at', 'desc')
                 ->orderBy('id', 'desc')
                 ->get();
 
-            if ($records->count() <= 1) {
+            $recordCount = $records->count();
+
+            if ($recordCount <= 1) {
+                $this->line("   Date {$date}: {$recordCount} record(s) - nothing to consolidate");
                 $progressBar->advance();
                 continue;
             }
 
-
             // Keep the latest record
             $keepRecord = $records->first();
             $duplicatesToDelete = $records->slice(1);
+
+            $this->line("   Date {$date}: Found {$recordCount} records, keeping latest from " . $keepRecord->created_at->format('H:i:s'));
 
             if (!$dryRun) {
                 foreach ($duplicatesToDelete as $duplicate) {

@@ -34,8 +34,8 @@
         </div>
 
         <div class="px-4 sm:px-6 pb-5 mt-2">
-            <ChartStats v-if="!loading && chartPoints.length" :stats="stats" :formatter="formatPrice"
-                :compact="isMobile" />
+            <ChartStats v-if="!loading && chartPoints.length" :stats="stats" :type="chartType"
+                :currency-symbol="currencySymbol" :compact="isMobile" />
         </div>
     </div>
 </template>
@@ -198,28 +198,51 @@ const chartPoints = computed(() => {
     return processed.sort((a, b) => a.date - b.date)
 })
 
+const chartType = computed(() => {
+    if (props.type === 'world_oz') return 'world'
+    if (props.type === 'new_system') return 'new'
+    if (props.type === 'traditional') return 'traditional'
+    return 'myanmar'
+})
+
+const currencySymbol = computed(() => {
+    if (props.type === 'world_oz') return '$'
+    return 'MMK'
+})
+
 const stats = computed(() => {
     const points = chartPoints.value;
     const usdPrices = points.map(p => p.price);
 
-    // Filter specifically for points that have an SGD price
+    // Filter for SGD points
     const sgdPoints = points.filter(p => p.sgd_price !== null);
     const sgdPrices = sgdPoints.map(p => p.sgd_price);
 
-    if (!usdPrices.length) return { high: null, low: null, avg: null, count: 0 };
+    if (!usdPrices.length) return {
+        high: null,
+        low: null,
+        avg: null,
+        count: 0,
+        sgd: null
+    };
 
-    return {
+    const result = {
         high: Math.max(...usdPrices),
         low: Math.min(...usdPrices),
         avg: usdPrices.reduce((a, b) => a + b, 0) / usdPrices.length,
-        count: points.length, // Total USD records (usually all)
-        sgdCount: sgdPoints.length, // Only records with SGD values
-        sgd: props.type === 'world_oz' && sgdPrices.length ? {
+        count: points.length,
+    };
+
+    // Add SGD stats for world gold
+    if (props.type === 'world_oz' && sgdPrices.length) {
+        result.sgd = {
             high: Math.max(...sgdPrices),
             low: Math.min(...sgdPrices),
             avg: sgdPrices.reduce((a, b) => a + b, 0) / sgdPrices.length,
-        } : null
-    };
+        };
+    }
+
+    return result;
 });
 
 const priceLabel = computed(() => {

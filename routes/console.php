@@ -67,17 +67,20 @@ Schedule::command('cbm:test --clear-cache')
 
 
 // --- Cleanup & Maintenance ---
-Schedule::command('exchange:consolidate-rates --days-to-keep=1')
-    ->dailyAt('00:05')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/exchange-consolidation.log'));
-
-
-
+// monthly
 Schedule::command('exchange:consolidate-rates --permanent-years=2 --stats')
     ->monthly()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/gold-consolidation-monthly.log'));
+
+
+// --- Daily Consolidation (Keep 1 record per day for past dates) ---
+Schedule::command('exchange:consolidate-rates --days-to-keep=1')
+    ->dailyAt('00:05')  // 5 minutes after midnight
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/exchange-consolidation-daily.log'));
+
+
 
 // alert notification
 Schedule::command('watch:alerts-check')

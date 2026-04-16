@@ -109,25 +109,50 @@ class Currency extends Model
         };
     }
 
-    public function calculateRatesFromCBM($cbmRateFromApi)
+    // public function calculateRatesFromCBM($cbmRateFromApi)
+    // {
+    //     $workingRate = $this->calculateWorkingRate($cbmRateFromApi);
+    //     $decimal = $this->decimal_places ?? 2;
+
+    //     if ($this->spread_type === 'percentage') {
+    //         $buyRate = $workingRate * (1 - (($this->buy_spread_percentage ?? 0.5) / 100));
+    //         $sellRate = $workingRate * (1 + (($this->sell_spread_percentage ?? 0.5) / 100));
+    //     } else {
+    //         $buyRate = $workingRate - ($this->fixed_buy_margin ?? 0);
+    //         $sellRate = $workingRate + ($this->fixed_sell_margin ?? 0);
+    //     }
+
+    //     return [
+    //         'buy_rate'     => round(max(0, $buyRate), $decimal),
+    //         'sell_rate'    => round(max(0, $sellRate), $decimal),
+    //         'working_rate' => round($workingRate, $decimal),
+    //         'active_mode'  => $this->source_mode,
+    //     ];
+    // }
+
+    // Add these methods to your Currency model if not already present
+
+    public function calculateRatesFromCBM(float $cbmRate): array
     {
-        $workingRate = $this->calculateWorkingRate($cbmRateFromApi);
-        $decimal = $this->decimal_places ?? 2;
+        $factor = $this->cbm_conversion_factor ?? 1;
+        $workingRate = $cbmRate * $factor;
 
         if ($this->spread_type === 'percentage') {
-            $buyRate = $workingRate * (1 - (($this->buy_spread_percentage ?? 0.5) / 100));
-            $sellRate = $workingRate * (1 + (($this->sell_spread_percentage ?? 0.5) / 100));
-        } else {
-            $buyRate = $workingRate - ($this->fixed_buy_margin ?? 0);
-            $sellRate = $workingRate + ($this->fixed_sell_margin ?? 0);
-        }
+            $buySpread = $this->buy_spread_percentage ?? 0.5;
+            $sellSpread = $this->sell_spread_percentage ?? 0.5;
 
-        return [
-            'buy_rate'     => round(max(0, $buyRate), $decimal),
-            'sell_rate'    => round(max(0, $sellRate), $decimal),
-            'working_rate' => round($workingRate, $decimal),
-            'active_mode'  => $this->source_mode,
-        ];
+            return [
+                'buy_rate' => round($workingRate * (1 - $buySpread / 100), $this->decimal_places ?? 2),
+                'sell_rate' => round($workingRate * (1 + $sellSpread / 100), $this->decimal_places ?? 2),
+                'working_rate' => round($workingRate, $this->decimal_places ?? 2),
+            ];
+        } else {
+            return [
+                'buy_rate' => round(max(0, $workingRate - ($this->fixed_buy_margin ?? 0)), $this->decimal_places ?? 2),
+                'sell_rate' => round($workingRate + ($this->fixed_sell_margin ?? 0), $this->decimal_places ?? 2),
+                'working_rate' => round($workingRate, $this->decimal_places ?? 2),
+            ];
+        }
     }
 
     /**

@@ -5,10 +5,12 @@ use App\Http\Controllers\AdminBlogController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CurrencyExchangeRate;
+use App\Http\Controllers\GoldPageController;
 use App\Http\Controllers\GoldPriceController;
 use App\Http\Controllers\GoldTypeController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RateController;
 use App\Http\Controllers\TestEmailController;
 use App\Http\Controllers\User\AlertController;
 use App\Http\Controllers\User\DashboardController;
@@ -20,11 +22,73 @@ use App\Models\Currency;
 use App\Models\ExchangeRate;
 use App\Services\BankAggregatorService;
 use App\Services\YahooFinanceService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Symfony\Component\DomCrawler\Crawler;
 
 
+
+Route::get('/api/cross-rate-preview/{currency}', function ($currencyCode) {
+    try {
+        Log::info('Cross rate preview requested for: ' . $currencyCode);
+
+        // Get USD rate from the exchange_rates table directly
+        $usdCurrency = App\Models\Currency::where('code', 'USD')->first();
+        if (!$usdCurrency) {
+            return response()->json(['success' => false, 'message' => 'USD currency not found']);
+        }
+
+        $usdRate = App\Models\ExchangeRate::where('currency_id', $usdCurrency->id)
+            ->where('is_verified', true)
+            ->latest('rate_date')
+            ->first();
+
+        if (!$usdRate) {
+            return response()->json(['success' => false, 'message' => 'USD rate not found']);
+        }
+
+        $usdMmkRate = ($usdRate->buy_rate + $usdRate->sell_rate) / 2;
+
+        // Get Yahoo rate
+        $yahoo = app(App\Services\YahooFinanceService::class);
+        $usdToTarget = $yahoo->getUsdToTargetRate($currencyCode);
+
+        if ($usdMmkRate > 0 && $usdToTarget && $usdToTarget > 0) {
+            $calculatedRate = $usdMmkRate / $usdToTarget;
+
+            return response()->json([
+                'success' => true,
+                'usd_mmk_rate' => round($usdMmkRate, 2),
+                'usd_to_target' => round($usdToTarget, 4),
+                'calculated_rate' => round($calculatedRate, 2),
+                'formula' => round($usdMmkRate, 2) . " ÷ " . round($usdToTarget, 4) . " = " . round($calculatedRate, 2)
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Unable to calculate cross rate',
+            'usd_mmk_rate' => $usdMmkRate,
+            'usd_to_target' => $usdToTarget
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Cross rate API error: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ]);
+    }
+});
+
+
+Route::get('/rates', [RateController::class, 'index'])->name('rates.index');
+
+
+
+Route::get('gold/index', [GoldPageController::class, 'index'])->name('goldPage.index');
 
 
 Route::post('/subscribe', [NewsletterController::class, 'subscribe'])->name('subscribe');
@@ -415,75 +479,53 @@ Route::get('/test-yahoo-direct', function () {
 Route::get('/test-brevo', [TestEmailController::class, 'sendTestEmail']);
 
 
-Route::get('/api/cross-rate-preview/{code}', function ($code) {
-    try {
-        $currency = Currency::where('code', $code)->first();
-        if (!$currency) {
-            return response()->json(['error' => 'Currency not found'], 404);
-        }
 
-        // Get latest USD/MMK rate
-        $usdCurrency = Currency::where('code', 'USD')->first();
-        if (!$usdCurrency) {
-            return response()->json(['error' => 'USD currency not found'], 404);
-        }
 
-        $usdRate = ExchangeRate::where('currency_id', $usdCurrency->id)
-            ->latest('rate_date')
-            ->first();
+Route::get('/final-fuel-test', function () {
+    // 1. Get USD data from the currencies table
+    $usd = DB::table('currencies')->where('code', 'USD')->first();
 
-        if (!$usdRate) {
-            return response()->json(['error' => 'USD rate not found'], 404);
-        }
-
-        $usdMmkMid = ($usdRate->buy_rate + $usdRate->sell_rate) / 2;
-
-        // Use fallback rates
-        $fallbackRates = [
-            'JPY' => 158.94,
-            'SGD' => 1.2742,
-            'EUR' => 0.92,
-            'THB' => 32.0,
-            'CNY' => 6.84,
-            'MYR' => 3.98,
-            'INR' => 92.6,
-            'KRW' => 1450,
-            'HKD' => 7.82,
-            'NZD' => 1.63,
-            'AUD' => 1.52,
-            'CAD' => 1.38,
-            'CHF' => 0.91,
-        ];
-
-        $yahooService = new YahooFinanceService();
-        $usdToTarget = $yahooService->getUsdToTargetRate($code);
-
-        if (!$usdToTarget || $usdToTarget <= 0) {
-            $usdToTarget = $fallbackRates[$code] ?? 1;
-        }
-
-        $baseRate = $usdMmkMid / $usdToTarget;
-        $markup = $currency->bank_markup_percentage ?? 2.0;
-        $baseRateWithMarkup = $baseRate * (1 + ($markup / 100));
-
-        $buySpread = $currency->buy_spread_percentage ?? 0.5;
-        $sellSpread = $currency->sell_spread_percentage ?? 0.5;
-        $buyRate = $baseRateWithMarkup * (1 - ($buySpread / 100));
-        $sellRate = $baseRateWithMarkup * (1 + ($sellSpread / 100));
-
-        return response()->json([
-            'success' => true,
-            'currency' => $code,
-            'usd_mmk_rate' => round($usdMmkMid, 2),
-            'usd_to_target' => $usdToTarget,
-            'calculated_rate' => round($baseRate, 4),
-            'base_rate_with_markup' => round($baseRateWithMarkup, 2),
-            'buy_rate' => round($buyRate, 2),
-            'sell_rate' => round($sellRate, 2),
-            'markup' => $markup,
-            'formula' => "{$usdMmkMid} ÷ {$usdToTarget} = " . round($baseRate, 4)
-        ]);
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
+    if (!$usd) {
+        return response()->json(['error' => 'USD not found in currencies table']);
     }
+
+    // Use Bank Avg + your Markup percentage to get the 'Real' market rate
+    // Formula: Bank Rate * (1 + (Markup / 100))
+    $usdMmkRate = $usd->avg_bank_rate * (1 + ($usd->bank_markup_percentage / 100));
+
+    // 2. Fetch Live Global Gas Price
+    $apiKey = env('COMMODITY_API_KEY');
+    $response = Http::withHeaders(['x-api-key' => $apiKey])
+        ->get('https://api.commoditypriceapi.com/v2/rates/latest', [
+            'symbols' => 'RB-SPOT'
+        ]);
+
+    if ($response->failed()) return $response->json();
+
+    $globalPrice = $response->json()['data']['rates']['RB-SPOT'] ?? $response->json()['rates']['RB-SPOT'];
+
+    // 3. Math Calibration
+    $usdPerLiter = $globalPrice / 3.785;
+    $baseMmk = $usdPerLiter * $usdMmkRate;
+
+    // Using your 1.171 multiplier for Yangon 4735 target
+    $ygn92 = round(($baseMmk * 1.171) / 5) * 5;
+
+    return response()->json([
+        'status' => 'SUCCESS',
+        'usd_details' => [
+            'base_bank_rate' => $usd->avg_bank_rate,
+            'markup_applied' => $usd->bank_markup_percentage . '%',
+            'final_calculated_usd_rate' => round($usdMmkRate, 2)
+        ],
+        'global_gas_usd' => $globalPrice,
+        'yangon' => [
+            '92' => $ygn92,
+            '95' => $ygn92 + 210,
+        ],
+        'ayeyarwady' => [
+            '92' => $ygn92 + 95,
+            '95' => $ygn92 + 310,
+        ]
+    ]);
 });

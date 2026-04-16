@@ -26,6 +26,11 @@ import RateHistoryChart from "./Components/Charts/Rate/RateHistoryChart.vue";
 import UserBreadcrumbs from "./Components/Layouts/UserBreadcrumbs.vue";
 import NotificationsBell from "./Components/NotificationsBell.vue";
 import GoogleAnalytics from "./Components/GoogleAnalytics.vue";
+import PublicCurrencyRate from "./Components/PublicCurrencyRate.vue";
+import MyanmarGoldHistoryList from "./Components/MyanmarGoldHistoryList.vue";
+import WorldGoldHistoryList from "./Components/WorldGoldHistoryList.vue";
+import MyanmarOtherRecordsTable from "./Components/MyanmarOtherRecordsTable.vue";
+import WorldOtherRecordsTable from "./Components/WorldOtherRecordsTable.vue";
 import AdUnit from "./Components/AdUnit.vue";
 
 window.Chart = Chart;
@@ -118,6 +123,11 @@ createInertiaApp({
             .component("UserBreadcrumbs", UserBreadcrumbs)
             .component("NotificationsBell", NotificationsBell)
             .component("GoogleAnalytics", GoogleAnalytics)
+            .component("PublicCurrencyRate", PublicCurrencyRate)
+            .component("MyanmarGoldHistoryList", MyanmarGoldHistoryList)
+            .component("WorldGoldHistoryList", WorldGoldHistoryList)
+            .component("MyanmarOtherRecordsTable", MyanmarOtherRecordsTable)
+            .component("WorldOtherRecordsTable", WorldOtherRecordsTable)
             .component("AdUnit", AdUnit)
 
             .component("PublicBreadcrumb", PublicBreadcrumb)
@@ -381,7 +391,7 @@ createInertiaApp({
 
         return app.mount(el);
     },
-    progress: {
-        // color: "#4f46e5",
-    },
+    // progress: {
+    //     // color: "#4f46e5",
+    // },
 });

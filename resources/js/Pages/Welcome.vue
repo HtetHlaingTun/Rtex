@@ -1,245 +1,265 @@
 <template>
     <GuestLayout>
 
-        <Head title="Live Market Rates" />
+        <Head title="MMRatePro - Live Exchange Rates & Gold Prices in Myanmar" />
 
-        <div
-            class="min-h-screen bg-[#F7F7F5] dark:bg-zinc-950 font-mono text-slate-900 dark:text-zinc-100 transition-colors duration-300">
-            <main class="w-full max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20">
-                <!-- Combined Gold Market Card -->
-                <WorldGoldMarket :snapshot="snapshot" :worldGoldSnapshot="worldGoldSnapshot" :sgdRate="sgdRate"
-                    :sgdGoldPrice="sgdGoldPrice" :sgdPerGram="sgdPerGram" :sgdKyattharNew="sgdKyattharNew"
-                    :sgdKyattharOld="sgdKyattharOld" :usdPerGram="usdPerGram" :usdPerKyattharNew="usdPerKyattharNew"
-                    :usdPerKyattharOld="usdPerKyattharOld" :priceFlash="priceFlash" :dayHigh="dayHigh" :dayLow="dayLow"
-                    :momentum7d="momentum7d" :premium200d="premium200d" :previousDayUsdPrice="previousDayUsdPrice"
-                    :previousDaySgdPrice="previousDaySgdPrice" :previousCloseDate="previousCloseDate" />
+        <div class="min-h-screen bg-[#F7F7F5] dark:bg-zinc-950 transition-colors duration-300">
 
-                <!-- Myanmar Bullion Cards (New & Old Systems) - FIXED PROPS -->
-                <div class="space-y-12 mt-8">
-                    <MyanmarGoldSystem :goldTypes="myanmarGoldNew" system="new" systemColor="amber"
-                        systemLabel="New System" weight="16.329g" :isFresh="isFresh"
-                        :previousDayPrice="previousDayMmkNew" :previousCloseDate="previousCloseDate"
-                        :usdMmkRate="snapshot?.usd_mmk_rate || 4385" :sgdRate="sgdRate" />
-
-                    <MyanmarGoldSystem :goldTypes="myanmarGoldOld" system="old" systemColor="orange"
-                        systemLabel="Old System" weight="16.606g" :isFresh="isFresh"
-                        :previousDayPrice="previousDayMmkOld" :previousCloseDate="previousCloseDate"
-                        :usdMmkRate="snapshot?.usd_mmk_rate || 4385" :sgdRate="sgdRate" />
+            <!-- Hero Section -->
+            <div
+                class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950">
+                <div class="absolute inset-0 opacity-10">
+                    <div class="absolute top-20 left-10 w-72 h-72 bg-orange-500 rounded-full blur-3xl animate-pulse">
+                    </div>
+                    <div
+                        class="absolute bottom-20 right-10 w-96 h-96 bg-emerald-500 rounded-full blur-3xl animate-pulse delay-1000">
+                    </div>
                 </div>
 
-                <!-- International Markets -->
-                <InternationalMarkets v-if="worldGold.length > 0" :goldTypes="worldGold" />
+                <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+                    <div class="text-center">
 
-                <!-- Exchange Rates Section -->
-                <CurrencyExchangeList :rates="rates" />
-            </main>
+
+                        <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4">
+                            Live
+                            <span class="bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-transparent">
+                                Exchange Rates
+                            </span>
+                            <br />
+                            <span class="bg-gradient-to-r from-yellow-400 to-amber-500 bg-clip-text text-transparent">
+                                & Gold Prices
+                            </span>
+                        </h1>
+
+                        <p class="text-slate-300 max-w-2xl mx-auto text-sm md:text-base">
+                            Real-time foreign exchange rates and gold prices in Myanmar Kyat (MMK).
+                            Updated every 30 minutes from local banks and global markets.
+                        </p>
+
+                        <div class="flex flex-wrap items-center justify-center gap-6 mt-8">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                                <span class="text-xs text-slate-300">Live Updates</span>
+                            </div>
+                            <div class="w-px h-4 bg-slate-600"></div>
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span class="text-xs text-slate-300">Updated {{ currentTime }}</span>
+                            </div>
+                            <div class="w-px h-4 bg-slate-600"></div>
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span class="text-xs text-slate-300">Every 30 minutes</span>
+                            </div>
+                        </div>
+
+                        <!-- CTA Buttons -->
+                        <div class="flex flex-wrap items-center justify-center gap-4 mt-10">
+                            <Link :href="route('rates.index')"
+                                class="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-all hover:scale-105">
+                                View Exchange Rates
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </Link>
+                            <Link :href="route('goldPage.index')"
+                                class="inline-flex items-center gap-2 px-6 py-3 bg-transparent border-2 border-orange-600 text-orange-600 rounded-xl font-bold hover:bg-orange-600 hover:text-white transition-all">
+                                View Gold Prices
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="absolute bottom-0 left-0 right-0">
+                    <svg class="w-full h-12 text-[#F7F7F5] dark:text-zinc-950" preserveAspectRatio="none"
+                        viewBox="0 0 1440 54" fill="currentColor">
+                        <path d="M0 22L120 16.7C240 11 480 0 720 0C960 0 1200 11 1320 16.7L1440 22V54H0V22Z" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Quick Stats Cards -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5 pt-5">
+                    <div
+                        class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800 shadow-lg hover:shadow-xl transition-all">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">USD/MMK</span>
+                            <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <p class="text-2xl font-bold text-slate-800 dark:text-white">{{ getUsdRate() }}</p>
+                        <p class="text-[9px] text-slate-400 mt-1">US Dollar to Kyat</p>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800 shadow-lg hover:shadow-xl transition-all">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SGD/MMK</span>
+                            <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <p class="text-2xl font-bold text-slate-800 dark:text-white">{{ getSgdRate() }}</p>
+                        <p class="text-[9px] text-slate-400 mt-1">Singapore Dollar to Kyat</p>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800 shadow-lg hover:shadow-xl transition-all">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">EUR/MMK</span>
+                            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <p class="text-2xl font-bold text-slate-800 dark:text-white">{{ getEurRate() }}</p>
+                        <p class="text-[9px] text-slate-400 mt-1">Euro to Kyat</p>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-slate-200 dark:border-zinc-800 shadow-lg hover:shadow-xl transition-all">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gold
+                                (24K)</span>
+                            <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <p class="text-2xl font-bold text-slate-800 dark:text-white">{{ getGoldPrice() }}</p>
+                        <p class="text-[9px] text-slate-400 mt-1">Per Kyatthar (16.329g)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature Cards -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Exchange Rates Card -->
+                    <Link :href="route('rates.index')"
+                        class="group bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-8 hover:shadow-xl hover:border-orange-300 dark:hover:border-orange-700 transition-all hover:-translate-y-1">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div
+                                class="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/30 dark:to-orange-800/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <svg class="w-7 h-7 text-orange-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2
+                                    class="text-xl font-bold text-slate-800 dark:text-white group-hover:text-orange-600 transition-colors">
+                                    Exchange Rates</h2>
+                                <p class="text-sm text-slate-500">Live currency rates</p>
+                            </div>
+                        </div>
+                        <p class="text-slate-500 dark:text-slate-400 mb-4">
+                            Track real-time foreign exchange rates for USD, SGD, EUR, THB and more against Myanmar Kyat.
+                        </p>
+                        <div
+                            class="flex items-center gap-2 text-orange-600 font-bold text-sm group-hover:gap-3 transition-all">
+                            View all rates
+                            <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5l7 7-7 7" />
+                            </svg>
+                        </div>
+                    </Link>
+
+                    <!-- Gold Prices Card -->
+                    <Link :href="route('goldPage.index')"
+                        class="group bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-8 hover:shadow-xl hover:border-amber-300 dark:hover:border-amber-700 transition-all hover:-translate-y-1">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div
+                                class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-100 to-yellow-200 dark:from-amber-900/30 dark:to-yellow-800/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <svg class="w-7 h-7 text-amber-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2
+                                    class="text-xl font-bold text-slate-800 dark:text-white group-hover:text-amber-600 transition-colors">
+                                    Gold Prices</h2>
+                                <p class="text-sm text-slate-500">Live precious metals</p>
+                            </div>
+                        </div>
+                        <p class="text-slate-500 dark:text-slate-400 mb-4">
+                            Track live gold prices in MMK, USD, and SGD. 24K, 22K, and 18K rates updated every 30
+                            minutes.
+                        </p>
+                        <div
+                            class="flex items-center gap-2 text-amber-600 font-bold text-sm group-hover:gap-3 transition-all">
+                            View gold prices
+                            <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5l7 7-7 7" />
+                            </svg>
+                        </div>
+                    </Link>
+                </div>
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="border-t border-slate-200 dark:border-zinc-800 py-8">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <p class="text-[9px] text-slate-400">
+                        💰 Real-time exchange rates and gold prices. Updated every 30 minutes and 2 minutes accordingly.
+                        Actual rates at local money changers may vary by 5-10%.
+                    </p>
+                </div>
+            </div>
         </div>
     </GuestLayout>
 </template>
 
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue'
-import { Head } from '@inertiajs/vue3'
-import { onMounted, onUnmounted, ref, computed } from 'vue'
-import WorldGoldMarket from '@/Components/gold/user/WorldGoldMarket.vue'
-import MyanmarGoldSystem from '@/Components/gold/user/MyanmarGoldSystem.vue'
-import InternationalMarkets from '@/Components/gold/user/InternationalMarkets.vue'
-import CurrencyExchangeList from '@/Components/Currency/user/CurrencyExchangeList.vue'
-import axios from 'axios'
+import { Link, Head } from '@inertiajs/vue3'
+import { computed } from 'vue'
 
 const props = defineProps({
-    canLogin: { type: Boolean, default: false },
-    canRegister: { type: Boolean, default: false },
-    laravelVersion: { type: String, default: '' },
-    phpVersion: { type: String, default: '' },
     rates: { type: Array, default: () => [] },
-    gold: { type: Object, default: null },
-    goldTypes: Array,
-    pending_gold_count: Number,
-    worldGoldSnapshot: Object,
-    sgdRate: { type: Object, default: null },
-    previousDayUsdPrice: { type: Number, default: null },
-    previousDaySgdPrice: { type: Number, default: null },
-    previousCloseDate: { type: String, default: null },
-    previousDayMmkNew: { type: Number, default: null },
-    previousDayMmkOld: { type: Number, default: null },
-    myanmarGoldNew: { type: Array, default: () => [] },
-    myanmarGoldOld: { type: Array, default: () => [] },
-    system_info: {
-        type: Object,
-        default: () => ({
-            cbm_available: false,
-            last_sync: 'Never',
-            active_currencies: 0,
-            calculation_method: 'Bank Average with Markup',
-            markup_summary: '0%',
-            active_banks: 4
-        })
-    }
+    gold: { type: Object, default: null }
 })
 
-const snapshot = ref(props.worldGoldSnapshot)
-const localGoldTypes = ref(props.goldTypes)
-const now = ref(new Date())
-const isRefreshing = ref(false)
-const priceFlash = ref(false)
-const lastUpdateTime = ref(new Date())
-
-let snapshotInterval = null
-let timer
-
-// Pass through previous day values from props
-const previousDayUsdPrice = computed(() => props.previousDayUsdPrice)
-const previousDaySgdPrice = computed(() => props.previousDaySgdPrice)
-const previousCloseDate = computed(() => props.previousCloseDate)
-
-// These are now numbers, not strings
-const previousDayMmkNew = computed(() => props.previousDayMmkNew)
-const previousDayMmkOld = computed(() => props.previousDayMmkOld)
-
-// Use the passed myanmarGoldNew/Old directly (not from goldTypes)
-const myanmarGoldNew = computed(() => props.myanmarGoldNew)
-const myanmarGoldOld = computed(() => props.myanmarGoldOld)
-
-const worldGold = computed(() => localGoldTypes.value?.filter(t => t.category === 'world') || [])
-const myanmarGoldNewFromTypes = computed(() => localGoldTypes.value?.filter(t => t.category === 'myanmar' && t.system === 'new') || [])
-const myanmarGoldOldFromTypes = computed(() => localGoldTypes.value?.filter(t => t.category === 'myanmar' && t.system === 'old') || [])
-
-// USD Calculations
-const usdPerGram = computed(() => (snapshot.value?.usd_price || 0) / 31.1035)
-const usdPerKyattharNew = computed(() => usdPerGram.value * 16.329)
-const usdPerKyattharOld = computed(() => usdPerGram.value * 16.606)
-
-// SGD Calculations
-const sgdGoldPrice = computed(() => {
-    if (!snapshot.value?.usd_price || !props.sgdRate?.usd_sgd_rate) return 0
-    return snapshot.value.usd_price * props.sgdRate.usd_sgd_rate
+const currentTime = computed(() => {
+    return new Date().toLocaleTimeString()
 })
 
-const sgdPerGram = computed(() => {
-    if (!sgdGoldPrice.value) return 0
-    return sgdGoldPrice.value / 31.1035
-})
-
-const sgdKyattharNew = computed(() => {
-    if (!sgdGoldPrice.value) return 0
-    const perGram = sgdGoldPrice.value / 31.1035
-    return perGram * 16.329
-})
-
-const sgdKyattharOld = computed(() => {
-    if (!sgdGoldPrice.value) return 0
-    const perGram = sgdGoldPrice.value / 31.1035
-    return perGram * 16.606
-})
-
-// Price Change (for other components)
-const priceUp = computed(() => (snapshot.value?.change ?? 0) >= 0)
-const changePct = computed(() => Math.abs(snapshot.value?.change_percent ?? 0))
-const changeAbs = computed(() => snapshot.value?.change ?? 0)
-
-// Metrics
-const dayHigh = computed(() => snapshot.value?.day_high || snapshot.value?.usd_price || 0)
-const dayLow = computed(() => snapshot.value?.day_low || snapshot.value?.usd_price || 0)
-
-const momentum7d = computed(() => {
-    const currentPrice = snapshot.value?.usd_price || 0
-    const sevenDayOldPrice = props.gold?.seven_day_old_price || currentPrice
-
-    if (sevenDayOldPrice > 0 && currentPrice > 0) {
-        const change7d = ((currentPrice - sevenDayOldPrice) / sevenDayOldPrice) * 100
-        return parseFloat(change7d.toFixed(1))
-    }
-    return 0
-})
-
-const premium200d = computed(() => {
-    if (snapshot.value?.usd_price && snapshot.value?.previous_close) {
-        const premium = ((snapshot.value.usd_price - snapshot.value.previous_close) / snapshot.value.previous_close) * 100
-        return parseFloat(premium.toFixed(1))
-    }
-    return 0
-})
-
-// Helper Functions
-const fetchLatestSnapshot = async () => {
-    isRefreshing.value = true
-    try {
-        const response = await axios.get(route('api.live-gold'))
-        if (response.data?.status === 'success') {
-            snapshot.value = response.data
-            if (response.data.gold_types) localGoldTypes.value = response.data.gold_types
-            lastUpdateTime.value = new Date()
-            priceFlash.value = true
-            setTimeout(() => { priceFlash.value = false }, 700)
-        }
-    } catch (e) {
-        console.error('Snapshot refresh failed:', e)
-    } finally {
-        isRefreshing.value = false
-    }
+const getUsdRate = () => {
+    const usd = props.rates?.find(r => r.currency?.code === 'USD')
+    return usd ? `≈ ${Math.round((usd.buy_rate + usd.sell_rate) / 2).toLocaleString()}` : '—'
 }
 
-const isFresh = (timestamp) => {
-    if (!timestamp) return false
-    return (now.value - new Date(timestamp)) < 600000
+const getSgdRate = () => {
+    const sgd = props.rates?.find(r => r.currency?.code === 'SGD')
+    return sgd ? `≈ ${Math.round((sgd.buy_rate + sgd.sell_rate) / 2).toLocaleString()}` : '—'
 }
 
+const getEurRate = () => {
+    const eur = props.rates?.find(r => r.currency?.code === 'EUR')
+    return eur ? `≈ ${Math.round((eur.buy_rate + eur.sell_rate) / 2).toLocaleString()}` : '—'
+}
 
-// ========== ADD THIS TRACKING FUNCTION ==========
-const trackCurrencyGoldClick = (event) => {
-    // Track currency clicks
-    const currencyElement = event.target.closest('[data-currency]');
-    if (currencyElement) {
-        const currency = currencyElement.dataset.currency;
-        const rateType = currencyElement.dataset.rateType || 'live';
-
-        if (typeof window !== 'undefined' && window.gtag) {
-            window.gtag('event', 'view_item', {
-                currency: currency,
-                rate_type: rateType,
-                page_location: window.location.href,
-                engagement_time_msec: 500
-            });
-            console.log(`GA4 Tracked: ${currency} - ${rateType}`);
-        }
-    }
-
-    // Track gold clicks
-    const goldElement = event.target.closest('[data-gold]');
-    if (goldElement) {
-        const goldType = goldElement.dataset.gold;
-        const goldSystem = goldElement.dataset.goldSystem || 'world';
-
-        if (typeof window !== 'undefined' && window.gtag) {
-            window.gtag('event', 'view_item', {
-                item_type: 'gold',
-                gold_type: goldType,
-                gold_system: goldSystem,
-                engagement_time_msec: 500
-            });
-            console.log(`GA4 Tracked: Gold - ${goldType} (${goldSystem})`);
-        }
-    }
-};
-
-
-
-// Debug logs
-onMounted(() => {
-
-
-    timer = setInterval(() => { now.value = new Date() }, 60000)
-    fetchLatestSnapshot()
-    snapshotInterval = setInterval(fetchLatestSnapshot, 60000)
-
-    document.addEventListener('click', trackCurrencyGoldClick);
-})
-
-onUnmounted(() => {
-    clearInterval(snapshotInterval)
-    clearInterval(timer)
-
-    document.removeEventListener('click', trackCurrencyGoldClick);
-})
+const getGoldPrice = () => {
+    return props.gold?.mmk_price_new ? Math.round(props.gold.mmk_price_new).toLocaleString() : '—'
+}
 </script>

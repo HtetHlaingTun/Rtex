@@ -2,37 +2,33 @@
 
 namespace App\Console\Commands;
 
-use App\Services\BankAggregatorService;
 use Illuminate\Console\Command;
+use App\Services\BankAggregatorService;
 
 class SyncBankRates extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'banks:sync-rates';
+    protected $description = 'Sync exchange rates from banks and Yahoo';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Fetch and update exchange rates from Myanmar private banks';
+    private BankAggregatorService $aggregator;
 
-    /**
-     * Execute the console command.
-     */
-    public function handle(BankAggregatorService $service): void
+    public function __construct(BankAggregatorService $aggregator)
     {
-        $this->info('Starting bank rate synchronization...');
+        parent::__construct();
+        $this->aggregator = $aggregator;
+    }
+
+    public function handle()
+    {
+        $this->info('🔄 Starting exchange rate sync...');
 
         try {
-            $service->syncRates();
-            $this->info('Success: All bank rates have been updated.');
+            $this->aggregator->syncRates();
+            $this->info('✅ Sync completed successfully!');
+            return Command::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('Failed to sync rates: ' . $e->getMessage());
+            $this->error('❌ Sync failed: ' . $e->getMessage());
+            return Command::FAILURE;
         }
     }
 }

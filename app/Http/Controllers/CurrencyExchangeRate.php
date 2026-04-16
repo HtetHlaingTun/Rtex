@@ -5,13 +5,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Currency;
 use App\Models\ExchangeRate;
-
 use App\Services\CBMRateService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route; // Standard Facade
-
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route; // Standard Facade
 use Inertia\Inertia;
 
 class CurrencyExchangeRate extends Controller
@@ -50,41 +49,38 @@ class CurrencyExchangeRate extends Controller
         try {
             $period = $request->query('period', 'month');
 
-            // Define date ranges based on period
             $days = match ($period) {
                 'week' => 7,
                 'month' => 30,
                 'quarter' => 90,
                 'year' => 365,
-                'all' => 730, // 2 years
+                'all' => 730,
                 default => 30
             };
 
-            $startDate = now()->subDays($days);
+            $startDate = now()->subDays($days)->startOfDay();
 
-            // Fetch exchange rates for the currency
+            // Return RAW data (not aggregated) - frontend will handle aggregation
             $rates = ExchangeRate::where('currency_id', $currencyId)
+                ->where('is_verified', true)
                 ->where('created_at', '>=', $startDate)
                 ->orderBy('created_at', 'asc')
                 ->get(['buy_rate', 'sell_rate', 'created_at']);
 
-            // If no data found, return empty array
-            if ($rates->isEmpty()) {
-                return response()->json([]);
-            }
+            $transformed = $rates->map(function ($rate) {
+                return [
+                    'buy_rate' => (float) $rate->buy_rate,
+                    'sell_rate' => (float) $rate->sell_rate,
+                    'created_at' => $rate->created_at->toISOString(),
+                ];
+            });
 
-            // For longer periods, aggregate data to reduce points
-            if (in_array($period, ['year', 'all']) && $rates->count() > 100) {
-                $rates = $this->aggregateRates($rates, $period);
-            }
-
-            return response()->json($rates);
+            return response()->json($transformed);
         } catch (\Exception $e) {
             Log::error('Chart data error: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to load chart data'], 500);
         }
     }
-
     private function aggregateRates($rates, $period)
     {
         // Group by day for year, or by month for all
@@ -97,9 +93,9 @@ class CurrencyExchangeRate extends Controller
         $aggregated = [];
         foreach ($grouped as $date => $group) {
             $aggregated[] = [
-                'buy_rate' => $group->avg('buy_rate'),
-                'sell_rate' => $group->avg('sell_rate'),
-                'created_at' => $group->first()->created_at
+                'buy_rate' => round($group->avg('buy_rate'), 2),
+                'sell_rate' => round($group->avg('sell_rate'), 2),
+                'created_at' => $group->first()->created_at->toISOString(), // Fixed: use toISOString()
             ];
         }
 
@@ -208,56 +204,99 @@ class CurrencyExchangeRate extends Controller
         });
 
         return Inertia::render('Currency/History', [
+
             'currency' => $currency,
             'history' => $history
-        ]); {
-        }
+        ]);
     }
 
     public function factors()
     {
-        $currencies = Currency::where('is_active', true)
-            ->orderBy('display_order')
-            ->orderBy('code')
-            ->get();
+        try {
+            // Get all active currencies
+            $currencies = Currency::where('is_active', true)
+                ->orderBy('display_order')
+                ->orderBy('code')
+                ->get();
 
-        // Get current CBM rates
-        $cbmRates = $this->cbmService->fetchCurrentRates();
+            // Get current CBM rates
+            $cbmRates = $this->cbmService->fetchCurrentRates();
 
-        foreach ($currencies as $currency) {
-            // Ensure these are explicitly set from database
-            $currency->buy_spread_percentage = (float) $currency->buy_spread_percentage;
-            $currency->sell_spread_percentage = (float) $currency->sell_spread_percentage;
-            $currency->bank_markup_percentage = (float) $currency->bank_markup_percentage;
-            $currency->source_mode = $currency->source_mode ?? 'bank_avg';
+            // Get services
+            $yahoo = app(\App\Services\YahooFinanceService::class);
+            $aggregator = app(\App\Services\BankAggregatorService::class);
 
-            // CBM rate
-            if (isset($cbmRates[$currency->code])) {
-                $currency->current_cbm_rate = $cbmRates[$currency->code]['cbm_rate'];
-            } else {
-                $currency->current_cbm_rate = $currency->cbm_rate ?? 0;
+            // Get market USD/MMK rate
+            $marketUsdMmk = $aggregator->getMarketUsdMmkMid();
+
+            // Prepare currencies data
+            $currenciesData = [];
+
+            foreach ($currencies as $currency) {
+                // Get latest exchange rate for preview
+                $latestRate = ExchangeRate::where('currency_id', $currency->id)
+                    ->where('is_verified', true)
+                    ->latest('rate_date')
+                    ->first();
+
+                // Get bank average rate
+                $avgBankRate = $currency->avg_bank_rate;
+                if (!$avgBankRate && $latestRate) {
+                    $avgBankRate = ($latestRate->buy_rate + $latestRate->sell_rate) / 2;
+                }
+
+                // Get CBM rate
+                $cbmRate = isset($cbmRates[$currency->code])
+                    ? $cbmRates[$currency->code]['cbm_rate']
+                    : ($currency->cbm_rate ?? 0);
+
+                $currencyData = [
+                    'id' => $currency->id,
+                    'code' => $currency->code,
+                    'name' => $currency->name,
+                    'symbol' => $currency->symbol,
+                    'source_mode' => $currency->source_mode ?? 'bank_avg',
+                    'cbm_conversion_factor' => (float) ($currency->cbm_conversion_factor ?? 1),
+                    'bank_markup_percentage' => (float) ($currency->bank_markup_percentage ?? 2.0),
+                    'manual_base_rate' => (float) ($currency->manual_base_rate ?? 0),
+                    'spread_type' => $currency->spread_type ?? 'percentage',
+                    'buy_spread_percentage' => (float) ($currency->buy_spread_percentage ?? 0.5),
+                    'sell_spread_percentage' => (float) ($currency->sell_spread_percentage ?? 0.5),
+                    'fixed_buy_margin' => (float) ($currency->fixed_buy_margin ?? 0),
+                    'fixed_sell_margin' => (float) ($currency->fixed_sell_margin ?? 0),
+                    'use_cbm_auto_fetch' => (bool) ($currency->use_cbm_auto_fetch ?? true),
+                    'avg_bank_rate' => $avgBankRate ? (float) $avgBankRate : null,
+                    'cbm_rate' => $cbmRate ? (float) $cbmRate : null,
+                    'current_cbm_rate' => $cbmRate ? (float) $cbmRate : 0,
+                    'banks_last_synced_at' => $currency->banks_last_synced_at,
+                    'is_active' => (bool) $currency->is_active,
+                ];
+
+                $currenciesData[] = $currencyData;
             }
 
-            // Bank average rate from last sync
-            $currency->avg_bank_rate = (float) ($currency->avg_bank_rate ?? 0);
-            $currency->banks_last_synced_at = $currency->banks_last_synced_at;
+            // Log for debugging
+            Log::info('Factors page - currencies count: ' . count($currenciesData));
+            Log::info('First currency: ' . json_encode($currenciesData[0] ?? null));
+
+            return Inertia::render('Currency/Factors', [
+                'currencies' => $currenciesData,
+                'cbm_available' => $this->cbmService->isAvailable(),
+                'default_factor' => config('cbm.default_factor', 1),
+                'market_usd_mmk' => $marketUsdMmk,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Factors page error: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+
+            return Inertia::render('Currency/Factors', [
+                'currencies' => [],
+                'cbm_available' => false,
+                'default_factor' => 1,
+                'market_usd_mmk' => 0,
+                'error' => $e->getMessage()
+            ]);
         }
-
-        // Debug: Log what's being sent
-        Log::info('Factors page data:', [
-            'currencies' => $currencies->map(fn($c) => [
-                'code' => $c->code,
-                'buy_spread' => $c->buy_spread_percentage,
-                'sell_spread' => $c->sell_spread_percentage,
-                'bank_markup' => $c->bank_markup_percentage,
-            ])
-        ]);
-
-        return Inertia::render('Currency/Factors', [
-            'currencies' => $currencies,
-            'cbm_available' => $this->cbmService->isAvailable(),
-            'default_factor' => config('cbm.default_factor', 1),
-        ]);
     }
 
     public function updateFactor(Request $request, Currency $currency)
@@ -554,6 +593,7 @@ class CurrencyExchangeRate extends Controller
             'history' => $paginatedHistory,
             'breadcrumbs' => [
                 ['label' => 'Home', 'route' => 'welcome'],
+                ['label' => 'Rates', 'route' => 'rates.index'],
                 ['label' => $currency->code . ' History',  'params' => ['currency' => $currency->id]],
             ],
         ]);

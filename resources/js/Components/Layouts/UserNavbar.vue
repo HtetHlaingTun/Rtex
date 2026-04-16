@@ -4,81 +4,103 @@ import { useDarkMode } from '@/Composables/useDarkMode';
 import { computed } from 'vue';
 
 const { isDark, toggleDark } = useDarkMode()
-// Navigation for public users only
-const publicNav = [
-    // { name: 'Live Rates', href: route('c'), component: 'Currency/Index' },
-    // { name: 'Gold Prices', href: route('gold.index'), component: 'Gold/Index' },
+const page = usePage();
 
+// Get current URL path
+const currentUrl = computed(() => page.url);
 
+// Navigation items with their paths for active highlighting
+const navItems = [
+    { name: 'Home', href: '/', path: '/' },
+    { name: 'Rates', href: '/rates', path: '/rates' },
+    { name: 'Gold', href: '/gold/index', path: '/gold/index' },
+    { name: 'Blog', href: '/blog', path: '/blog' },
 ];
 
-const page = usePage();
-const activeComponent = computed(() => page.component);
-</script>
-<template>
-    <nav class="bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-slate-100 dark:border-zinc-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center gap-10">
-                    <h1 class="flex items-center gap-3">
-                        <!-- <img src="/favicon.ico" class="h-10 w-10"> -->
-                        <span
-                            class="text-xl font-black tracking-tighter text-orange-600 transition-colors duration-500">
-                            MM<span class="text-slate-900 dark:text-white">RatePro</span>
-                        </span>
-                    </h1>
+// Check if current route matches the nav item
+const isActive = (item) => {
+    const current = currentUrl.value;
 
-                    <Link :href="route('welcome')" class="hidden sm:flex flex-shrink-0 flex items-center">
-                        <span class="text-md font-mono tracking-tighter text-orange-600">
-                            Home<span class="text-slate-900"></span>
+    // Exact match for home
+    if (item.path === '/' && current === '/') return true;
+
+    // Check if current URL starts with the item path
+    if (item.path !== '/' && current.startsWith(item.path)) return true;
+
+    // Also check for history pages (so Rates stays active when viewing history)
+    if (item.path === '/rates' && current.startsWith('/history')) return true;
+    if (item.path === '/gold/index' && current.startsWith('/gold')) return true;
+
+    return false;
+};
+</script>
+
+<template>
+    <nav
+        class="bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-slate-100 dark:border-zinc-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+
+                <!-- Logo -->
+                <div class="flex items-center gap-8">
+                    <Link :href="route('welcome')" class="flex items-center gap-2 group">
+
+                        <span class="text-xl font-black tracking-tight">
+                            <span class="text-orange-600 dark:text-orange-500">MM</span>
+                            <span class="text-slate-800 dark:text-white">RatePro</span>
                         </span>
                     </Link>
 
+                    <!-- Desktop Navigation with Active Highlight -->
+                    <div class="hidden md:flex items-center gap-1">
+                        <Link v-for="item in navItems" :key="item.name" :href="item.href"
+                            class="relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                            :class="isActive(item)
+                                ? 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50/50 dark:hover:bg-orange-950/20'">
 
-
-
-
-
-                    <div class="hidden sm:ml-10 sm:flex sm:space-x-8">
-                        <Link v-for="item in publicNav" :key="item.name" :href="item.href"
-                            class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-bold transition-colors"
-                            :class="activeComponent === item.component
-                                ? 'border-orange-500 text-slate-900'
-                                : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-200'">
                             {{ item.name }}
+
+                            <!-- Active Indicator Underline -->
+                            <span v-if="isActive(item)"
+                                class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-0.5 bg-orange-500 rounded-full">
+                            </span>
                         </Link>
-
                     </div>
-
-
-
                 </div>
 
+                <!-- Right Side Actions -->
+                <div class="flex items-center gap-2">
 
-                <div class="flex items-center space-x-4 ">
-
-                    <Link :href="route('login')" class="hidden sm:flex flex-shrink-0 flex items-center">
-                        <span class="text-xl font-mono tracking-tighter text-orange-600">
-                            login<span class="text-slate-900"></span>
-                        </span>
-                    </Link>
-
-                    <Link v-if="$page.props.auth.user" :href="route('dashboard')"
-                        class="p-2 text-slate-400 hover:text-orange-600 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <!-- Login Button -->
+                    <Link v-if="!$page.props.auth.user" :href="route('login')" class="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                               text-slate-600 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400
+                               hover:bg-orange-50/50 dark:hover:bg-orange-950/20 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                         </svg>
+                        <span>Login</span>
                     </Link>
 
+                    <!-- Dashboard Link (when logged in) -->
+                    <Link v-if="$page.props.auth.user" :href="route('dashboard')" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
+                               text-slate-600 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400
+                               hover:bg-orange-50/50 dark:hover:bg-orange-950/20 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span class="hidden sm:inline">Dashboard</span>
+                    </Link>
 
+                    <!-- Dark Mode Toggle -->
                     <button @click="toggleDark"
-                        class="relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                        class="relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-orange-500/30"
                         :class="isDark ? 'bg-zinc-700' : 'bg-slate-200'">
+
                         <div class="absolute inset-0 flex items-center justify-between px-1.5 pointer-events-none">
-                            <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                             </svg>
@@ -89,7 +111,7 @@ const activeComponent = computed(() => page.component);
                         </div>
 
                         <span
-                            class="inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-300 ease-in-out flex items-center justify-center"
+                            class="inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition-all duration-300 ease-in-out flex items-center justify-center"
                             :class="isDark ? 'translate-x-7' : 'translate-x-1'">
                             <svg v-if="isDark" class="w-3.5 h-3.5 text-zinc-700" fill="currentColor"
                                 viewBox="0 0 20 20">

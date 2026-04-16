@@ -1,5 +1,5 @@
 <template>
-    <!-- ADD THIS HEAD COMPONENT AT THE VERY TOP -->
+
 
     <Head>
         <title>MMRatePro - Live Exchange Rates & Gold Prices</title>
@@ -9,6 +9,8 @@
         <!-- JSON-LD Structured Data for SEO - Using v-html -->
         <meta v-html="jsonLd" />
     </Head>
+
+
     <div
         class="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 overflow-visible">
 
@@ -25,11 +27,16 @@
             {{ errorMessageText }}
         </div>
 
+
+        <!-- Loader  -->
         <Loader :show="isGlobalLoading" :message="globalLoadingMessage" />
 
+
+        <!-- Header  -->
         <header class="sticky top-0 z-[100] w-full">
             <UserNavbar />
         </header>
+
 
         <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <div
@@ -40,6 +47,8 @@
             </div>
         </div>
 
+
+        <!-- content  -->
         <div class="relative z-10 flex flex-col w-full min-w-0">
             <div
                 class="sticky top-[64px] z-50 w-full backdrop-blur-md bg-white/70 dark:bg-zinc-900/70 transition-all duration-300">

@@ -2,13 +2,15 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use Spatie\Sitemap\Sitemap;
-use Spatie\Sitemap\Tags\Url;
-use App\Models\Currency;
 use App\Models\BlogPost;
+use App\Models\Currency;
 use App\Models\GoldType;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Schema;
+use Spatie\Sitemap\Sitemap;
+use Spatie\Sitemap\Tags\Url;
+
 
 class GenerateSitemap extends Command
 {
@@ -27,42 +29,47 @@ class GenerateSitemap extends Command
         // ========== MAIN PAGES ==========
         $this->info('Adding main pages...');
 
-        // Homepage
-        $sitemap->add(Url::create($baseUrl . '/')
-            ->setLastModificationDate(Carbon::now())
-            ->setChangeFrequency('daily')
-            ->setPriority(1.0));
+        $mainPages = [
+            '/' => ['priority' => 1.0, 'frequency' => 'daily', 'label' => 'Homepage'],
+            '/live-rates' => ['priority' => 0.9, 'frequency' => 'hourly', 'label' => 'Live Market Rates'],
+            '/gold-prices' => ['priority' => 0.9, 'frequency' => 'hourly', 'label' => 'Gold Prices'],
+            '/blog' => ['priority' => 0.8, 'frequency' => 'daily', 'label' => 'Blog'],
+            '/privacy' => ['priority' => 0.4, 'frequency' => 'monthly', 'label' => 'Privacy Policy'],
+            '/terms' => ['priority' => 0.4, 'frequency' => 'monthly', 'label' => 'Terms of Service'],
+            '/contact' => ['priority' => 0.5, 'frequency' => 'weekly', 'label' => 'Contact Us'],
+            '/rates' => ['priority' => 0.8, 'frequency' => 'daily', 'label' => 'Rates'],
+            '/gold/index' => ['priority' => 0.8, 'frequency' => 'daily', 'label' => 'Gold Index'],
+        ];
 
-        // Live Market Rates
-        $sitemap->add(Url::create($baseUrl . '/live-rates')
-            ->setLastModificationDate(Carbon::now())
-            ->setChangeFrequency('hourly')
-            ->setPriority(0.9));
-
-        // Gold Prices
-        $sitemap->add(Url::create($baseUrl . '/gold-prices')
-            ->setLastModificationDate(Carbon::now())
-            ->setChangeFrequency('hourly')
-            ->setPriority(0.9));
+        foreach ($mainPages as $path => $config) {
+            $sitemap->add(Url::create($baseUrl . $path)
+                ->setLastModificationDate(Carbon::now())
+                ->setChangeFrequency($config['frequency'])
+                ->setPriority($config['priority']));
+            $this->line("  ✓ Added: {$config['label']}");
+        }
 
         // ========== CURRENCY PAGES ==========
         $this->info('Adding currency pages...');
 
-        // Get ALL active currencies (not just 4)
+        // Get ALL active currencies
         $currencies = Currency::where('is_active', true)->get();
+        $this->line("  Found {$currencies->count()} active currencies");
 
         foreach ($currencies as $currency) {
             // Currency history page
             $sitemap->add(Url::create($baseUrl . "/history/{$currency->code}")
-                ->setLastModificationDate(Carbon::now())
+                ->setLastModificationDate($currency->updated_at ?? Carbon::now())
                 ->setChangeFrequency('daily')
                 ->setPriority(0.8));
 
-            // Currency rate page (if exists)
+            // Currency rate page
             $sitemap->add(Url::create($baseUrl . "/rates/{$currency->code}")
-                ->setLastModificationDate(Carbon::now())
+                ->setLastModificationDate($currency->updated_at ?? Carbon::now())
                 ->setChangeFrequency('daily')
                 ->setPriority(0.7));
+
+            $this->line("  ✓ Added: {$currency->code} pages");
         }
 
         // ========== GOLD PAGES ==========
@@ -80,87 +87,78 @@ class GenerateSitemap extends Command
                 ->setLastModificationDate(Carbon::now())
                 ->setChangeFrequency('daily')
                 ->setPriority(0.8));
+            $this->line("  ✓ Added: {$name}");
         }
 
-        // If you have individual gold type pages from database
+        // Individual gold type pages from database
         $goldTypeRecords = GoldType::where('is_active', true)->get();
         foreach ($goldTypeRecords as $goldType) {
             $sitemap->add(Url::create($baseUrl . "/gold/{$goldType->id}")
                 ->setLastModificationDate($goldType->updated_at ?? Carbon::now())
                 ->setChangeFrequency('daily')
                 ->setPriority(0.7));
+            $this->line("  ✓ Added: Gold Type ID {$goldType->id}");
         }
 
         // ========== BLOG PAGES ==========
         $this->info('Adding blog pages...');
 
-        // Blog homepage
-        $sitemap->add(Url::create($baseUrl . '/blog')
-            ->setLastModificationDate(Carbon::now())
-            ->setChangeFrequency('daily')
-            ->setPriority(0.7));
+        // Blog homepage already added above
 
         // Individual blog posts
         $blogPosts = BlogPost::where('is_published', true)->get();
+        $this->line("  Found {$blogPosts->count()} published blog posts");
+
         foreach ($blogPosts as $post) {
             $sitemap->add(Url::create($baseUrl . "/blog/{$post->slug}")
                 ->setLastModificationDate($post->updated_at ?? $post->created_at)
                 ->setChangeFrequency('weekly')
-                ->setPriority(0.6));
-        }
+                ->setPriority(0.7));
 
-        // Blog categories (if you have them)
-        $categories = BlogPost::where('is_published', true)
-            ->select('category')
-            ->distinct()
-            ->pluck('category');
-
-        foreach ($categories as $category) {
-            if ($category) {
-                $sitemap->add(Url::create($baseUrl . "/blog/category/{$category}")
-                    ->setLastModificationDate(Carbon::now())
-                    ->setChangeFrequency('weekly')
-                    ->setPriority(0.5));
-            }
-        }
-
-        // ========== STATIC PAGES ==========
-        $this->info('Adding static pages...');
-
-        $staticPages = [
-            '/privacy' => 'Privacy Policy',
-            '/terms' => 'Terms of Service',
-            '/contact' => 'Contact Us',
-            '/about' => 'About Us',
-            '/faq' => 'FAQ',
-            '/sitemap' => 'Sitemap',
-        ];
-
-        foreach ($staticPages as $path => $name) {
-            $sitemap->add(Url::create($baseUrl . $path)
-                ->setLastModificationDate(Carbon::now())
-                ->setChangeFrequency('monthly')
+            // Facebook share page (for OG tags)
+            $sitemap->add(Url::create($baseUrl . "/blog/{$post->slug}/fb")
+                ->setLastModificationDate($post->updated_at ?? $post->created_at)
+                ->setChangeFrequency('weekly')
                 ->setPriority(0.4));
+
+            $this->line("  ✓ Added: {$post->title}");
         }
 
-        // ========== USER DASHBOARD PAGES (if public) ==========
-        $this->info('Adding user pages...');
 
-        // Only add if these pages are public (no login required)
-        // Or add with lower priority
-        $sitemap->add(Url::create($baseUrl . '/login')
-            ->setChangeFrequency('monthly')
-            ->setPriority(0.3));
+        // Blog categories 
+        try {
+            if (Schema::hasTable('blog_posts') && Schema::hasColumn('blog_posts', 'category')) {
+                $categories = BlogPost::where('is_published', true)
+                    ->whereNotNull('category')
+                    ->select('category')
+                    ->distinct()
+                    ->pluck('category');
 
-        $sitemap->add(Url::create($baseUrl . '/register')
-            ->setChangeFrequency('monthly')
-            ->setPriority(0.3));
+                foreach ($categories as $category) {
+                    if ($category) {
+                        $slug = strtolower(str_replace(' ', '-', $category));
+                        $sitemap->add(Url::create($baseUrl . "/blog/category/{$slug}")
+                            ->setLastModificationDate(Carbon::now())
+                            ->setChangeFrequency('weekly')
+                            ->setPriority(0.6));
+                        $this->line("  ✓ Added: Category - {$category}");
+                    }
+                }
+            } else {
+                $this->line("  ℹ️ No category column found, skipping blog categories");
+            }
+        } catch (\Exception $e) {
+            $this->line("  ⚠️ Could not load blog categories: " . $e->getMessage());
+        }
 
         // ========== EXCHANGE RATE COMPARISON PAGES ==========
         $this->info('Adding exchange rate comparison pages...');
 
-        // Popular currency pairs
-        $pairs = [
+        // Get all currency codes for dynamic pairs
+        $currencyCodes = $currencies->pluck('code')->toArray();
+
+        // Generate popular pairs
+        $popularPairs = [
             'USD/MMK',
             'SGD/MMK',
             'EUR/MMK',
@@ -172,22 +170,132 @@ class GenerateSitemap extends Command
             'CNY/MMK',
             'MYR/MMK',
             'INR/MMK',
+            'KRW/MMK',
+            'HKD/MMK',
+            'NZD/MMK',
+            'AUD/MMK',
+            'CAD/MMK',
+            'CHF/MMK'
         ];
 
-        foreach ($pairs as $pair) {
+        // Generate cross pairs between major currencies
+        $majorCurrencies = ['USD', 'EUR', 'SGD', 'THB', 'JPY', 'CNY', 'MYR'];
+        for ($i = 0; $i < count($majorCurrencies); $i++) {
+            for ($j = $i + 1; $j < count($majorCurrencies); $j++) {
+                $popularPairs[] = $majorCurrencies[$i] . '/' . $majorCurrencies[$j];
+            }
+        }
+
+        $popularPairs = array_unique($popularPairs);
+
+        foreach ($popularPairs as $pair) {
             $sitemap->add(Url::create($baseUrl . "/compare/{$pair}")
                 ->setLastModificationDate(Carbon::now())
                 ->setChangeFrequency('daily')
                 ->setPriority(0.6));
+            $this->line("  ✓ Added: Compare {$pair}");
         }
 
-        // ========== API ENDPOINTS (optional - for SEO) ==========
-        // Note: Usually you don't need to add API endpoints to sitemap
-        // But if you have public API documentation, add it
+        // ========== API ENDPOINTS (Optional - for SEO of API docs) ==========
+        $this->info('Adding API documentation pages...');
+
+        $apiEndpoints = [
+            '/api/live-gold' => 'Live Gold Rate API',
+            '/api/market-pulse' => 'Market Pulse API',
+            '/api/gold-history' => 'Gold History API',
+        ];
+
+        foreach ($apiEndpoints as $endpoint => $name) {
+            $sitemap->add(Url::create($baseUrl . $endpoint)
+                ->setLastModificationDate(Carbon::now())
+                ->setChangeFrequency('hourly')
+                ->setPriority(0.5));
+            $this->line("  ✓ Added: {$name}");
+        }
+
+        // ========== STATIC UTILITY PAGES ==========
+        $this->info('Adding utility pages...');
+
+        $utilityPages = [
+            '/sitemap' => 'Sitemap',
+            '/generate-og-image' => 'OG Image Generator',
+            '/default-og-image.jpg' => 'Default OG Image',
+        ];
+
+        foreach ($utilityPages as $path => $name) {
+            $sitemap->add(Url::create($baseUrl . $path)
+                ->setLastModificationDate(Carbon::now())
+                ->setChangeFrequency('monthly')
+                ->setPriority(0.3));
+            $this->line("  ✓ Added: {$name}");
+        }
+
+        // ========== AUTH PAGES (with lower priority) ==========
+        $this->info('Adding authentication pages...');
+
+        $authPages = [
+            '/login' => 'Login',
+            '/register' => 'Register',
+            '/forgot-password' => 'Forgot Password',
+            '/reset-password' => 'Reset Password',
+            '/verify-email' => 'Verify Email',
+            '/dashboard' => 'Dashboard',
+        ];
+
+        foreach ($authPages as $path => $name) {
+            $sitemap->add(Url::create($baseUrl . $path)
+                ->setChangeFrequency('monthly')
+                ->setPriority(0.3));
+            $this->line("  ✓ Added: {$name}");
+        }
+
+        // ========== USER DASHBOARD PAGES (if public) ==========
+        $this->info('Adding user dashboard pages...');
+
+        $userPages = [
+            '/user/dashboard' => 'User Dashboard',
+            '/user/watchlist' => 'Watchlist',
+            '/user/alerts' => 'Price Alerts',
+            '/user/notifications' => 'Notifications',
+            '/user/assets' => 'Assets',
+        ];
+
+        foreach ($userPages as $path => $name) {
+            $sitemap->add(Url::create($baseUrl . $path)
+                ->setChangeFrequency('daily')
+                ->setPriority(0.5));
+            $this->line("  ✓ Added: {$name}");
+        }
+
+        // ========== ADMIN PAGES (with lower priority, noindex recommended) ==========
+        // Note: Consider adding robots meta tag to noindex admin pages
+        $this->info('Adding admin pages (low priority)...');
+
+        $adminPages = [
+            '/currencies' => 'Currency Management',
+            '/currencies/factors' => 'Currency Factors',
+            '/currencies/pending' => 'Pending Rates',
+            '/currencies/settings' => 'Currency Settings',
+            '/gold/gold/index' => 'Gold Management',
+            '/gold/pending' => 'Pending Gold Prices',
+            '/gold/create' => 'Add Gold Price',
+            '/gold-types/create' => 'Add Gold Type',
+            '/admin/blog' => 'Blog Management',
+            '/admin/contacts' => 'Contact Messages',
+            '/profile' => 'Profile Settings',
+        ];
+
+        foreach ($adminPages as $path => $name) {
+            $sitemap->add(Url::create($baseUrl . $path)
+                ->setChangeFrequency('weekly')
+                ->setPriority(0.2));
+            $this->line("  ✓ Added: {$name}");
+        }
 
         // ========== SAVE THE SITEMAP ==========
         $sitemap->writeToFile(public_path('sitemap.xml'));
 
+        $this->newLine();
         $this->info('✅ Sitemap generated successfully!');
         $this->info('📁 Location: ' . public_path('sitemap.xml'));
 
@@ -196,6 +304,11 @@ class GenerateSitemap extends Command
         preg_match_all('/<loc>/', $content, $matches);
         $count = count($matches[0]);
         $this->info("📊 Total URLs in sitemap: {$count}");
+
+        // Create sitemap index if needed (for large sitemaps >50,000 URLs)
+        if ($count > 45000) {
+            $this->warn('⚠️  Sitemap is large. Consider splitting into multiple sitemap files.');
+        }
 
         return Command::SUCCESS;
     }

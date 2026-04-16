@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\IsAdmin;
+use App\Http\Middleware\NoCache;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SecureHeaders;
 use App\Http\Middleware\SessionTimeout;
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
             SecureHeaders::class,
             SetMetaTags::class,
+            NoCache::class
         ]);
         $middleware->alias([
             'role' => RoleMiddleware::class,

@@ -127,11 +127,11 @@
                                     <div class="flex items-center gap-2 mt-1">
                                         <span class="text-[6px] text-black font-sans font-bold">Buy: {{
                                             $formatNumber(usdRate.buy_rate)
-                                            }}</span>
+                                        }}</span>
                                         <span class="w-px h-2 bg-white/20"></span>
                                         <span class="text-[6px] text-black font-sans font-bold">Sell: {{
                                             $formatNumber(usdRate.sell_rate)
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                 </div>
                             </div>

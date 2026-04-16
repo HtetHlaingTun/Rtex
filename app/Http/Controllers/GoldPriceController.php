@@ -178,6 +178,7 @@ class GoldPriceController extends Controller
         }
 
         return Inertia::render('Gold/History', [
+
             'goldType'       => $goldType,
             'history'        => $history,
             'chartData'      => $chartData,
@@ -330,6 +331,8 @@ class GoldPriceController extends Controller
 
     public function publicGoldHistory($type)
     {
+
+
         $validTypes = ['new_system', 'traditional', 'world_oz'];
         if (!in_array($type, $validTypes)) abort(404);
 
@@ -341,7 +344,8 @@ class GoldPriceController extends Controller
 
         $breadcrumbs = [
             ['label' => 'Home', 'route' => 'welcome'],
-            ['label' => 'Gold History', 'route' => 'user.gold.history', 'params' => ['type' => 'new_system']],
+            ['label' => 'Gold', 'route' => 'goldPage.index'],
+            ['label' => 'History', 'route' => 'user.gold.history', 'params' => ['type' => 'new_system']],
             ['label' => $typeLabels[$type]]
         ];
 
@@ -446,6 +450,7 @@ class GoldPriceController extends Controller
             }
         }
 
+
         return Inertia::render('Gold/PublicHistory', [
             'history' => $history,
             'selectedType' => $type,
@@ -516,97 +521,14 @@ class GoldPriceController extends Controller
     private function getLocalGoldData($goldTypeId, $period)
     {
         try {
-            // First, check if the gold_type exists
+            // Check if gold_type exists
             $goldType = DB::table('gold_types')->find($goldTypeId);
             if (!$goldType) {
                 Log::warning("Gold type not found: {$goldTypeId}");
                 return response()->json([]);
             }
 
-            // Build the query - remove status filter for now to see if we get data
-            $query = GoldPrice::where('gold_type_id', $goldTypeId);
-
-            // Temporarily remove status filter to debug
-            // $query->where('status', 'verified');
-
             // Get date range based on period
-            $days = match ($period) {
-                '7d' => 7,
-                '1m' => 30,
-                '3m' => 90,
-                '1y' => 365,
-                'all' => 365 * 2, // 2 years max for performance
-                default => 7
-            };
-
-            $startDate = now()->subDays($days);
-
-            // Log the query for debugging
-            Log::info('Local gold query', [
-                'gold_type_id' => $goldTypeId,
-                'period' => $period,
-                'days' => $days,
-                'start_date' => $startDate
-            ]);
-
-            // Apply date filter
-            $query->where('created_at', '>=', $startDate);
-
-            // Get count first to debug
-            $totalCount = $query->count();
-            Log::info("Found {$totalCount} records for gold_type_id: {$goldTypeId}");
-
-            if ($totalCount === 0) {
-                // Try without date filter to see if there's any data at all
-                $anyData = GoldPrice::where('gold_type_id', $goldTypeId)->count();
-                Log::info("Total records without date filter: {$anyData}");
-
-                if ($anyData > 0) {
-                    // There is data, but not in the date range, so return the oldest available
-                    $oldestRecord = GoldPrice::where('gold_type_id', $goldTypeId)
-                        ->orderBy('created_at', 'asc')
-                        ->first();
-
-                    if ($oldestRecord) {
-                        Log::info("Oldest record date: {$oldestRecord->created_at}");
-                    }
-                }
-
-                return response()->json([]);
-            }
-
-            // For 7-day period, return all data points
-            if ($period === '7d') {
-                return $query->select('created_at as recorded_at', 'price')
-                    ->orderBy('created_at', 'asc')
-                    ->get();
-            }
-
-            // For longer periods, aggregate by day to reduce data points
-            // Use COALESCE to handle NULL prices
-            return $query->select(
-                DB::raw('DATE(created_at) as recorded_at'),
-                DB::raw('AVG(COALESCE(price, 0)) as price')
-            )
-                ->groupBy(DB::raw('DATE(created_at)'))
-                ->orderBy('recorded_at', 'asc')
-                ->get();
-        } catch (\Exception $e) {
-            Log::error('Local gold data error: ' . $e->getMessage());
-            return response()->json([]);
-        }
-    }
-
-    private function getWorldGoldData($period)
-    {
-        try {
-            // 1. Basic Table Check
-            if (!Schema::hasTable('world_gold_snapshots')) {
-                Log::warning('world_gold_snapshots table does not exist');
-                return response()->json([]);
-            }
-
-            // 2. Define Date Range
             $days = match ($period) {
                 '7d' => 7,
                 '1m' => 30,
@@ -616,50 +538,91 @@ class GoldPriceController extends Controller
                 default => 7
             };
 
-            $startDate = now()->subDays($days);
-            $dateColumn = 'fetched_at'; // Standardizing on your table column
+            $startDate = now()->subDays($days)->startOfDay();
+            $endDate = now()->endOfDay();
 
-            // 3. Query Logic
-            $query = DB::table('world_gold_snapshots')
-                ->where($dateColumn, '>=', $startDate);
+            // Build query using price_date (not created_at)
+            $query = GoldPrice::where('gold_type_id', $goldTypeId)
+                ->where('status', 'verified')
+                ->where('price_date', '>=', $startDate)
+                ->where('price_date', '<=', $endDate);
 
-            switch ($period) {
-                case '7d':
-                    /**
-                     * For 7 days: Return all raw snapshots (likely hourly).
-                     * This provides high-resolution data for the short-term chart.
-                     */
-                    return $query->select(
-                        'usd_price as price',
-                        'sgd_price',
-                        "$dateColumn as recorded_at"
-                    )
-                        ->orderBy($dateColumn, 'asc')
-                        ->get();
+            // For ALL periods, return ONE record per day (latest price of that day)
+            // This ensures chart matches the table display
+            $data = $query->select(
+                DB::raw('DATE(price_date) as recorded_at'),
+                DB::raw('MAX(price) as price') // Use MAX to get latest price of the day
+            )
+                ->groupBy(DB::raw('DATE(price_date)'))
+                ->orderBy('recorded_at', 'asc')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'recorded_at' => $item->recorded_at . ' 00:00:00',
+                        'price' => (float) $item->price
+                    ];
+                });
 
-                case '1m':
-                case '3m':
-                case '1y':
-                case 'all':
-                    /**
-                     * For longer periods: Aggregate by Day.
-                     * We take the Average (AVG) of both USD and SGD for each day 
-                     * to keep the chart clean and prevent thousands of points.
-                     */
-                    return $query->select(
-                        DB::raw("AVG(usd_price) as price"),
-                        DB::raw("AVG(sgd_price) as sgd_price"),
-                        DB::raw("DATE($dateColumn) as recorded_at")
-                    )
-                        ->groupBy(DB::raw("DATE($dateColumn)"))
-                        ->orderBy('recorded_at', 'asc')
-                        ->get();
+            // Log for debugging
+            Log::info('Local gold chart data', [
+                'gold_type_id' => $goldTypeId,
+                'period' => $period,
+                'days' => count($data),
+                'date_range' => [
+                    'start' => $startDate->format('Y-m-d'),
+                    'end' => $endDate->format('Y-m-d')
+                ]
+            ]);
 
-                default:
-                    return $query->select('usd_price as price', 'sgd_price', "$dateColumn as recorded_at")
-                        ->orderBy($dateColumn, 'asc')
-                        ->get();
+            return response()->json($data);
+        } catch (\Exception $e) {
+            Log::error('Local gold data error: ' . $e->getMessage());
+            return response()->json([]);
+        }
+    }
+
+    private function getWorldGoldData($period)
+    {
+        try {
+            if (!Schema::hasTable('world_gold_snapshots')) {
+                Log::warning('world_gold_snapshots table does not exist');
+                return response()->json([]);
             }
+
+            // Define Date Range - same calculation as local gold
+            $days = match ($period) {
+                '7d' => 7,
+                '1m' => 30,
+                '3m' => 90,
+                '1y' => 365,
+                'all' => 365 * 2,
+                default => 7
+            };
+
+            $startDate = now()->subDays($days)->startOfDay();
+            $endDate = now()->endOfDay();
+
+            // Always aggregate by day to get ONE record per day
+            $data = DB::table('world_gold_snapshots')
+                ->where('fetched_at', '>=', $startDate)
+                ->where('fetched_at', '<=', $endDate)
+                ->select(
+                    DB::raw('DATE(fetched_at) as recorded_at'),
+                    DB::raw('MAX(usd_price) as price'), // Latest USD price of the day
+                    DB::raw('MAX(sgd_price) as sgd_price') // Latest SGD price of the day
+                )
+                ->groupBy(DB::raw('DATE(fetched_at)'))
+                ->orderBy('recorded_at', 'asc')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'recorded_at' => $item->recorded_at . ' 00:00:00',
+                        'price' => (float) $item->price,
+                        'sgd_price' => $item->sgd_price ? (float) $item->sgd_price : null
+                    ];
+                });
+
+            return response()->json($data);
         } catch (\Exception $e) {
             Log::error('World gold data error: ' . $e->getMessage());
             return response()->json(['error' => 'Internal Server Error'], 500);
