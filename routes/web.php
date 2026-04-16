@@ -29,7 +29,11 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Symfony\Component\DomCrawler\Crawler;
 
-
+// Google ads 
+Route::get('/ads.txt', function () {
+    return response("google.com, pub-4513869151029765, DIRECT, f08c47fec0942fa0", 200)
+        ->header('Content-Type', 'text/plain');
+});
 
 Route::get('/api/cross-rate-preview/{currency}', function ($currencyCode) {
     try {

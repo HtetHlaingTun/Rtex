@@ -1,24 +1,75 @@
-*.log
-.DS_Store
-.env
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
-/.fleet
-/.idea
-/.nova
-/.phpunit.cache
-/.vscode
-/.zed
-/auth.json
+# ============================================
+# DEPENDENCIES
+# ============================================
 /node_modules
+/vendor
+/auth.json
+composer.phar
+
+# ============================================
+# LARAVEL SPECIFIC
+# ============================================
+/storage/*.log
+/storage/*.key
+/storage/framework/sessions/*
+/storage/framework/cache/*
+/storage/framework/views/*
+/storage/app/temp/*
+/storage/pail
 /public/build
 /public/hot
 /public/storage
-/storage/*.key
-/storage/pail
-/vendor
+/.phpunit.cache
+.phpunit.result.cache
+.phpactor.json
+
+# ============================================
+# ENVIRONMENT FILES (NEVER COMMIT)
+# ============================================
+.env
+.env.backup
+.env.production
+.env.*.local
+.env.local
+
+# ============================================
+# IDE FILES
+# ============================================
+/.idea
+/.vscode
+/.fleet
+/.nova
+/.zed
+*.sublime-*
+*.sublime-project
+*.sublime-workspace
+
+# ============================================
+# DEPLOYMENT
+# ============================================
+/.forge
+/deploy.log
 Homestead.json
 Homestead.yaml
+
+# ============================================
+# OS FILES
+# ============================================
+.DS_Store
 Thumbs.db
+desktop.ini
+
+# ============================================
+# COMPOSER & NPM (KEEP LOCK FILES)
+# ============================================
+# composer.lock - KEEP THIS (don't ignore)
+# package-lock.json - KEEP THIS (don't ignore)
+
+# ============================================
+# TEMPORARY FILES
+# ============================================
+*.tmp
+*.cache
+*.swp
+*.swo
+*~

@@ -11,6 +11,29 @@ Artisan::command('inspire', function () {
 
 
 
+// clean disk --------------------------
+// Daily cleanup at 2 AM
+Schedule::command('system:cleanup --days=7 --releases=3')
+    ->dailyAt('02:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/cleanup.log'));
+
+// Weekly deep cleanup (Sundays)
+Schedule::command('system:cleanup --days=30 --releases=2 --force')
+    ->weekly()
+    ->sundays()
+    ->at('03:00');
+
+// Monthly database vacuum
+Schedule::command('db:optimize')
+    ->monthly()
+    ->at('04:00');
+
+// minitor disk-----------------------
+Schedule::command('monitor:disk --threshold=75')->hourly();
+Schedule::command('monitor:disk --threshold=85')->everyThirtyMinutes();
+
+
 
 
 
