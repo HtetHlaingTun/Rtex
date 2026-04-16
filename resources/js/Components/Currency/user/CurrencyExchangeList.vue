@@ -105,7 +105,7 @@
                             </div>
                             <div>
                                 <div class="font-bold text-slate-800 dark:text-white text-base">{{ rate.currency?.code
-                                }}</div>
+                                    }}</div>
                                 <!-- ADDED: Full currency name on mobile -->
                                 <div class="text-[8px] text-slate-400 font-medium">{{ getCurrencyName(rate) }}</div>
                                 <div class="text-[8px] text-slate-400">{{ $formatTime24(rate.created_at) }}</div>
@@ -116,7 +116,8 @@
                     <!-- Buy & Sell Rates -->
                     <div class="grid grid-cols-2 gap-3">
                         <div class="text-center p-3 rounded-xl bg-emerald-50/40 dark:bg-emerald-950/20">
-                            <div class="text-[9px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Buy</div>
+                            <div class="text-[9px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Buy(MMK)
+                            </div>
                             <div class="font-mono font-bold text-emerald-700 dark:text-emerald-400 text-lg">
                                 {{ $formatMoney(rate.buy_rate) }}
                             </div>
@@ -124,7 +125,8 @@
                                 class="justify-center mt-1" />
                         </div>
                         <div class="text-center p-3 rounded-xl bg-rose-50/40 dark:bg-rose-950/20">
-                            <div class="text-[9px] font-bold text-rose-600 uppercase tracking-wider mb-1">Sell</div>
+                            <div class="text-[9px] font-bold text-rose-600 uppercase tracking-wider mb-1">Sell(MMK)
+                            </div>
                             <div class="font-mono font-bold text-rose-700 dark:text-rose-400 text-lg">
                                 {{ $formatMoney(rate.sell_rate) }}
                             </div>

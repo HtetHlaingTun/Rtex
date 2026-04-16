@@ -1,40 +1,132 @@
 <template>
     <nav
-        class="sm:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white/80 dark:bg-zinc-950/80 backdrop-blur-lg border-t border-slate-200 dark:border-zinc-800 pb-safe">
+        class="sm:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-zinc-800/50 shadow-lg pb-safe">
+
         <div class="flex items-center justify-around h-16 px-2">
 
-            <Link :href="route('welcome')" class="flex flex-col items-center gap-1 flex-1">
-            <div :class="[route().current('welcome') ? 'text-orange-600' : 'text-slate-400']" class="transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- Home -->
+            <Link :href="route('welcome')"
+                class="relative flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all duration-200 group"
+                :class="[route().current('welcome') ? 'text-orange-600' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300']">
+
+                <!-- Active Indicator -->
+                <div v-if="route().current('welcome')" class="absolute -top-0.5 w-8 h-0.5 bg-orange-500 rounded-full">
+                </div>
+
+                <!-- Icon with animation -->
+                <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
-            </div>
-            <span class="text-[10px] font-bold uppercase tracking-tight"
-                :class="[route().current('welcome') ? 'text-orange-600' : 'text-slate-400']">Home</span>
+
+                <span class="text-[9px] font-bold uppercase tracking-wide">Home</span>
             </Link>
 
-            <!-- <Link :href="route('gold.history', 'new_system')" class="flex flex-col items-center gap-1 flex-1">
-            <div :class="[route().current('gold.history') ? 'text-orange-600' : 'text-slate-400']">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- Rates -->
+            <Link :href="route('rates.index')"
+                class="relative flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all duration-200 group"
+                :class="[route().current('rates.index') ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300']">
+
+                <div v-if="route().current('rates.index')" class="absolute -top-0.5 w-8 h-0.5 bg-blue-500 rounded-full">
+                </div>
+
+                <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002 2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-            </div>
-            <span class="text-[10px] font-bold uppercase tracking-tight"
-                :class="[route().current('gold.history') ? 'text-orange-600' : 'text-slate-400']">Rates</span>
-            </Link> -->
 
-            <Link :href="route('login')" class="flex flex-col items-center gap-1 flex-1">
-            <div class="p-2 bg-slate-100 dark:bg-zinc-800 rounded-full text-slate-500">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <span class="text-[9px] font-bold uppercase tracking-wide">Rates</span>
+            </Link>
+
+            <!-- Gold - Center Prominent -->
+            <Link :href="route('goldPage.index')"
+                class="relative -mt-6 flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all duration-200 group">
+
+                <!-- Floating Circle Background -->
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/30 dark:to-amber-800/30 shadow-lg"
+                        :class="[route().current('goldPage.index') ? 'scale-110' : 'group-hover:scale-105']">
+                    </div>
+                </div>
+
+                <!-- Icon -->
+                <div class="relative z-10">
+                    <svg class="w-6 h-6 transition-all duration-200 group-hover:scale-110"
+                        :class="[route().current('goldPage.index') ? 'text-amber-600' : 'text-amber-500']" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+
+                <span class="relative z-10 text-[9px] font-bold uppercase tracking-wide"
+                    :class="[route().current('goldPage.index') ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500']">Gold</span>
+            </Link>
+
+            <!-- Blog -->
+            <Link :href="route('blog.index')"
+                class="relative flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all duration-200 group"
+                :class="[route().current('blog.index') ? 'text-purple-600' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300']">
+
+                <div v-if="route().current('blog.index')"
+                    class="absolute -top-0.5 w-8 h-0.5 bg-purple-500 rounded-full"></div>
+
+                <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                 </svg>
-            </div>
-            <span class="text-[10px] font-bold uppercase tracking-tight text-slate-400">Account</span>
+
+                <span class="text-[9px] font-bold uppercase tracking-wide">Blog</span>
+            </Link>
+
+            <!-- Profile / Login - Dynamic based on auth state -->
+            <Link :href="route('login')"
+                class="relative flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all duration-200 group"
+                :class="[$page.props.auth.user ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300']">
+
+                <div v-if="$page.props.auth.user" class="absolute -top-0.5 w-8 h-0.5 bg-emerald-500 rounded-full"></div>
+
+                <!-- User Avatar or Icon -->
+                <div class="relative">
+                    <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+
+                    <!-- Online Indicator -->
+                    <span v-if="$page.props.auth.user"
+                        class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border-2 border-white dark:border-zinc-950"></span>
+                </div>
+
+                <span class="text-[9px] font-bold uppercase tracking-wide">
+                    {{ $page.props.auth.user ? 'Profile' : 'Login' }}
+                </span>
             </Link>
 
         </div>
+
+        <!-- Safe area spacer for iPhone notch -->
+        <div class="h-safe-bottom"></div>
     </nav>
 </template>
+
+<script setup>
+import { Link } from '@inertiajs/vue3'
+import { usePage } from '@inertiajs/vue3'
+
+const $page = usePage()
+</script>
+
+<style scoped>
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.h-safe-bottom {
+    height: env(safe-area-inset-bottom);
+}
+</style>

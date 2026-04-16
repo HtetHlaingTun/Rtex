@@ -2,61 +2,63 @@
     <div>
         <!-- Table Header -->
         <div
-            class="grid grid-cols-4 px-6 py-3.5 bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-800">
-            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Date & Time</span>
-            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">USD</span>
-            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">SGD</span>
-            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">Change</span>
+            class="grid grid-cols-[100px_1fr_1fr_70px_70px] sm:grid-cols-[120px_1fr_1fr_80px_80px] gap-2 sm:gap-4 px-4 sm:px-5 py-3 bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-wider text-slate-400">
+            <div>Date</div>
+            <div class="text-right">USD</div>
+            <div class="text-right">SGD</div>
+            <div class="text-right">USD Trend</div>
+            <div class="text-right">SGD Trend</div>
         </div>
 
-        <!-- Table Body -->
-        <div v-if="paginatedRecords.length > 0" class="divide-y divide-slate-100 dark:divide-zinc-800">
-            <div v-for="(record, index) in paginatedRecords" :key="record.id"
-                class="group grid grid-cols-4 items-center px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition-all duration-200">
+        <!-- Table Body - Paginated -->
+        <div v-if="paginatedGroups.length > 0" class="divide-y divide-slate-100 dark:divide-zinc-800">
+            <div v-for="group in paginatedGroups" :key="group.date"
+                class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 transition-colors duration-150">
 
-                <div class="flex flex-col">
-                    <span class="text-[13px] font-bold text-slate-800 dark:text-white">
-                        {{ formatDate(record.created_at) }}
-                    </span>
-                    <span class="text-[8px] text-slate-400">
-                        {{ formatTime(record.created_at) }}
-                    </span>
-                </div>
+                <!-- Main row -->
+                <div
+                    class="grid grid-cols-[100px_1fr_1fr_70px_70px] sm:grid-cols-[120px_1fr_1fr_80px_80px] gap-2 sm:gap-4 px-4 sm:px-5 py-3 items-center">
 
-                <div class="text-right">
-                    <div class="flex flex-col items-end">
-                        <span class="text-[13px] font-mono font-black text-blue-600 dark:text-blue-400">
-                            ${{ formatMoney(record.price, 2) }}
+                    <!-- Date column -->
+                    <div class="flex flex-col">
+                        <span class="text-[11px] sm:text-[12px] font-bold text-slate-700 dark:text-slate-300">
+                            {{ formatDisplayDate(group.date) }}
                         </span>
-                        <div class="mt-0.5">
-                            <TrendIcon :current="record.price" :previous="getGlobalPrevious(index)"
-                                :show-percentage="true" class="scale-75" />
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-right">
-                    <div class="flex flex-col items-end">
-                        <span v-if="record.sgd_price"
-                            class="text-[13px] font-mono font-black text-blue-600 dark:text-blue-400">
-                            S${{ formatMoney(record.sgd_price, 2) }}
+                        <span v-if="group.records.length > 1" class="text-[8px] sm:text-[9px] text-slate-400">
+                            {{ group.records.length }} entries
                         </span>
-                        <span v-else class="text-[11px] text-slate-400">—</span>
-                        <div class="mt-0.5" v-if="record.sgd_price">
-                            <TrendIcon :current="record.sgd_price" :previous="getGlobalPreviousSGD(index)"
-                                :show-percentage="true" class="scale-75" />
-                        </div>
                     </div>
-                </div>
 
-                <div class="text-right">
-                    <span v-if="getChangePercent(index)"
-                        :class="getChangePercent(index).dir === 'up' ? 'text-emerald-600' : 'text-rose-600'"
-                        class="text-[10px] font-bold inline-flex items-center gap-1">
-                        <span>{{ getChangePercent(index).dir === 'up' ? '▲' : '▼' }}</span>
-                        {{ Math.abs(getChangePercent(index).value).toFixed(2) }}%
-                    </span>
-                    <span v-else class="text-slate-400 text-[10px]">—</span>
+                    <!-- USD Price -->
+                    <div class="text-right">
+                        <span
+                            class="text-[11px] sm:text-[13px] font-mono font-medium text-slate-600 dark:text-zinc-400">
+                            ${{ formatMoney(group.latestPrice, 2) }}
+                        </span>
+                    </div>
+
+                    <!-- SGD Price -->
+                    <div class="text-right">
+                        <span v-if="group.latestSgdPrice"
+                            class="text-[11px] sm:text-[13px] font-mono font-medium text-slate-600 dark:text-zinc-400">
+                            S${{ formatMoney(group.latestSgdPrice, 2) }}
+                        </span>
+                        <span v-else class="text-[10px] text-slate-400">—</span>
+                    </div>
+
+                    <!-- USD Trend -->
+                    <div class="flex justify-end">
+                        <TrendIcon :current="group.latestPrice" :previous="getPreviousDayPrice(group.date, 'price')"
+                            :show-percentage="true" class="scale-75 sm:scale-90" />
+                    </div>
+
+                    <!-- SGD Trend -->
+                    <div class="flex justify-end">
+                        <TrendIcon v-if="group.latestSgdPrice" :current="group.latestSgdPrice"
+                            :previous="getPreviousDayPrice(group.date, 'sgd_price')" :show-percentage="true"
+                            class="scale-75 sm:scale-90" />
+                        <span v-else class="text-[10px] text-slate-400">—</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -67,30 +69,30 @@
         </div>
 
         <!-- Pagination -->
-        <div v-if="totalRecords > itemsPerPage"
-            class="flex flex-col sm:flex-row justify-between items-center gap-4 px-6 py-4 bg-slate-50/50 dark:bg-zinc-800/20 border-t border-slate-200 dark:border-zinc-800">
-            <span class="text-[10px] font-bold text-slate-400">
-                {{ totalRecords }} records · Page {{ currentPage }} of {{ totalPages }}
+        <div v-if="totalGroups > itemsPerPage"
+            class="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4 bg-slate-50/50 dark:bg-zinc-800/20 border-t border-slate-200 dark:border-zinc-800">
+            <span class="text-[9px] sm:text-[10px] font-bold text-slate-400">
+                {{ totalGroups }} records · Page {{ currentPage }} of {{ totalPages }}
             </span>
             <div class="flex gap-1.5 flex-wrap justify-center">
                 <button @click="goToPage(1)" :disabled="currentPage === 1"
-                    class="min-w-[32px] h-7 flex items-center justify-center px-2 text-[10px] font-black rounded-lg transition-all"
+                    class="min-w-[28px] sm:min-w-[32px] h-6 sm:h-7 flex items-center justify-center px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-black rounded-lg transition-all"
                     :class="currentPage === 1 ? 'opacity-30 cursor-not-allowed bg-white border border-slate-200' : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-400'">«</button>
                 <button @click="goToPage(currentPage - 1)" :disabled="currentPage === 1"
-                    class="min-w-[32px] h-7 flex items-center justify-center px-2 text-[10px] font-black rounded-lg transition-all"
+                    class="min-w-[28px] sm:min-w-[32px] h-6 sm:h-7 flex items-center justify-center px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-black rounded-lg transition-all"
                     :class="currentPage === 1 ? 'opacity-30 cursor-not-allowed bg-white border border-slate-200' : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-400'">‹</button>
 
                 <button v-for="page in visiblePages" :key="page" @click="goToPage(page)"
-                    class="min-w-[32px] h-7 flex items-center justify-center px-2 text-[10px] font-black rounded-lg transition-all"
+                    class="min-w-[28px] sm:min-w-[32px] h-6 sm:h-7 flex items-center justify-center px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-black rounded-lg transition-all"
                     :class="page === currentPage ? 'bg-slate-800 text-white' : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-400'">
                     {{ page }}
                 </button>
 
                 <button @click="goToPage(currentPage + 1)" :disabled="currentPage === totalPages"
-                    class="min-w-[32px] h-7 flex items-center justify-center px-2 text-[10px] font-black rounded-lg transition-all"
+                    class="min-w-[28px] sm:min-w-[32px] h-6 sm:h-7 flex items-center justify-center px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-black rounded-lg transition-all"
                     :class="currentPage === totalPages ? 'opacity-30 cursor-not-allowed bg-white border border-slate-200' : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-400'">›</button>
                 <button @click="goToPage(totalPages)" :disabled="currentPage === totalPages"
-                    class="min-w-[32px] h-7 flex items-center justify-center px-2 text-[10px] font-black rounded-lg transition-all"
+                    class="min-w-[28px] sm:min-w-[32px] h-6 sm:h-7 flex items-center justify-center px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-black rounded-lg transition-all"
                     :class="currentPage === totalPages ? 'opacity-30 cursor-not-allowed bg-white border border-slate-200' : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-400'">»</button>
             </div>
         </div>
@@ -105,45 +107,56 @@ const props = defineProps({
     records: { type: Array, required: true, default: () => [] }
 })
 
+// Pagination state
 const currentPage = ref(1)
 const itemsPerPage = 10
 
-// Sort records by created_at descending (newest first)
-const allRecords = computed(() => {
-    return [...(props.records || [])].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+const formatDisplayDate = (dateStr) => {
+    if (!dateStr) return ''
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+const formatMoney = (value, decimals = 2) => {
+    if (value === null || value === undefined) return '0.00'
+    return Number(value).toLocaleString('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    })
+}
+
+// Group records by date
+const groupedOtherRecords = computed(() => {
+    if (!props.records || !props.records.length) return []
+
+    const groups = {}
+    props.records.forEach(record => {
+        const dateKey = new Date(record.created_at).toISOString().slice(0, 10)
+        if (!groups[dateKey]) groups[dateKey] = []
+        groups[dateKey].push(record)
+    })
+
+    return Object.entries(groups)
+        .map(([date, records]) => {
+            const sorted = [...records].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            return {
+                date,
+                records: sorted,
+                latestPrice: sorted[0]?.price || 0,
+                latestSgdPrice: sorted[0]?.sgd_price || 0
+            }
+        })
+        .sort((a, b) => b.date.localeCompare(a.date))
 })
 
-const totalRecords = computed(() => allRecords.value.length)
-const totalPages = computed(() => Math.ceil(totalRecords.value / itemsPerPage))
+// Pagination computed properties
+const totalGroups = computed(() => groupedOtherRecords.value.length)
+const totalPages = computed(() => Math.ceil(totalGroups.value / itemsPerPage))
 
-const paginatedRecords = computed(() => {
+const paginatedGroups = computed(() => {
     const start = (currentPage.value - 1) * itemsPerPage
-    return allRecords.value.slice(start, start + itemsPerPage)
+    return groupedOtherRecords.value.slice(start, start + itemsPerPage)
 })
-
-// Returns the global index in allRecords for the item at paginatedIndex
-const globalIndex = (paginatedIndex) => (currentPage.value - 1) * itemsPerPage + paginatedIndex
-
-// For TrendIcon: compare against the next record in allRecords (older record)
-const getGlobalPrevious = (paginatedIndex) => {
-    const gi = globalIndex(paginatedIndex)
-    return allRecords.value[gi + 1]?.price ?? null
-}
-
-const getGlobalPreviousSGD = (paginatedIndex) => {
-    const gi = globalIndex(paginatedIndex)
-    return allRecords.value[gi + 1]?.sgd_price ?? null
-}
-
-const getChangePercent = (paginatedIndex) => {
-    const gi = globalIndex(paginatedIndex)
-    const next = allRecords.value[gi + 1]
-    if (!next || !next.price) return null
-    const current = allRecords.value[gi].price
-    const pct = ((current - next.price) / next.price) * 100
-    if (Math.abs(pct) < 0.01) return null
-    return { value: pct, dir: pct > 0 ? 'up' : 'down' }
-}
 
 const visiblePages = computed(() => {
     const maxVisible = 5
@@ -156,17 +169,17 @@ const visiblePages = computed(() => {
 })
 
 const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages.value) currentPage.value = page
+    if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page
+    }
 }
 
-const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'
-const formatTime = (d) => d ? new Date(d).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : ''
-
-const formatMoney = (value, decimals = 2) => {
-    if (value === null || value === undefined) return '0.00'
-    return Number(value).toLocaleString('en-US', {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
-    })
+// Get previous day's price for trend (supports both price and sgd_price)
+const getPreviousDayPrice = (currentDate, field) => {
+    // Use the full grouped list for trend calculation (not paginated)
+    const currentIndex = groupedOtherRecords.value.findIndex(g => g.date === currentDate)
+    if (currentIndex === -1) return null
+    const previousGroup = groupedOtherRecords.value[currentIndex + 1]
+    return previousGroup ? (previousGroup[field === 'price' ? 'latestPrice' : 'latestSgdPrice'] || null) : null
 }
 </script>

@@ -5,10 +5,14 @@
         <!-- TODAY -->
         <div v-if="todayData">
 
-            <!-- HEADER -->
+            <!-- HEADER - Grid with Auto-Fit -->
             <div
-                class="px-5 py-4 bg-gradient-to-r from-blue-50/50 to-white dark:from-blue-950/20 dark:to-zinc-900 border-b border-slate-200 dark:border-zinc-800">
-                <div class="flex justify-between items-center">
+                class="px-4 sm:px-5 py-4 bg-gradient-to-r from-blue-50/50 to-white dark:from-blue-950/20 dark:to-zinc-900 border-b border-slate-200 dark:border-zinc-800">
+
+                <!-- Responsive Grid: 1 column on mobile, 2 columns on desktop -->
+                <div class="grid grid-cols-1 xs:grid-cols-[2fr_4fr] sm:grid-cols-[5fr_4fr] gap-4 ">
+
+                    <!-- Left: Date info -->
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="relative flex h-2 w-2">
@@ -26,139 +30,174 @@
                         </div>
                     </div>
 
-                    <div class="flex gap-6">
+                    <!-- Right: Auto-fit grid for rates and button -->
+                    <div
+                        class="grid grid-cols-[repeat(auto-fit,minmax(70px,auto))] gap-4 lg:gap-6 justify-start lg:justify-end items-center">
 
-                        <div class="text-right">
+                        <!-- Buy Rate -->
+                        <div class="text-left lg:text-right">
                             <div class="text-[8px] font-black tracking-wider uppercase text-slate-400 mb-1">Buy</div>
-                            <div class="text-base font-mono font-black text-emerald-600 dark:text-emerald-400">
+                            <div
+                                class="text-sm sm:text-base font-mono font-black text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                                 {{ $formatMoney(todayData.latestBuyRate) }}
                             </div>
-                            <div class="flex justify-end mt-0.5">
+                            <div class="flex justify-start lg:justify-end mt-0.5">
                                 <TrendIcon :current="todayData.latestBuyRate" :previous="getSecondLatestBuyRate()"
-                                    :show-percentage="true" class="scale-75 origin-right" />
+                                    :show-percentage="true" class="scale-75 origin-left lg:origin-right" />
                             </div>
                         </div>
 
-                        <div class="w-px h-10 bg-slate-200 dark:bg-zinc-700 rounded-full"></div>
-
-                        <div class="text-right">
+                        <!-- Sell Rate -->
+                        <div class="text-left lg:text-right">
                             <div class="text-[8px] font-black tracking-wider uppercase text-slate-400 mb-1">Sell</div>
-                            <div class="text-base font-mono font-black text-rose-600 dark:text-rose-400">
+                            <div
+                                class="text-sm sm:text-base font-mono font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">
                                 {{ $formatMoney(todayData.latestRate) }}
                             </div>
-                            <div class="flex justify-end mt-0.5">
+                            <div class="flex justify-start lg:justify-end mt-0.5">
                                 <TrendIcon :current="todayData.latestRate" :previous="getSecondLatestSellRate()"
-                                    :show-percentage="true" class="scale-75 origin-right" />
+                                    :show-percentage="true" class="scale-75 origin-left lg:origin-right" />
                             </div>
                         </div>
 
-                        <button v-if="todayData.records.length > 1" @click="toggleToday" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-black tracking-wider uppercase
+                        <!-- Button -->
+                        <button v-if="todayData.records.length > 1" @click="toggleToday"
+                            class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-black tracking-wider uppercase
                                    bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300
-                                   hover:bg-blue-200 dark:hover:bg-blue-500/25 transition-all duration-200">
+                                   hover:bg-blue-200 dark:hover:bg-blue-500/25 transition-all duration-200 whitespace-nowrap">
                             <svg :class="{ 'rotate-180': showTodayHistory }"
                                 class="w-2.5 h-2.5 transition-transform duration-200" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
                                     d="M19 9l-7 7-7-7" />
                             </svg>
-                            {{ todayData.records.length - 1 }} earlier
+                            <span>{{ todayData.records.length - 1 }} earlier</span>
                         </button>
+
                     </div>
                 </div>
             </div>
 
-            <!-- TODAY HISTORY DROPDOWN -->
+            <!-- TODAY HISTORY DROPDOWN - Responsive Grid -->
             <transition name="slide-down">
                 <div v-if="showTodayHistory" class="divide-y divide-slate-100 dark:divide-zinc-800">
                     <div v-for="r in todayEarlierRecords" :key="r.id"
-                        class="grid grid-cols-[80px_1fr_1fr] gap-4 px-5 py-3 bg-slate-50/50 dark:bg-zinc-800/20 hover:bg-slate-100/60 dark:hover:bg-zinc-800/40 transition-colors duration-150">
+                        class="px-4 sm:px-5 py-3 bg-slate-50/50 dark:bg-zinc-800/20 hover:bg-slate-100/60 dark:hover:bg-zinc-800/40 transition-colors duration-150">
 
-                        <div class="flex items-center gap-1.5">
-                            <svg class="w-2.5 h-2.5 text-slate-400" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span class="text-[10px] font-mono font-bold text-slate-500 dark:text-zinc-400">
-                                {{ formatTime(r.created_at) }}
-                            </span>
-                        </div>
+                        <!-- Auto-fit grid for history items -->
+                        <div
+                            class="grid grid-cols-[auto_1fr_1fr] sm:grid-cols-[80px_1fr_1fr] gap-3 sm:gap-4 items-center">
 
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-bold text-slate-400">Buy</span>
-                            <div class="flex items-center gap-2 flex-col">
-                                <span class="text-[13px] font-mono font-black text-emerald-600 dark:text-emerald-400">
-                                    {{ $formatMoney(r.buy_rate) }}
+                            <!-- Time column -->
+                            <div class="flex items-center gap-1.5">
+                                <svg class="w-2.5 h-2.5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span
+                                    class="text-[9px] sm:text-[10px] font-mono font-bold text-slate-500 dark:text-zinc-400 whitespace-nowrap">
+                                    {{ formatTime(r.created_at) }}
                                 </span>
-                                <TrendIcon :current="r.buy_rate" :previous="getPreviousRate(r, 'buy_rate')"
-                                    :show-percentage="true" class="scale-75" />
                             </div>
-                        </div>
 
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-bold text-slate-400">Sell</span>
-                            <div class="flex items-center gap-2 flex-col">
-                                <span class="text-[13px] font-mono font-black text-rose-600 dark:text-rose-400">
-                                    {{ $formatMoney(r.sell_rate) }}
-                                </span>
-                                <TrendIcon :current="r.sell_rate" :previous="getPreviousRate(r, 'sell_rate')"
-                                    :show-percentage="true" class="scale-75" />
+                            <!-- Buy Rate -->
+                            <div class="flex items-center justify-end gap-2 sm:gap-3">
+
+                                <div class="flex flex-col items-end gap-1">
+                                    <span
+                                        class="text-[11px] sm:text-[13px] font-mono font-black text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                                        {{ $formatMoney(r.buy_rate) }}
+                                    </span>
+                                    <TrendIcon :current="r.buy_rate" :previous="getPreviousRate(r, 'buy_rate')"
+                                        :show-percentage="true" class="scale-75" />
+                                </div>
                             </div>
-                        </div>
 
+                            <!-- Sell Rate -->
+                            <div class="flex items-center justify-end gap-2 sm:gap-3">
+
+                                <div class="flex flex-col items-end gap-1">
+                                    <span
+                                        class="text-[11px] sm:text-[13px] font-mono font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                                        {{ $formatMoney(r.sell_rate) }}
+                                    </span>
+                                    <TrendIcon :current="r.sell_rate" :previous="getPreviousRate(r, 'sell_rate')"
+                                        :show-percentage="true" class="scale-75" />
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
                 </div>
             </transition>
 
         </div>
 
-        <!-- PREVIOUS DAYS -->
+        <!-- PREVIOUS DAYS - Responsive Grid Table -->
         <div v-if="previousDaysData.length" class="divide-y divide-slate-100 dark:divide-zinc-800">
             <div v-for="d in previousDaysData" :key="d.date"
-                class="group grid grid-cols-[120px_1fr_1fr_100px] items-center gap-4 px-5 py-3.5 hover:bg-slate-50/70 dark:hover:bg-zinc-800/30 transition-colors duration-150">
+                class="group px-4 sm:px-5 py-3.5 hover:bg-slate-50/70 dark:hover:bg-zinc-800/30 transition-colors duration-150">
 
-                <div class="flex flex-col">
-                    <span class="text-[12px] font-bold text-slate-700 dark:text-slate-300">
-                        {{ formatDateHeader(d.date) }}
-                    </span>
-                    <span class="text-[8px] text-slate-400 dark:text-zinc-600 font-mono">
-                        Final rate
-                    </span>
+                <!-- Auto-fit grid for historical data -->
+                <div
+                    class="grid grid-cols-[100px_1fr_1fr_50px] sm:grid-cols-[120px_1fr_1fr_80px] lg:grid-cols-[140px_1fr_1fr_100px] gap-3 sm:gap-4 items-center">
+
+                    <!-- Date column -->
+                    <div class="flex flex-col">
+                        <span
+                            class="text-[11px] sm:text-[12px] font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                            {{ formatDateHeader(d.date) }}
+                        </span>
+                        <span class="text-[7px] sm:text-[8px] text-slate-400 dark:text-zinc-600 font-mono">
+                            Final rate
+                        </span>
+                    </div>
+
+                    <!-- Buy Rate -->
+                    <div class="text-right">
+                        <div class="text-[7px] sm:text-[8px] font-black tracking-wider uppercase text-slate-400 mb-0.5">
+                            Buy</div>
+                        <span
+                            class="text-[11px] sm:text-[13px] font-mono font-black text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                            {{ $formatMoney(d.latestBuyRate) }}
+                        </span>
+                    </div>
+
+                    <!-- Sell Rate -->
+                    <div class="text-right">
+                        <div class="text-[7px] sm:text-[8px] font-black tracking-wider uppercase text-slate-400 mb-0.5">
+                            Sell</div>
+                        <span
+                            class="text-[11px] sm:text-[13px] font-mono font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                            {{ $formatMoney(d.latestRate) }}
+                        </span>
+                    </div>
+
+                    <!-- Trend -->
+                    <div class="flex justify-end">
+                        <TrendIcon :current="d.latestRate" :previous="d.prevSellRate" :show-percentage="true"
+                            class="scale-75 sm:scale-90" />
+                    </div>
+
                 </div>
-
-                <div class="text-right">
-                    <div class="text-[8px] font-black tracking-wider uppercase text-slate-400 mb-0.5">Buy</div>
-                    <span class="text-[13px] font-mono font-black text-emerald-600 dark:text-emerald-400">
-                        {{ $formatMoney(d.latestBuyRate) }}
-                    </span>
-                </div>
-
-                <div class="text-right">
-                    <div class="text-[8px] font-black tracking-wider uppercase text-slate-400 mb-0.5">Sell</div>
-                    <span class="text-[13px] font-mono font-black text-rose-600 dark:text-rose-400">
-                        {{ $formatMoney(d.latestRate) }}
-                    </span>
-                </div>
-
-                <div class="flex justify-end">
-                    <TrendIcon :current="d.latestRate" :previous="d.prevSellRate" :show-percentage="true"
-                        class="scale-90" />
-                </div>
-
             </div>
         </div>
 
         <!-- EMPTY STATE -->
-        <div v-if="!todayData && !previousDaysData.length" class="py-16 flex flex-col items-center gap-3 text-center">
-            <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
-                <svg class="w-6 h-6 text-slate-300 dark:text-zinc-600" fill="none" stroke="currentColor"
+        <div v-if="!todayData && !previousDaysData.length"
+            class="py-12 sm:py-16 flex flex-col items-center gap-3 text-center">
+            <div
+                class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
+                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-slate-300 dark:text-zinc-600" fill="none" stroke="currentColor"
                     viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </div>
-            <p class="text-sm font-medium text-slate-500 dark:text-zinc-400">No historical data</p>
-            <p class="text-[10px] text-slate-400 dark:text-zinc-500">Data will appear after the first rate sync</p>
+            <p class="text-xs sm:text-sm font-medium text-slate-500 dark:text-zinc-400">No historical data</p>
+            <p class="text-[9px] sm:text-[10px] text-slate-400 dark:text-zinc-500">Data will appear after the first rate
+                sync</p>
         </div>
 
     </div>
@@ -198,7 +237,7 @@ const formatDateHeader = (dateStr) => {
 
     if (date.toDateString() === today.toDateString()) return 'Today'
     if (date.toDateString() === yesterday.toDateString()) return 'Yesterday'
-    return date.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' })
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
 }
 
 const formatTime = (d) => new Date(d).toLocaleTimeString('en-GB', {
@@ -207,9 +246,10 @@ const formatTime = (d) => new Date(d).toLocaleTimeString('en-GB', {
 
 // Core logic
 const groupedByDate = computed(() => {
-    const groups = {}
+    if (!props.history?.data?.length) return []
 
-    props.history?.data?.forEach(r => {
+    const groups = {}
+    props.history.data.forEach(r => {
         const key = formatDateKey(r.created_at)
         if (!groups[key]) groups[key] = []
         groups[key].push(r)

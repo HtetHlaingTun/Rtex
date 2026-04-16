@@ -5,8 +5,8 @@
         <!-- ==================== TODAY SECTION ==================== -->
         <div v-if="todayRecords.length > 0">
             <div
-                class="px-5 py-4 bg-gradient-to-r from-slate-50 to-white dark:from-zinc-800/30 dark:to-zinc-900 border-b border-slate-200 dark:border-zinc-800">
-                <div class="flex justify-between items-center">
+                class="px-4 sm:px-5 py-4 bg-gradient-to-r from-slate-50 to-white dark:from-zinc-800/30 dark:to-zinc-900 border-b border-slate-200 dark:border-zinc-800">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="relative flex h-2 w-2">
@@ -22,11 +22,11 @@
                         </div>
                     </div>
 
-                    <div class="flex gap-6">
-                        <div class="text-right">
+                    <div class="flex flex-wrap items-center gap-4 sm:gap-6 w-full sm:w-auto justify-end">
+                        <div class="text-right flex-1 sm:flex-none min-w-[120px]">
                             <div class="text-[8px] font-black tracking-wider uppercase text-slate-400 mb-1">Price (MMK)
                             </div>
-                            <div class="text-base font-mono font-black" :class="priceColor">
+                            <div class="text-base sm:text-base font-mono font-black" :class="priceColor">
                                 {{ $formatMoney(todayRecords[0]?.price, 0, true) }}
                             </div>
                             <div class="flex justify-end mt-0.5">
@@ -35,40 +35,45 @@
                             </div>
                         </div>
 
-                        <button v-if="todayRecords.length > 1" @click="toggleToday"
-                            class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-black tracking-wider uppercase bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all duration-200">
+                        <button v-if="todayRecords.length > 1" @click="toggleToday" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-black tracking-wider uppercase 
+                                   bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 
+                                   hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all duration-200 shrink-0">
                             <svg :class="{ 'rotate-180': showTodayHistory }"
                                 class="w-2.5 h-2.5 transition-transform duration-200" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
                                     d="M19 9l-7 7-7-7" />
                             </svg>
-                            {{ todayRecords.length - 1 }} earlier
+
+
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- TODAY DROPDOWN (Earlier records today) -->
+            <!-- TODAY DROPDOWN (Earlier records today) - Responsive -->
             <transition name="slide-down">
                 <div v-if="showTodayHistory" class="divide-y divide-slate-100 dark:divide-zinc-800">
                     <div v-for="(r, idx) in todayRecords.slice(1)" :key="r.id"
-                        class="grid grid-cols-[80px_1fr] gap-4 px-5 py-3 bg-slate-50/50 hover:bg-slate-100/60 transition-colors duration-150">
+                        class="grid grid-cols-[70px_1fr] sm:grid-cols-[80px_1fr] gap-3 sm:gap-4 px-4 sm:px-5 py-3 bg-slate-50/50 dark:bg-zinc-800/20 hover:bg-slate-100/60 dark:hover:bg-zinc-800/40 transition-colors duration-150">
 
                         <div class="flex items-center gap-1.5">
-                            <svg class="w-2.5 h-2.5 text-slate-400" fill="none" stroke="currentColor"
+                            <svg class="w-2.5 h-2.5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span class="text-[10px] font-mono font-bold text-slate-500">{{ formatTime(r.created_at)
-                            }}</span>
+                            <span
+                                class="text-[9px] sm:text-[10px] font-mono font-bold text-slate-500 dark:text-zinc-400">
+                                {{ formatTime(r.created_at) }}
+                            </span>
                         </div>
 
                         <div class="flex flex-col items-end gap-1">
                             <div class="flex items-center gap-2">
-                                <span class="text-[10px] font-bold text-slate-400">MMK</span>
-                                <span class="text-[13px] font-mono font-black" :class="priceColor">
+                                <span
+                                    class="text-[9px] sm:text-[10px] font-bold text-slate-400 hidden sm:inline">MMK</span>
+                                <span class="text-[11px] sm:text-[13px] font-mono font-black" :class="priceColor">
                                     {{ $formatMoney(r.price, 0, true) }}
                                 </span>
                             </div>
@@ -85,30 +90,18 @@
             <MyanmarOtherRecordsTable :records="otherRecords" :systemType="systemType" />
         </div>
 
-        <!-- DEBUG INFO (remove after fixing) -->
-        <!-- <div v-if="allRecords.length > 0" class="px-6 py-2 text-center text-xs border-t border-slate-200">
-            <details>
-                <summary class="text-slate-400 cursor-pointer">Debug Info</summary>
-                <div class="mt-2 text-left text-slate-500">
-                    <p>Total records: {{ allRecords.length }}</p>
-                    <p>Today records: {{ todayRecords.length }}</p>
-                    <p>Other records: {{ otherRecords.length }}</p>
-                    <p>Today date: {{ todayDateString }}</p>
-                    <p>Sample record date: {{ allRecords[0]?.created_at }}</p>
-                </div>
-            </details>
-        </div> -->
-
-        <!-- EMPTY STATE -->
-        <div v-if="allRecords.length === 0" class="py-16 flex flex-col items-center gap-3 text-center">
-            <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
-                <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- EMPTY STATE - Responsive -->
+        <div v-if="allRecords.length === 0" class="py-12 sm:py-16 flex flex-col items-center gap-3 text-center">
+            <div
+                class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
+                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </div>
-            <p class="text-sm font-medium text-slate-500">No historical data</p>
-            <p class="text-[10px] text-slate-400">Data will appear after the first price sync</p>
+            <p class="text-xs sm:text-sm font-medium text-slate-500 dark:text-zinc-400">No historical data</p>
+            <p class="text-[9px] sm:text-[10px] text-slate-400 dark:text-zinc-500">Data will appear after the first
+                price sync</p>
         </div>
 
     </div>
@@ -136,7 +129,6 @@ const toggleToday = () => showTodayHistory.value = !showTodayHistory.value
 
 // Helper to get the actual date from record (use price_date or created_at)
 const getRecordDate = (record) => {
-    // Try price_date first, fallback to created_at
     return record.price_date || record.created_at
 }
 
@@ -144,7 +136,6 @@ const getRecordDate = (record) => {
 const allRecords = computed(() => {
     return (props.history?.data || []).map(record => ({
         ...record,
-        // Ensure we have a proper date field
         effective_date: getRecordDate(record)
     }))
 })
@@ -176,18 +167,6 @@ const otherRecords = computed(() => {
         .sort((a, b) => new Date(b.effective_date) - new Date(a.effective_date))
 })
 
-// Log for debugging
-console.log('Total records:', allRecords.value.length)
-console.log('Today records:', todayRecords.value.length)
-console.log('Other records:', otherRecords.value.length)
-if (allRecords.value[0]) {
-    console.log('Sample record dates:', {
-        created_at: allRecords.value[0].created_at,
-        price_date: allRecords.value[0].price_date,
-        effective_date: allRecords.value[0].effective_date
-    })
-}
-
 // Helper functions
 const formatDate = (d) => {
     if (!d) return ''
@@ -197,6 +176,16 @@ const formatDate = (d) => {
 const formatTime = (d) => {
     if (!d) return ''
     return new Date(d).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+}
+
+// Debug logs (remove in production)
+if (import.meta.env.DEV) {
+    console.log('Myanmar Gold Component - Debug:', {
+        totalRecords: allRecords.value.length,
+        todayRecords: todayRecords.value.length,
+        otherRecords: otherRecords.value.length,
+        systemType: props.systemType
+    })
 }
 </script>
 
@@ -210,5 +199,12 @@ const formatTime = (d) => {
 .slide-down-leave-to {
     opacity: 0;
     transform: translateY(-10px);
+}
+
+/* Touch-friendly tap highlights */
+@media (max-width: 640px) {
+    button:active {
+        transform: scale(0.96);
+    }
 }
 </style>

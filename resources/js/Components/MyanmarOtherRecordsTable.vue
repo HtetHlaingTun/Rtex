@@ -1,35 +1,40 @@
 <template>
     <div>
-        <!-- Table Header -->
+        <!-- Table Header - Responsive -->
         <div
-            class="grid grid-cols-3 px-6 py-3.5 bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-800">
-            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Date & Time</span>
-            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">Price (MMK)</span>
-            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">Change</span>
+            class="grid grid-cols-3 px-4 sm:px-6 py-3 bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-800">
+            <span
+                class="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-slate-400">Date
+                & Time</span>
+            <span
+                class="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-slate-400 text-right">Price
+                (MMK)</span>
+            <span
+                class="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-slate-400 text-right">Change</span>
         </div>
 
-        <!-- Table Body -->
+        <!-- Table Body - Responsive -->
         <div v-if="paginatedRecords.length > 0" class="divide-y divide-slate-100 dark:divide-zinc-800">
             <div v-for="(record, index) in paginatedRecords" :key="record.id"
-                class="group grid grid-cols-3 items-center px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition-all duration-200">
+                class="group grid grid-cols-3 items-center px-4 sm:px-6 py-3 sm:py-4 hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition-all duration-200">
 
                 <div class="flex flex-col">
-                    <span class="text-[13px] font-bold text-slate-800 dark:text-white">
+                    <span class="text-[11px] sm:text-[13px] font-bold text-slate-800 dark:text-white">
                         {{ formatDate(record.effective_date || record.price_date || record.created_at) }}
                     </span>
-                    <span class="text-[8px] text-slate-400">
+                    <span class="text-[7px] sm:text-[8px] text-slate-400">
                         {{ formatTime(record.effective_date || record.created_at) }}
                     </span>
                 </div>
 
                 <div class="text-right">
                     <div class="flex flex-col items-end">
-                        <span class="text-[13px] font-mono font-black" :class="priceColor">
+                        <span class="text-[11px] sm:text-[13px] font-mono font-black" :class="priceColor">
                             {{ $formatMoney(record.price, 0, true) }}
                         </span>
                         <div class="mt-0.5">
                             <TrendIcon :current="record.price" :previous="getGlobalPrevious(index)"
-                                :show-percentage="true" class="scale-75" />
+                                :show-percentage="true" class="scale-70 sm:scale-75" />
                         </div>
                     </div>
                 </div>
@@ -37,45 +42,40 @@
                 <div class="text-right">
                     <span v-if="getChangePercent(index)"
                         :class="getChangePercent(index).dir === 'up' ? 'text-emerald-600' : 'text-rose-600'"
-                        class="text-[10px] font-bold inline-flex items-center gap-1">
+                        class="text-[9px] sm:text-[10px] font-bold inline-flex items-center gap-1">
                         <span>{{ getChangePercent(index).dir === 'up' ? '▲' : '▼' }}</span>
                         {{ Math.abs(getChangePercent(index).value).toFixed(2) }}%
                     </span>
-                    <span v-else class="text-slate-400 text-[10px]">—</span>
+                    <span v-else class="text-slate-400 text-[9px] sm:text-[10px]">—</span>
                 </div>
             </div>
         </div>
 
-        <!-- Empty State -->
-        <div v-else class="py-8 text-center">
-            <p class="text-sm text-slate-400">No historical records found</p>
-        </div>
-
-        <!-- Pagination -->
+        <!-- Pagination - Responsive -->
         <div v-if="totalRecords > itemsPerPage"
-            class="flex flex-col sm:flex-row justify-between items-center gap-4 px-6 py-4 bg-slate-50/50 dark:bg-zinc-800/20 border-t border-slate-200 dark:border-zinc-800">
-            <span class="text-[10px] font-bold text-slate-400">
+            class="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4 bg-slate-50/50 dark:bg-zinc-800/20 border-t border-slate-200 dark:border-zinc-800">
+            <span class="text-[9px] sm:text-[10px] font-bold text-slate-400">
                 {{ totalRecords }} records · Page {{ currentPage }} of {{ totalPages }}
             </span>
             <div class="flex gap-1.5 flex-wrap justify-center">
                 <button @click="goToPage(1)" :disabled="currentPage === 1"
-                    class="min-w-[32px] h-7 flex items-center justify-center px-2 text-[10px] font-black rounded-lg transition-all"
+                    class="min-w-[28px] sm:min-w-[32px] h-6 sm:h-7 flex items-center justify-center px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-black rounded-lg transition-all"
                     :class="currentPage === 1 ? 'opacity-30 cursor-not-allowed bg-white border border-slate-200' : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-400'">«</button>
                 <button @click="goToPage(currentPage - 1)" :disabled="currentPage === 1"
-                    class="min-w-[32px] h-7 flex items-center justify-center px-2 text-[10px] font-black rounded-lg transition-all"
+                    class="min-w-[28px] sm:min-w-[32px] h-6 sm:h-7 flex items-center justify-center px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-black rounded-lg transition-all"
                     :class="currentPage === 1 ? 'opacity-30 cursor-not-allowed bg-white border border-slate-200' : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-400'">‹</button>
 
                 <button v-for="page in visiblePages" :key="page" @click="goToPage(page)"
-                    class="min-w-[32px] h-7 flex items-center justify-center px-2 text-[10px] font-black rounded-lg transition-all"
+                    class="min-w-[28px] sm:min-w-[32px] h-6 sm:h-7 flex items-center justify-center px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-black rounded-lg transition-all"
                     :class="page === currentPage ? 'bg-slate-800 text-white' : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-400'">
                     {{ page }}
                 </button>
 
                 <button @click="goToPage(currentPage + 1)" :disabled="currentPage === totalPages"
-                    class="min-w-[32px] h-7 flex items-center justify-center px-2 text-[10px] font-black rounded-lg transition-all"
+                    class="min-w-[28px] sm:min-w-[32px] h-6 sm:h-7 flex items-center justify-center px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-black rounded-lg transition-all"
                     :class="currentPage === totalPages ? 'opacity-30 cursor-not-allowed bg-white border border-slate-200' : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-400'">›</button>
                 <button @click="goToPage(totalPages)" :disabled="currentPage === totalPages"
-                    class="min-w-[32px] h-7 flex items-center justify-center px-2 text-[10px] font-black rounded-lg transition-all"
+                    class="min-w-[28px] sm:min-w-[32px] h-6 sm:h-7 flex items-center justify-center px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-black rounded-lg transition-all"
                     :class="currentPage === totalPages ? 'opacity-30 cursor-not-allowed bg-white border border-slate-200' : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-400'">»</button>
             </div>
         </div>
@@ -88,7 +88,7 @@ import TrendIcon from '@/Components/TrendIcon.vue'
 
 const props = defineProps({
     records: { type: Array, required: true },
-    systemType: { type: String, required: true }, // 'new' or 'old'
+    systemType: { type: String, required: true },
 })
 
 const currentPage = ref(1)
@@ -106,10 +106,8 @@ const paginatedRecords = computed(() => {
     return allRecords.value.slice(start, start + itemsPerPage)
 })
 
-// Returns the global index in allRecords for the item at paginatedIndex
 const globalIndex = (paginatedIndex) => (currentPage.value - 1) * itemsPerPage + paginatedIndex
 
-// For TrendIcon: compare against the next record in allRecords
 const getGlobalPrevious = (paginatedIndex) => {
     const gi = globalIndex(paginatedIndex)
     return allRecords.value[gi + 1]?.price ?? null

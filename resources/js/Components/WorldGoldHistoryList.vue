@@ -5,8 +5,8 @@
         <!-- ==================== TODAY SECTION ==================== -->
         <div v-if="todayData">
             <div
-                class="px-5 py-4 bg-gradient-to-r from-blue-50/50 to-white dark:from-blue-950/20 dark:to-zinc-900 border-b border-slate-200 dark:border-zinc-800">
-                <div class="flex justify-between items-center">
+                class="px-4 sm:px-5 py-4 bg-gradient-to-r from-blue-50/50 to-white dark:from-blue-950/20 dark:to-zinc-900 border-b border-slate-200 dark:border-zinc-800">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="relative flex h-2 w-2">
@@ -24,11 +24,13 @@
                         </div>
                     </div>
 
-                    <div class="flex gap-6">
+                    <div class="flex flex-wrap items-center gap-4 sm:gap-6 w-full sm:w-auto justify-end">
                         <!-- USD Price -->
-                        <div class="text-right">
-
-                            <div class="text-base font-mono font-black text-blue-600 dark:text-blue-400">
+                        <div class="text-right flex-1 sm:flex-none min-w-[100px]">
+                            <div
+                                class="text-[8px] font-black tracking-wider uppercase text-slate-400 mb-1 hidden sm:block">
+                                USD</div>
+                            <div class="text-base sm:text-base font-mono font-black text-blue-600 dark:text-blue-400">
                                 ${{ formatMoney(todayData.latestPrice, 2) }}
                             </div>
                             <div class="flex justify-end mt-0.5">
@@ -38,9 +40,11 @@
                         </div>
 
                         <!-- SGD Price -->
-                        <div class="text-right">
-
-                            <div class="text-base font-mono font-black text-blue-600 dark:text-blue-400">
+                        <div class="text-right flex-1 sm:flex-none min-w-[100px]">
+                            <div
+                                class="text-[8px] font-black tracking-wider uppercase text-slate-400 mb-1 hidden sm:block">
+                                SGD</div>
+                            <div class="text-base sm:text-base font-mono font-black text-blue-600 dark:text-blue-400">
                                 S${{ formatMoney(todayData.latestSgdPrice, 2) }}
                             </div>
                             <div class="flex justify-end mt-0.5">
@@ -50,47 +54,48 @@
                             </div>
                         </div>
 
-                        <!-- Show button for all records (no warning) -->
+                        <!-- Show button for all records -->
                         <button v-if="todayEarlierRecords.length > 0" @click="toggleToday" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-black tracking-wider uppercase
-           bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300
-           hover:bg-blue-200 dark:hover:bg-blue-500/25 transition-all duration-200">
+                                   bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300
+                                   hover:bg-blue-200 dark:hover:bg-blue-500/25 transition-all duration-200 shrink-0">
                             <svg :class="{ 'rotate-180': showTodayHistory }"
                                 class="w-2.5 h-2.5 transition-transform duration-200" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
                                     d="M19 9l-7 7-7-7" />
                             </svg>
-                            {{ todayEarlierRecords.length }} earlier
+
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- TODAY DROPDOWN - Show all records (no limit) -->
+            <!-- TODAY DROPDOWN - Responsive -->
             <transition name="slide-down">
                 <div v-if="showTodayHistory" class="divide-y divide-slate-100 dark:divide-zinc-800">
                     <div v-for="(r, idx) in todayEarlierRecords" :key="r.id"
-                        class="grid grid-cols-[80px_1fr] gap-4 px-5 py-3 bg-slate-50/50 dark:bg-zinc-800/20 hover:bg-slate-100/60 dark:hover:bg-zinc-800/40 transition-colors duration-150">
+                        class="grid grid-cols-[70px_1fr_1fr] sm:grid-cols-[80px_1fr_1fr] gap-3 sm:gap-4 px-4 sm:px-5 py-3 bg-slate-50/50 dark:bg-zinc-800/20 hover:bg-slate-100/60 dark:hover:bg-zinc-800/40 transition-colors duration-150">
 
                         <!-- Time column -->
                         <div class="flex items-center gap-1.5">
-                            <svg class="w-2.5 h-2.5 text-slate-400" fill="none" stroke="currentColor"
+                            <svg class="w-2.5 h-2.5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span class="text-[10px] font-mono font-bold text-slate-500 dark:text-zinc-400">
+                            <span
+                                class="text-[9px] sm:text-[10px] font-mono font-bold text-slate-500 dark:text-zinc-400">
                                 {{ formatTime(r.created_at) }}
                             </span>
                         </div>
 
-                        <!-- Price columns -->
-                        <div class="grid grid-cols-2 gap-4">
+                        <!-- Price columns - Responsive -->
+                        <div class="grid grid-cols-2 gap-2 sm:gap-4">
                             <!-- USD -->
                             <div class="flex flex-col items-end gap-1">
                                 <div class="flex items-center gap-2">
-
-                                    <span class="text-[13px] font-mono font-black text-blue-600 dark:text-blue-400">
+                                    <span
+                                        class="text-[11px] sm:text-[13px] font-mono font-black text-blue-600 dark:text-blue-400">
                                         ${{ formatMoney(r.price, 2) }}
                                     </span>
                                 </div>
@@ -101,8 +106,8 @@
                             <!-- SGD -->
                             <div v-if="r.sgd_price" class="flex flex-col items-end gap-1">
                                 <div class="flex items-center gap-2">
-
-                                    <span class="text-[13px] font-mono font-black text-blue-600 dark:text-blue-400">
+                                    <span
+                                        class="text-[11px] sm:text-[13px] font-mono font-black text-blue-600 dark:text-blue-400">
                                         S${{ formatMoney(r.sgd_price, 2) }}
                                     </span>
                                 </div>
@@ -120,33 +125,18 @@
             <WorldOtherRecordsTable :records="otherRecordsList" />
         </div>
 
-
-        <!-- DEBUG INFO -->
-        <!-- <div v-if="hasData" class="px-6 py-2 text-center text-xs border-t border-slate-200 dark:border-zinc-800">
-            <details>
-                <summary class="text-slate-400 cursor-pointer hover:text-slate-600 transition-colors">Debug Info
-                </summary>
-                <div class="mt-2 text-left text-slate-500 dark:text-zinc-400 space-y-1">
-                    <p>Total records: {{ totalRecords }}</p>
-                    <p>Today records: {{ todayData?.records?.length || 0 }}</p>
-                    <p>Other records: {{ otherRecordsList.length }}</p>
-                    <p>Unique days: {{ uniqueDaysCount }}</p>
-                    <p>Today date: {{ todayDateString }}</p>
-                    <p>Needs consolidation: {{ needsConsolidation ? 'Yes' : 'No' }}</p>
-                </div>
-            </details>
-        </div> -->
-
-        <!-- EMPTY STATE -->
-        <div v-if="!hasData" class="py-16 flex flex-col items-center gap-3 text-center">
-            <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
-                <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- EMPTY STATE - Responsive -->
+        <div v-if="!hasData" class="py-12 sm:py-16 flex flex-col items-center gap-3 text-center">
+            <div
+                class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
+                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </div>
-            <p class="text-sm font-medium text-slate-500 dark:text-zinc-400">No historical data</p>
-            <p class="text-[10px] text-slate-400 dark:text-zinc-500">Data will appear after the first price sync</p>
+            <p class="text-xs sm:text-sm font-medium text-slate-500 dark:text-zinc-400">No historical data</p>
+            <p class="text-[9px] sm:text-[10px] text-slate-400 dark:text-zinc-500">Data will appear after the first
+                price sync</p>
         </div>
 
     </div>
@@ -241,10 +231,9 @@ const uniqueDaysCount = computed(() => groupedByDate.value.length)
 // Get today's data
 const todayData = computed(() => groupedByDate.value.find(d => isToday(d.date)))
 
-// Get earlier records from today (excluding the latest) - limit to reasonable number
+// Get earlier records from today (excluding the latest)
 const todayEarlierRecords = computed(() => {
     const records = todayData.value?.records || []
-    // Return all but limit UI display later
     return records.slice(1)
 })
 
@@ -272,7 +261,7 @@ const getPreviousPrice = (record, field) => {
 // Statistics for debug
 const totalRecords = computed(() => allRecords.value.length)
 
-// Log for debugging
+// Log for debugging (remove in production)
 if (import.meta.env.DEV) {
     console.log('World Gold Component - Debug Info:', {
         totalRecords: totalRecords.value,
@@ -295,5 +284,12 @@ if (import.meta.env.DEV) {
 .slide-down-leave-to {
     opacity: 0;
     transform: translateY(-10px);
+}
+
+/* Touch-friendly tap highlights */
+@media (max-width: 640px) {
+    button:active {
+        transform: scale(0.96);
+    }
 }
 </style>
