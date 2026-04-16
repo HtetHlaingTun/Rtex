@@ -91,6 +91,12 @@
                 window.matchMedia('(prefers-color-scheme: dark)').matches)
         );
     </script>
+
+    @if(app()->environment('production'))
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4513869151029765"
+        crossorigin="anonymous">
+    </script>
+    @endif
 </head>
 
 <body class="font-sans antialiased preload">
