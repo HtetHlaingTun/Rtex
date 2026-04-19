@@ -260,7 +260,7 @@ Route::middleware(['auth', 'verified', 'is_admin', 'session.timeout'])->group(fu
     Route::prefix('currencies')->name('currencies.')->group(function () {
         Route::get('/', [CurrencyExchangeRate::class, 'index'])->name('index');
         Route::get('/refresh', [CurrencyExchangeRate::class, 'refresh'])->name('refresh');
-        Route::get('/history/{currency}', [CurrencyExchangeRate::class, 'history'])->name('history');
+        Route::get('/history/{currency}', [CurrencyExchangeRate::class, 'history'])->name('admin.history');
         Route::get('/factors', [CurrencyExchangeRate::class, 'factors'])->name('factors');
         Route::match(['put', 'post'], '/{currency}/factor', [CurrencyExchangeRate::class, 'updateFactor'])->name('update-factor');
         Route::get('/pending', [CurrencyExchangeRate::class, 'pending'])->name('pending');

@@ -88,7 +88,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-50">
                         <tr v-for="rate in rates" :key="rate.id"
-                            @click="router.visit(route('currencies.history', rate.id))"
+                            @click="router.visit(route('currencies.admin.history', rate.id))"
                             class="hover:bg-slate-50/50 transition-colors group cursor-pointer">
 
                             <td class="px-6 py-4">

@@ -42,7 +42,7 @@
                                 {{ $formatMoney(todayData.latestBuyRate) }}
                             </div>
                             <div class="flex justify-start lg:justify-end mt-0.5">
-                                <TrendIcon :current="todayData.latestBuyRate" :previous="getSecondLatestBuyRate()"
+                                <TrendIcon :current="todayData.latestBuyRate" :previous="getPreviousDayBuyRate()"
                                     :show-percentage="true" class="scale-75 origin-left lg:origin-right" />
                             </div>
                         </div>
@@ -55,7 +55,7 @@
                                 {{ $formatMoney(todayData.latestRate) }}
                             </div>
                             <div class="flex justify-start lg:justify-end mt-0.5">
-                                <TrendIcon :current="todayData.latestRate" :previous="getSecondLatestSellRate()"
+                                <TrendIcon :current="todayData.latestRate" :previous="getPreviousDaySellRate()"
                                     :show-percentage="true" class="scale-75 origin-left lg:origin-right" />
                             </div>
                         </div>
@@ -80,8 +80,9 @@
 
             <!-- TODAY HISTORY DROPDOWN - Responsive Grid -->
             <transition name="slide-down">
-                <div v-if="showTodayHistory" class="divide-y divide-slate-100 dark:divide-zinc-800">
-                    <div v-for="r in todayEarlierRecords" :key="r.id"
+                <div v-if="showTodayHistory && todayEarlierRecords.length"
+                    class="divide-y divide-slate-100 dark:divide-zinc-800">
+                    <div v-for="(r, idx) in todayEarlierRecords" :key="r.id"
                         class="px-4 sm:px-5 py-3 bg-slate-50/50 dark:bg-zinc-800/20 hover:bg-slate-100/60 dark:hover:bg-zinc-800/40 transition-colors duration-150">
 
                         <!-- Auto-fit grid for history items -->
@@ -103,27 +104,27 @@
 
                             <!-- Buy Rate -->
                             <div class="flex items-center justify-end gap-2 sm:gap-3">
-
                                 <div class="flex flex-col items-end gap-1">
                                     <span
                                         class="text-[11px] sm:text-[13px] font-mono font-black text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                                         {{ $formatMoney(r.buy_rate) }}
                                     </span>
-                                    <TrendIcon :current="r.buy_rate" :previous="getPreviousRate(r, 'buy_rate')"
-                                        :show-percentage="true" class="scale-75" />
+                                    <TrendIcon :current="r.buy_rate"
+                                        :previous="getPreviousRateInDropdown(idx, 'buy_rate')" :show-percentage="true"
+                                        class="scale-75" />
                                 </div>
                             </div>
 
                             <!-- Sell Rate -->
                             <div class="flex items-center justify-end gap-2 sm:gap-3">
-
                                 <div class="flex flex-col items-end gap-1">
                                     <span
                                         class="text-[11px] sm:text-[13px] font-mono font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">
                                         {{ $formatMoney(r.sell_rate) }}
                                     </span>
-                                    <TrendIcon :current="r.sell_rate" :previous="getPreviousRate(r, 'sell_rate')"
-                                        :show-percentage="true" class="scale-75" />
+                                    <TrendIcon :current="r.sell_rate"
+                                        :previous="getPreviousRateInDropdown(idx, 'sell_rate')" :show-percentage="true"
+                                        class="scale-75" />
                                 </div>
                             </div>
 
@@ -135,8 +136,8 @@
         </div>
 
         <!-- PREVIOUS DAYS - Responsive Grid Table -->
-        <div v-if="previousDaysData.length" class="divide-y divide-slate-100 dark:divide-zinc-800">
-            <div v-for="d in previousDaysData" :key="d.date"
+        <div v-if="sortedPreviousDays.length" class="divide-y divide-slate-100 dark:divide-zinc-800">
+            <div v-for="(d, idx) in sortedPreviousDays" :key="d.date"
                 class="group px-4 sm:px-5 py-3.5 hover:bg-slate-50/70 dark:hover:bg-zinc-800/30 transition-colors duration-150">
 
                 <!-- Auto-fit grid for historical data -->
@@ -154,38 +155,43 @@
                         </span>
                     </div>
 
-                    <!-- Buy Rate -->
+                    <!-- Buy Rate with Trend - Compare with NEXT newer day -->
                     <div class="text-right">
                         <div class="text-[7px] sm:text-[8px] font-black tracking-wider uppercase text-slate-400 mb-0.5">
                             Buy</div>
-                        <span
-                            class="text-[11px] sm:text-[13px] font-mono font-black text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                            {{ $formatMoney(d.latestBuyRate) }}
-                        </span>
+                        <div class="flex flex-col items-end gap-1">
+                            <span
+                                class="text-[11px] sm:text-[13px] font-mono font-black text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                                {{ $formatMoney(d.latestBuyRate) }}
+                            </span>
+                            <TrendIcon :current="d.latestBuyRate" :previous="getTrendPreviousBuy(idx)"
+                                :show-percentage="true" class="scale-75" />
+                        </div>
                     </div>
 
-                    <!-- Sell Rate -->
+                    <!-- Sell Rate with Trend - Compare with NEXT newer day -->
                     <div class="text-right">
                         <div class="text-[7px] sm:text-[8px] font-black tracking-wider uppercase text-slate-400 mb-0.5">
                             Sell</div>
-                        <span
-                            class="text-[11px] sm:text-[13px] font-mono font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">
-                            {{ $formatMoney(d.latestRate) }}
-                        </span>
+                        <div class="flex flex-col items-end gap-1">
+                            <span
+                                class="text-[11px] sm:text-[13px] font-mono font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">
+                                {{ $formatMoney(d.latestRate) }}
+                            </span>
+                            <TrendIcon :current="d.latestRate" :previous="getTrendPreviousSell(idx)"
+                                :show-percentage="true" class="scale-75" />
+                        </div>
                     </div>
 
-                    <!-- Trend -->
-                    <div class="flex justify-end">
-                        <TrendIcon :current="d.latestRate" :previous="d.prevSellRate" :show-percentage="true"
-                            class="scale-75 sm:scale-90" />
-                    </div>
+                    <!-- Empty column for spacing -->
+                    <div></div>
 
                 </div>
             </div>
         </div>
 
         <!-- EMPTY STATE -->
-        <div v-if="!todayData && !previousDaysData.length"
+        <div v-if="!todayData && !sortedPreviousDays.length"
             class="py-12 sm:py-16 flex flex-col items-center gap-3 text-center">
             <div
                 class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
@@ -208,7 +214,10 @@ import { ref, computed } from 'vue'
 import TrendIcon from '@/Components/TrendIcon.vue'
 
 const props = defineProps({
-    history: Object
+    history: {
+        type: Object,
+        default: () => ({ data: [] })
+    }
 })
 
 const showTodayHistory = ref(false)
@@ -216,6 +225,7 @@ const toggleToday = () => showTodayHistory.value = !showTodayHistory.value
 
 // Date helpers
 const formatDateKey = (d) => {
+    if (!d) return ''
     const date = new Date(d)
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
@@ -225,11 +235,15 @@ const isToday = (dateStr) => {
     return dateStr === today
 }
 
-const formatDate = (d) => new Date(d).toLocaleDateString('en-GB', {
-    day: '2-digit', month: 'short', year: 'numeric'
-})
+const formatDate = (d) => {
+    if (!d) return ''
+    return new Date(d).toLocaleDateString('en-GB', {
+        day: '2-digit', month: 'short', year: 'numeric'
+    })
+}
 
 const formatDateHeader = (dateStr) => {
+    if (!dateStr) return ''
     const date = new Date(dateStr)
     const today = new Date()
     const yesterday = new Date(today)
@@ -240,15 +254,19 @@ const formatDateHeader = (dateStr) => {
     return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
 }
 
-const formatTime = (d) => new Date(d).toLocaleTimeString('en-GB', {
-    hour: '2-digit', minute: '2-digit', second: '2-digit'
-})
+const formatTime = (d) => {
+    if (!d) return ''
+    return new Date(d).toLocaleTimeString('en-GB', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+    })
+}
 
-// Core logic
+// Core logic - Group by date and sort NEWEST to OLDEST
 const groupedByDate = computed(() => {
     if (!props.history?.data?.length) return []
 
     const groups = {}
+
     props.history.data.forEach(r => {
         const key = formatDateKey(r.created_at)
         if (!groups[key]) groups[key] = []
@@ -256,63 +274,58 @@ const groupedByDate = computed(() => {
     })
 
     return Object.entries(groups).map(([date, records]) => {
-        const unique = Array.from(
-            new Map(records.map(r => [`${r.created_at}_${r.buy_rate}_${r.sell_rate}`, r])).values()
-        )
-        const sorted = unique.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        const clean = sorted.filter((r, i, arr) => {
-            if (i === 0) return true
-            return r.buy_rate !== arr[i - 1].buy_rate || r.sell_rate !== arr[i - 1].sell_rate
-        })
+        const sorted = [...records].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
         return {
             date,
-            records: clean,
-            latestRate: clean[0]?.sell_rate || 0,
-            latestBuyRate: clean[0]?.buy_rate || 0
+            records: sorted,
+            latestRate: sorted[0]?.sell_rate || 0,
+            latestBuyRate: sorted[0]?.buy_rate || 0
         }
-    }).sort((a, b) => b.date.localeCompare(a.date))
+    }).sort((a, b) => new Date(b.date) - new Date(a.date)) // NEWEST first
 })
 
 const todayData = computed(() => groupedByDate.value.find(d => isToday(d.date)))
-const todayEarlierRecords = computed(() => todayData.value?.records.slice(1) || [])
-
-const previousDaysData = computed(() => {
-    const days = groupedByDate.value.filter(d => !isToday(d.date))
-    return days.map((d, i) => {
-        const prev = days[i + 1]
-        return {
-            ...d,
-            prevSellRate: prev?.latestRate ?? null
-        }
-    })
+const todayEarlierRecords = computed(() => {
+    const records = todayData.value?.records || []
+    return records.slice(1)
 })
 
-// Trend helpers
-const getSecondLatestBuyRate = () => {
-    const r = todayData.value?.records || []
-    for (let i = 1; i < r.length; i++) {
-        if (r[i].buy_rate !== r[0].buy_rate) return r[i].buy_rate
-    }
-    return null
-}
+// Previous days - already sorted NEWEST to OLDEST
+const previousDaysData = computed(() => {
+    return groupedByDate.value.filter(d => !isToday(d.date))
+})
 
-const getSecondLatestSellRate = () => {
-    const r = todayData.value?.records || []
-    for (let i = 1; i < r.length; i++) {
-        if (r[i].sell_rate !== r[0].sell_rate) return r[i].sell_rate
-    }
-    return null
-}
+// Sorted previous days (already newest to oldest, but ensure correct order)
+const sortedPreviousDays = computed(() => {
+    return [...previousDaysData.value].sort((a, b) => new Date(b.date) - new Date(a.date))
+})
 
-const getPreviousRate = (record, field) => {
-    const list = todayData.value?.records || []
-    const index = list.findIndex(r => r.id === record.id)
-    for (let i = index + 1; i < list.length; i++) {
-        if (list[i][field] !== record[field]) {
-            return list[i][field]
-        }
+// Today's trends (compare with the most recent previous day)
+const getPreviousDaySellRate = () =>
+    sortedPreviousDays.value[0]?.latestRate ?? null
+
+const getPreviousDayBuyRate = () =>
+    sortedPreviousDays.value[0]?.latestBuyRate ?? null
+
+// HISTORICAL trends — compare each day with the NEXT OLDER day (index + 1)
+// sortedPreviousDays is NEWEST → OLDEST, so:
+//   idx 0 = 17 Apr → compare with idx 1 = 16 Apr
+//   idx 1 = 16 Apr → compare with idx 2 = 15 Apr
+//   idx 2 = 15 Apr → no older day → null
+const getTrendPreviousSell = (currentIndex) =>
+    sortedPreviousDays.value[currentIndex + 1]?.latestRate ?? null
+
+const getTrendPreviousBuy = (currentIndex) =>
+    sortedPreviousDays.value[currentIndex + 1]?.latestBuyRate ?? null
+
+// Dropdown trends
+const getPreviousRateInDropdown = (index, field) => {
+    const records = todayEarlierRecords.value
+    if (index === 0) {
+        return todayData.value?.records[0]?.[field] || null
     }
-    return null
+    return records[index - 1]?.[field] || null
 }
 </script>
 
