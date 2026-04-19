@@ -151,7 +151,8 @@
                 <!-- Enhanced History Component -->
                 <div
                     class="bg-white dark:bg-zinc-900 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm">
-                    <PublicCurrencyRate :history="history" />
+
+                    <PublicCurrencyRate :grouped="grouped" :today-key="todayKey" :history="history" />
                 </div>
 
                 <!-- Disclaimer -->
@@ -180,7 +181,10 @@ const props = defineProps({
         required: true,
         default: () => ({ data: [], links: [], current_page: 1, last_page: 1, total: 0 })
     },
-    selectedType: { type: String, default: 'exchange' }
+    selectedType: { type: String, default: 'exchange' },
+    grouped: Array,
+    todayKey: String,
+    breadcrumbs: Array,
 })
 
 // Chart State

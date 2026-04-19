@@ -539,7 +539,6 @@ class CurrencyExchangeRate extends Controller
      */
     public function guestHistory($currencyIdentifier)
     {
-        // Find currency by ID or code
         if (is_numeric($currencyIdentifier)) {
             $currency = Currency::find($currencyIdentifier);
         } else {
@@ -550,31 +549,26 @@ class CurrencyExchangeRate extends Controller
             abort(404, 'Currency not found');
         }
 
-        // Get all historical rates for this currency
         $history = ExchangeRate::where('currency_id', $currency->id)
             ->where('is_verified', true)
             ->orderBy('rate_date', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        // Transform the data for the frontend
         $transformedHistory = $history->getCollection()->map(function ($rate) {
-            $factors = is_array($rate->factors) ? $rate->factors : json_decode($rate->factors, true) ?? [];
-
             return [
-                'id' => $rate->id,
-                'buy_rate' => floatval($rate->buy_rate),
-                'sell_rate' => floatval($rate->sell_rate),
-                'cbm_rate' => $rate->cbm_rate ? floatval($rate->cbm_rate) : null,
-                'rate_date' => $rate->rate_date,
-                'created_at' => $rate->created_at->toISOString(),
-                'source_name' => $rate->source_name ?? 'CBM Auto-Fetch',
+                'id'                => $rate->id,
+                'buy_rate'          => floatval($rate->buy_rate),
+                'sell_rate'         => floatval($rate->sell_rate),
+                'cbm_rate'          => $rate->cbm_rate ? floatval($rate->cbm_rate) : null,
+                'rate_date'         => $rate->rate_date,
+                'created_at'        => $rate->created_at->toISOString(),
+                'source_name'       => $rate->source_name ?? 'CBM Auto-Fetch',
                 'change_percentage' => $rate->change_percentage ? floatval($rate->change_percentage) : null,
-                'market_trend' => $rate->market_trend,
+                'market_trend'      => $rate->market_trend,
             ];
         });
 
-        // Create a new paginator with transformed data
         $paginatedHistory = new \Illuminate\Pagination\LengthAwarePaginator(
             $transformedHistory,
             $history->total(),
@@ -583,18 +577,52 @@ class CurrencyExchangeRate extends Controller
             ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
         );
 
+        // Pre-group by Singapore timezone (UTC+8) so SSR and client always agree
+        $tz       = 'Asia/Singapore'; // UTC+8
+        $todayKey = \Carbon\Carbon::now($tz)->toDateString(); // YYYY-MM-DD
+
+        $allRates = ExchangeRate::where('currency_id', $currency->id)
+            ->where('is_verified', true)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($rate) use ($tz) {
+                return [
+                    'id'         => $rate->id,
+                    'buy_rate'   => floatval($rate->buy_rate),
+                    'sell_rate'  => floatval($rate->sell_rate),
+                    'created_at' => $rate->created_at->toISOString(),
+                    'date_key'   => $rate->created_at->setTimezone($tz)->toDateString(),
+                ];
+            });
+
+        $grouped = $allRates
+            ->groupBy('date_key')
+            ->map(function ($records, $date) {
+                $sorted = $records->sortByDesc('created_at')->values();
+                return [
+                    'date'          => $date,
+                    'records'       => $sorted,
+                    'latestRate'    => $sorted[0]['sell_rate'] ?? 0,
+                    'latestBuyRate' => $sorted[0]['buy_rate']  ?? 0,
+                ];
+            })
+            ->sortKeysDesc()
+            ->values();
+
         return Inertia::render('History', [
             'currency' => [
-                'id' => $currency->id,
-                'code' => $currency->code,
-                'name' => $currency->name,
+                'id'     => $currency->id,
+                'code'   => $currency->code,
+                'name'   => $currency->name,
                 'symbol' => $currency->symbol,
             ],
-            'history' => $paginatedHistory,
+            'history'     => $paginatedHistory,
+            'grouped'     => $grouped,
+            'todayKey'    => $todayKey,
             'breadcrumbs' => [
-                ['label' => 'Home', 'route' => 'welcome'],
+                ['label' => 'Home',  'route' => 'welcome'],
                 ['label' => 'Rates', 'route' => 'rates.index'],
-                ['label' => $currency->code . ' History',  'params' => ['currency' => $currency->id]],
+                ['label' => $currency->code . ' History', 'params' => ['currency' => $currency->id]],
             ],
         ]);
     }
