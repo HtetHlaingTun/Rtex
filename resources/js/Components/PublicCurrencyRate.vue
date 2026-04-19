@@ -57,17 +57,16 @@
                         </div>
 
                         <!-- Expand button -->
-                        <button v-if="todayData.records.length > 1" @click="toggleToday"
-                            class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-black tracking-wider uppercase
-                                   bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300
-                                   hover:bg-blue-200 dark:hover:bg-blue-500/25 transition-all duration-200 whitespace-nowrap">
+                        <button v-if="todayData.records.length > 1" @click="toggleToday" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-black tracking-wider uppercase
+                                    text-blue-700  dark:text-blue-300
+                                   transition-all duration-200 whitespace-nowrap">
                             <svg :class="{ 'rotate-180': showTodayHistory }"
                                 class="w-2.5 h-2.5 transition-transform duration-200" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
                                     d="M19 9l-7 7-7-7" />
                             </svg>
-                            <span>{{ todayData.records.length - 1 }} earlier</span>
+                            <span>{{ todayData.records.length - 1 }} </span>
                         </button>
 
                     </div>
@@ -133,7 +132,7 @@
             <div v-for="(d, idx) in previousDays" :key="d.date"
                 class="group px-4 sm:px-5 py-3.5 hover:bg-slate-50/70 dark:hover:bg-zinc-800/30 transition-colors duration-150">
                 <div
-                    class="grid grid-cols-[100px_1fr_1fr_50px] sm:grid-cols-[120px_1fr_1fr_80px] lg:grid-cols-[140px_1fr_1fr_100px] gap-3 sm:gap-4 items-center">
+                    class="grid grid-cols-[100px_1fr_1fr] sm:grid-cols-[120px_1fr_1fr] lg:grid-cols-[140px_1fr_1fr] gap-3 sm:gap-4 items-center">
 
                     <!-- Date -->
                     <div class="flex flex-col">
@@ -175,7 +174,7 @@
                         </div>
                     </div>
 
-                    <div></div>
+
 
                 </div>
             </div>
