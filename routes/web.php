@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminBlogController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CurrencyExchangeRate;
+use App\Http\Controllers\FuelPriceController;
 use App\Http\Controllers\GoldPageController;
 use App\Http\Controllers\GoldPriceController;
 use App\Http\Controllers\GoldTypeController;
@@ -26,6 +27,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Symfony\Component\DomCrawler\Crawler;
+
+
 
 // Google ads 
 Route::get('/ads.txt', function () {
@@ -481,6 +484,11 @@ Route::get('/test-yahoo-direct', function () {
 Route::get('/test-brevo', [TestEmailController::class, 'sendTestEmail']);
 
 
+// fuel 
+
+Route::get('/api/fuel-prices', [FuelPriceController::class, 'index'])->name('api.fuel-prices');
+
+Route::get('/api/fuel-prices/history/{region}', [FuelPriceController::class, 'history'])->name('api.fuel-prices.history');
 
 
 Route::get('/final-fuel-test', function () {

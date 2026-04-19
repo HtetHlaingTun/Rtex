@@ -7,6 +7,7 @@
 
         <!-- JSON-LD Structured Data for SEO -->
         <meta v-html="jsonLd" />
+
     </Head>
 
 

@@ -13,6 +13,7 @@ class ExchangeRate extends Model
 {
     use SoftDeletes;
 
+
     protected $fillable = [
         'currency_id',
         'rate_date',

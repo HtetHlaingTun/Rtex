@@ -93,6 +93,8 @@
                 </div>
             </div>
 
+
+
             <!-- Quick Stats Cards - Responsive Grid -->
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 sm:-mt-8 relative z-10">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-5 pt-4 sm:pt-5">
@@ -160,6 +162,16 @@
                         <p class="text-[7px] sm:text-[9px] text-slate-400 mt-0.5 sm:mt-1">Per Kyatthar (16.329g)</p>
                     </div>
                 </div>
+            </div>
+
+            <!-- Fuel Price Widget -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <FuelPriceWidget />
+            </div>
+
+            <!-- Fuel Price History -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <FuelPriceHistory />
             </div>
 
             <!-- Feature Cards - Stack on mobile -->

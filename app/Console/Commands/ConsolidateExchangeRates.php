@@ -62,37 +62,34 @@ class ConsolidateExchangeRates extends Command
 
     private function consolidateCurrencyRates($currencyId, $keepFromDate, $permanentCutoffDate, $dryRun)
     {
-        // Step 1: Permanent delete old records
+        // Step 1: Permanent delete old records (unchanged)
         $permanentDelete = ExchangeRate::where('currency_id', $currencyId)
             ->where('created_at', '<', $permanentCutoffDate);
 
         $permanentCount = $permanentDelete->count();
         if ($permanentCount > 0) {
             if (!$dryRun) {
-                $permanentDelete->forceDelete();
+                $permanentDelete->delete();
                 $this->info("   ✅ Permanently deleted {$permanentCount} old records");
             } else {
                 $this->info("   🔍 Would delete {$permanentCount} old records permanently");
             }
         }
 
-        // IMPORTANT: Get dates that are BEFORE today (not including today)
-        $today = now()->startOfDay();
-
-        // Get all dates that have records before today
+        // Get dates that are OLDER than keepFromDate
         $dates = ExchangeRate::where('currency_id', $currencyId)
-            ->where('created_at', '<', $today)  // Only records before today
+            ->where('created_at', '<', $keepFromDate)  // ✅ Use keepFromDate instead of today
             ->selectRaw('DATE(created_at) as date')
             ->groupBy('date')
             ->orderBy('date', 'desc')
             ->get();
 
         if ($dates->isEmpty()) {
-            $this->info("   ✅ No records need consolidation (no records before today)");
+            $this->info("   ✅ No records need consolidation");
             return 0;
         }
 
-        $this->info("   Found " . $dates->count() . " days to process (before today)");
+        $this->info("   Found " . $dates->count() . " days to consolidate");
         $progressBar = $this->output->createProgressBar($dates->count());
         $progressBar->start();
 
@@ -100,12 +97,10 @@ class ConsolidateExchangeRates extends Command
 
         foreach ($dates as $dateData) {
             $date = $dateData->date;
+            $startOfDay = Carbon::parse($date)->startOfDay();
+            $endOfDay = Carbon::parse($date)->endOfDay();
 
-            // Define the exact start and end of that day
-            $startOfDay = \Carbon\Carbon::parse($date)->startOfDay();
-            $endOfDay = \Carbon\Carbon::parse($date)->endOfDay();
-
-            // Get all records for that day
+            // Group by buy_rate and sell_rate to preserve both
             $records = ExchangeRate::where('currency_id', $currencyId)
                 ->whereBetween('created_at', [$startOfDay, $endOfDay])
                 ->orderBy('created_at', 'desc')
@@ -115,28 +110,38 @@ class ConsolidateExchangeRates extends Command
             $recordCount = $records->count();
 
             if ($recordCount <= 1) {
-                $this->line("   Date {$date}: {$recordCount} record(s) - nothing to consolidate");
                 $progressBar->advance();
                 continue;
             }
 
-            // Keep the latest record
-            $keepRecord = $records->first();
-            $duplicatesToDelete = $records->slice(1);
+            // Group by unique combinations of rate_type or rate values
+            $uniqueRates = [];
+            $duplicatesToDelete = collect();
 
-            $this->line("   Date {$date}: Found {$recordCount} records, keeping latest from " . $keepRecord->created_at->format('H:i:s'));
+            foreach ($records as $record) {
+                // Create a unique key based on the rate values
+                $key = $record->buy_rate . '_' . $record->sell_rate;
 
-            if (!$dryRun) {
+                if (!isset($uniqueRates[$key])) {
+                    $uniqueRates[$key] = $record;
+                } else {
+                    $duplicatesToDelete->push($record);
+                }
+            }
+
+            if (!$dryRun && $duplicatesToDelete->isNotEmpty()) {
                 foreach ($duplicatesToDelete as $duplicate) {
                     $duplicate->forceDelete();
                     $totalDeleted++;
                 }
 
-                // Mark the kept record as consolidated
-                $keepRecord->update([
-                    'source_name' => 'Consolidated',
-                    'market_notes' => "Daily Summary (Consolidated from " . ($duplicatesToDelete->count() + 1) . " records)"
-                ]);
+                // Update the kept records
+                foreach ($uniqueRates as $keptRecord) {
+                    $keptRecord->update([
+                        'source_name' => 'Consolidated',
+                        'market_notes' => "Daily Summary (Kept from " . $records->count() . " total records)"
+                    ]);
+                }
             } else {
                 $totalDeleted += $duplicatesToDelete->count();
             }

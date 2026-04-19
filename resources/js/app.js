@@ -31,6 +31,8 @@ import MyanmarGoldHistoryList from "./Components/MyanmarGoldHistoryList.vue";
 import WorldGoldHistoryList from "./Components/WorldGoldHistoryList.vue";
 import MyanmarOtherRecordsTable from "./Components/MyanmarOtherRecordsTable.vue";
 import WorldOtherRecordsTable from "./Components/WorldOtherRecordsTable.vue";
+import FuelPriceWidget from "./Components/FuelPriceWidget.vue";
+import FuelPriceHistory from "./Components/FuelPriceHistory.vue";
 import AdUnit from "./Components/AdUnit.vue";
 
 window.Chart = Chart;
@@ -128,6 +130,8 @@ createInertiaApp({
             .component("WorldGoldHistoryList", WorldGoldHistoryList)
             .component("MyanmarOtherRecordsTable", MyanmarOtherRecordsTable)
             .component("WorldOtherRecordsTable", WorldOtherRecordsTable)
+            .component("FuelPriceWidget", FuelPriceWidget)
+            .component("FuelPriceHistory", FuelPriceHistory)
             .component("AdUnit", AdUnit)
 
             .component("PublicBreadcrumb", PublicBreadcrumb)
