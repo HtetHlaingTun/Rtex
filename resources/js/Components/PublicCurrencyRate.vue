@@ -4,15 +4,10 @@
 
         <!-- TODAY -->
         <div v-if="todayData">
-
-            <!-- HEADER - Grid with Auto-Fit -->
             <div
                 class="px-4 sm:px-5 py-4 bg-gradient-to-r from-blue-50/50 to-white dark:from-blue-950/20 dark:to-zinc-900 border-b border-slate-200 dark:border-zinc-800">
+                <div class="grid grid-cols-1 xs:grid-cols-[2fr_4fr] sm:grid-cols-[5fr_4fr] gap-4">
 
-                <!-- Responsive Grid: 1 column on mobile, 2 columns on desktop -->
-                <div class="grid grid-cols-1 xs:grid-cols-[2fr_4fr] sm:grid-cols-[5fr_4fr] gap-4 ">
-
-                    <!-- Left: Date info -->
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="relative flex h-2 w-2">
@@ -30,11 +25,9 @@
                         </div>
                     </div>
 
-                    <!-- Right: Auto-fit grid for rates and button -->
                     <div
                         class="grid grid-cols-[repeat(auto-fit,minmax(70px,auto))] gap-4 lg:gap-6 justify-start lg:justify-end items-center">
 
-                        <!-- Buy Rate -->
                         <div class="text-left lg:text-right">
                             <div class="text-[8px] font-black tracking-wider uppercase text-slate-400 mb-1">Buy</div>
                             <div
@@ -47,7 +40,6 @@
                             </div>
                         </div>
 
-                        <!-- Sell Rate -->
                         <div class="text-left lg:text-right">
                             <div class="text-[8px] font-black tracking-wider uppercase text-slate-400 mb-1">Sell</div>
                             <div
@@ -60,7 +52,6 @@
                             </div>
                         </div>
 
-                        <!-- Button -->
                         <button v-if="todayData.records.length > 1" @click="toggleToday"
                             class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-black tracking-wider uppercase
                                    bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300
@@ -78,18 +69,14 @@
                 </div>
             </div>
 
-            <!-- TODAY HISTORY DROPDOWN - Responsive Grid -->
             <transition name="slide-down">
                 <div v-if="showTodayHistory && todayEarlierRecords.length"
                     class="divide-y divide-slate-100 dark:divide-zinc-800">
                     <div v-for="(r, idx) in todayEarlierRecords" :key="r.id"
                         class="px-4 sm:px-5 py-3 bg-slate-50/50 dark:bg-zinc-800/20 hover:bg-slate-100/60 dark:hover:bg-zinc-800/40 transition-colors duration-150">
-
-                        <!-- Auto-fit grid for history items -->
                         <div
                             class="grid grid-cols-[auto_1fr_1fr] sm:grid-cols-[80px_1fr_1fr] gap-3 sm:gap-4 items-center">
 
-                            <!-- Time column -->
                             <div class="flex items-center gap-1.5">
                                 <svg class="w-2.5 h-2.5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
@@ -102,7 +89,6 @@
                                 </span>
                             </div>
 
-                            <!-- Buy Rate -->
                             <div class="flex items-center justify-end gap-2 sm:gap-3">
                                 <div class="flex flex-col items-end gap-1">
                                     <span
@@ -115,7 +101,6 @@
                                 </div>
                             </div>
 
-                            <!-- Sell Rate -->
                             <div class="flex items-center justify-end gap-2 sm:gap-3">
                                 <div class="flex flex-col items-end gap-1">
                                     <span
@@ -132,19 +117,15 @@
                     </div>
                 </div>
             </transition>
-
         </div>
 
-        <!-- PREVIOUS DAYS - Responsive Grid Table -->
+        <!-- PREVIOUS DAYS -->
         <div v-if="sortedPreviousDays.length" class="divide-y divide-slate-100 dark:divide-zinc-800">
             <div v-for="(d, idx) in sortedPreviousDays" :key="d.date"
                 class="group px-4 sm:px-5 py-3.5 hover:bg-slate-50/70 dark:hover:bg-zinc-800/30 transition-colors duration-150">
-
-                <!-- Auto-fit grid for historical data -->
                 <div
                     class="grid grid-cols-[100px_1fr_1fr_50px] sm:grid-cols-[120px_1fr_1fr_80px] lg:grid-cols-[140px_1fr_1fr_100px] gap-3 sm:gap-4 items-center">
 
-                    <!-- Date column -->
                     <div class="flex flex-col">
                         <span
                             class="text-[11px] sm:text-[12px] font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">
@@ -155,7 +136,6 @@
                         </span>
                     </div>
 
-                    <!-- Buy Rate with Trend - Compare with NEXT newer day -->
                     <div class="text-right">
                         <div class="text-[7px] sm:text-[8px] font-black tracking-wider uppercase text-slate-400 mb-0.5">
                             Buy</div>
@@ -169,7 +149,6 @@
                         </div>
                     </div>
 
-                    <!-- Sell Rate with Trend - Compare with NEXT newer day -->
                     <div class="text-right">
                         <div class="text-[7px] sm:text-[8px] font-black tracking-wider uppercase text-slate-400 mb-0.5">
                             Sell</div>
@@ -183,7 +162,6 @@
                         </div>
                     </div>
 
-                    <!-- Empty column for spacing -->
                     <div></div>
 
                 </div>
@@ -223,109 +201,111 @@ const props = defineProps({
 const showTodayHistory = ref(false)
 const toggleToday = () => showTodayHistory.value = !showTodayHistory.value
 
-// Date helpers
-const formatDateKey = (d) => {
+// ─── Date helpers ────────────────────────────────────────────────────────────
+// ALL three functions use the same local-time approach so SSR (UTC) and
+// client (Myanmar UTC+6:30) are each internally consistent.
+
+/** Returns "YYYY-MM-DD" in LOCAL time — used as the group key. */
+const localDateKey = (d) => {
     if (!d) return ''
-    const date = new Date(d)
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    const dt = new Date(d)
+    return [
+        dt.getFullYear(),
+        String(dt.getMonth() + 1).padStart(2, '0'),
+        String(dt.getDate()).padStart(2, '0'),
+    ].join('-')
 }
 
-const isToday = (dateStr) => {
-    const today = new Date().toISOString().slice(0, 10)
-    return dateStr === today
+/** "YYYY-MM-DD" for right now in LOCAL time. */
+const todayKey = () => localDateKey(new Date())
+
+/** "YYYY-MM-DD" for yesterday in LOCAL time. */
+const yesterdayKey = () => {
+    const d = new Date()
+    d.setDate(d.getDate() - 1)
+    return localDateKey(d)
 }
+
+const isToday = (dateStr) => dateStr === todayKey()
 
 const formatDate = (d) => {
     if (!d) return ''
-    return new Date(d).toLocaleDateString('en-GB', {
-        day: '2-digit', month: 'short', year: 'numeric'
-    })
+    return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+/**
+ * Display label for a YYYY-MM-DD key.
+ * Compares keys (not Date objects) so it stays in sync with localDateKey.
+ */
 const formatDateHeader = (dateStr) => {
     if (!dateStr) return ''
-    const date = new Date(dateStr)
-    const today = new Date()
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-
-    if (date.toDateString() === today.toDateString()) return 'Today'
-    if (date.toDateString() === yesterday.toDateString()) return 'Yesterday'
-    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
+    if (dateStr === todayKey()) return 'Today'
+    if (dateStr === yesterdayKey()) return 'Yesterday'
+    // Parse as local midnight — split avoids any UTC offset shift
+    const [y, m, day] = dateStr.split('-').map(Number)
+    return new Date(y, m - 1, day).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
 }
 
 const formatTime = (d) => {
     if (!d) return ''
-    return new Date(d).toLocaleTimeString('en-GB', {
-        hour: '2-digit', minute: '2-digit', second: '2-digit'
-    })
+    return new Date(d).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
-// Core logic - Group by date and sort NEWEST to OLDEST
+// ─── Core grouping ───────────────────────────────────────────────────────────
+
 const groupedByDate = computed(() => {
     if (!props.history?.data?.length) return []
 
     const groups = {}
-
     props.history.data.forEach(r => {
-        const key = formatDateKey(r.created_at)
+        const key = localDateKey(r.created_at)
         if (!groups[key]) groups[key] = []
         groups[key].push(r)
     })
 
-    return Object.entries(groups).map(([date, records]) => {
-        const sorted = [...records].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-
-        return {
-            date,
-            records: sorted,
-            latestRate: sorted[0]?.sell_rate || 0,
-            latestBuyRate: sorted[0]?.buy_rate || 0
-        }
-    }).sort((a, b) => new Date(b.date) - new Date(a.date)) // NEWEST first
+    return Object.entries(groups)
+        .map(([date, records]) => {
+            const sorted = [...records].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            return {
+                date,
+                records: sorted,
+                latestRate: sorted[0]?.sell_rate ?? 0,
+                latestBuyRate: sorted[0]?.buy_rate ?? 0,
+            }
+        })
+        .sort((a, b) => b.date.localeCompare(a.date)) // NEWEST first — string compare is safe for ISO dates
 })
 
-const todayData = computed(() => groupedByDate.value.find(d => isToday(d.date)))
-const todayEarlierRecords = computed(() => {
-    const records = todayData.value?.records || []
-    return records.slice(1)
-})
+const todayData = computed(() =>
+    groupedByDate.value.find(d => isToday(d.date)) ?? null
+)
 
-// Previous days - already sorted NEWEST to OLDEST
-const previousDaysData = computed(() => {
-    return groupedByDate.value.filter(d => !isToday(d.date))
-})
+const todayEarlierRecords = computed(() =>
+    (todayData.value?.records ?? []).slice(1)
+)
 
-// Sorted previous days (already newest to oldest, but ensure correct order)
-const sortedPreviousDays = computed(() => {
-    return [...previousDaysData.value].sort((a, b) => new Date(b.date) - new Date(a.date))
-})
+const sortedPreviousDays = computed(() =>
+    groupedByDate.value.filter(d => !isToday(d.date))
+    // already sorted newest → oldest from groupedByDate
+)
 
-// Today's trends (compare with the most recent previous day)
-const getPreviousDaySellRate = () =>
-    sortedPreviousDays.value[0]?.latestRate ?? null
+// ─── Trend helpers ───────────────────────────────────────────────────────────
 
-const getPreviousDayBuyRate = () =>
-    sortedPreviousDays.value[0]?.latestBuyRate ?? null
+// Today row: compare against most recent previous day
+const getPreviousDaySellRate = () => sortedPreviousDays.value[0]?.latestRate ?? null
+const getPreviousDayBuyRate = () => sortedPreviousDays.value[0]?.latestBuyRate ?? null
 
-// HISTORICAL trends — compare each day with the NEXT OLDER day (index + 1)
-// sortedPreviousDays is NEWEST → OLDEST, so:
-//   idx 0 = 17 Apr → compare with idx 1 = 16 Apr
-//   idx 1 = 16 Apr → compare with idx 2 = 15 Apr
-//   idx 2 = 15 Apr → no older day → null
-const getTrendPreviousSell = (currentIndex) =>
-    sortedPreviousDays.value[currentIndex + 1]?.latestRate ?? null
+// Historical rows: compare each day against the next OLDER day (idx + 1)
+// sortedPreviousDays is newest → oldest, so idx+1 is always the older entry
+const getTrendPreviousSell = (idx) => sortedPreviousDays.value[idx + 1]?.latestRate ?? null
+const getTrendPreviousBuy = (idx) => sortedPreviousDays.value[idx + 1]?.latestBuyRate ?? null
 
-const getTrendPreviousBuy = (currentIndex) =>
-    sortedPreviousDays.value[currentIndex + 1]?.latestBuyRate ?? null
-
-// Dropdown trends
-const getPreviousRateInDropdown = (index, field) => {
-    const records = todayEarlierRecords.value
-    if (index === 0) {
-        return todayData.value?.records[0]?.[field] || null
-    }
-    return records[index - 1]?.[field] || null
+// Dropdown rows: compare each earlier record against the one above it
+// idx 0 = second-latest → previous is the latest (records[0])
+// idx 1 = third-latest  → previous is records[idx] in todayEarlierRecords (idx-1 ... +1 offset = idx in earlierRecords)
+const getPreviousRateInDropdown = (idx, field) => {
+    if (idx === 0) return todayData.value?.records[0]?.[field] ?? null
+    return todayEarlierRecords.value[idx - 1]?.[field] ?? null
 }
 </script>
 
