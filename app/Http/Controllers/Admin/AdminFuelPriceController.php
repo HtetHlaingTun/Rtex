@@ -1,5 +1,5 @@
 <?php
-// app/Http/Controllers/Admin/FuelPriceController.php
+// app/Http/Controllers/Admin/AdminFuelPriceController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -8,10 +8,9 @@ use App\Models\FuelCalibration;
 use App\Models\FuelPrice;
 use App\Services\FuelPriceService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
-use Symfony\Component\Process\Process;
 
 class AdminFuelPriceController extends Controller
 {
@@ -87,8 +86,6 @@ class AdminFuelPriceController extends Controller
     /**
      * Update calibration
      */
-    // app/Http/Controllers/Admin/FuelPriceController.php
-
     public function updateCalibration(Request $request)
     {
         $request->validate([
@@ -98,75 +95,95 @@ class AdminFuelPriceController extends Controller
             'notes' => 'nullable|string|max:255',
         ]);
 
-        $calibration = FuelCalibration::firstOrCreate([]);
+        $calibration = FuelCalibration::firstOrCreate(
+            [],
+            ['calibration_factor' => 1.4000]
+        );
 
         if ($request->action === 'factor') {
+            // Direct factor update
             $calibration->update([
                 'calibration_factor' => $request->calibration_factor,
                 'notes' => $request->notes ?? 'Manual factor update',
             ]);
+
             $message = "Calibration factor updated to {$request->calibration_factor}";
-        } else {
-            $latest = FuelPrice::where('region', 'yangon')
-                ->orderBy('created_at', 'desc')
-                ->first();
 
-            if (!$latest) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No calculated price found.'
-                ], 400);
-            }
-
-            $calculatedPrice = $latest->octane_92;
-            $currentFactor = $calibration->calibration_factor ?? 1.4000;
-            $newFactor = ($request->market_price / $calculatedPrice) * $currentFactor;
-
-            $calibration->update([
-                'calibration_factor' => round($newFactor, 4),
-                'reference_price_92' => $request->market_price,
-                'notes' => $request->notes ?? "Calibrated to market: {$request->market_price} MMK",
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'calibration' => $calibration->fresh(),
             ]);
-
-            $message = "Calibrated to {$request->market_price} MMK. New factor: " . round($newFactor, 4);
         }
 
-        // 🔥 AUTO-RUN UPDATE COMMAND
-        try {
-            Artisan::call('fuel:prices-update');
-            $message .= " Prices updated automatically!";
-        } catch (\Exception $e) {
-            $message .= " Manual update may be required.";
+        // Calibrate from market price
+        $latest = FuelPrice::where('region', 'yangon')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$latest) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No calculated price found. Run Update Now first.'
+            ], 400);
         }
+
+        // ✅ CORRECTED: Get base import values from latest record
+        $globalPrice = $latest->global_usd_reference ?? 3.07;
+        $usdRate = $latest->market_usd_rate ?? 4214;
+
+        // Calculate base import (MMK per liter before any markup)
+        $baseImport = ($globalPrice / 3.785) * $usdRate;
+
+        if ($baseImport <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid base import calculation.'
+            ], 400);
+        }
+
+        // ✅ CORRECTED: Calculate factor directly from base import
+        // Formula: Factor = Target Price / Base Import
+        $newFactor = $request->market_price / $baseImport;
+
+        $calibration->update([
+            'calibration_factor' => round($newFactor, 4),
+            'reference_price_92' => $request->market_price,
+            'global_price_at_calibration' => $globalPrice,
+            'usd_mmk_at_calibration' => round($usdRate, 2),
+            'notes' => $request->notes ?? "Calibrated to market: {$request->market_price} MMK",
+        ]);
+
+        $message = "Calibrated to {$request->market_price} MMK. New factor: " . round($newFactor, 4);
 
         return response()->json([
             'success' => true,
             'message' => $message,
             'calibration' => $calibration->fresh(),
-            'auto_updated' => true,
         ]);
     }
 
+    /**
+     * Manual trigger update
+     */
     public function updateNow()
     {
         try {
-            // Run in background (non-blocking)
-            $process = new Process(['php', base_path('artisan'), 'fuel:prices-update']);
-            $process->setTimeout(300); // 5 minutes max
-            $process->start(); // Don't wait for result
+            Artisan::call('fuel:prices-update');
+            $output = Artisan::output();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Fuel price update started in background. Page will refresh in 3 seconds.',
+                'message' => 'Fuel prices updated successfully!',
+                'output' => $output,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to start update: ' . $e->getMessage(),
+                'message' => 'Update failed: ' . $e->getMessage(),
             ], 500);
         }
     }
-
 
     /**
      * API health check
@@ -181,7 +198,7 @@ class AdminFuelPriceController extends Controller
      */
     public function preview(Request $request, FuelPriceService $service)
     {
-        $factor = $request->input('factor', FuelCalibration::getFactor());
+        $factor = (float) $request->input('factor', FuelCalibration::getFactor());
 
         $usd = DB::table('currencies')->where('code', 'USD')->first();
         $usdRate = $usd->avg_bank_rate * (1 + ($usd->bank_markup_percentage / 100));
@@ -189,10 +206,22 @@ class AdminFuelPriceController extends Controller
         $globalPrice = $service->fetchGlobalGasPrice();
 
         return response()->json(
-            $service->calculatePrices($globalPrice, $usdRate, (float) $factor)
+            $service->calculatePrices($globalPrice, $usdRate, $factor)
         );
     }
 
+    /**
+     * Get current global price
+     */
+    private function getCurrentGlobalPrice(): float
+    {
+        $latest = FuelPrice::latest()->first();
+        return $latest->global_usd_reference ?? 3.07;
+    }
+
+    /**
+     * Get statistics for dashboard
+     */
     private function getStats(): array
     {
         $lastWeek = FuelPrice::where('region', 'yangon')
@@ -225,4 +254,67 @@ class AdminFuelPriceController extends Controller
             'max' => round($lastWeek->max('octane_92')),
         ];
     }
+
+    // ============================================
+    // API METHODS FOR GUEST FUEL PAGE
+    // ============================================
+
+    /**
+     * API: Get current prices
+     */
+    // public function indexApi()
+    // {
+    //     $latest = DB::table('fuel_prices')
+    //         ->where('region', 'yangon')
+    //         ->orderBy('created_at', 'desc')
+    //         ->first();
+
+    //     return response()->json([
+    //         'octane_92'      => $latest->octane_92 ?? 0,
+    //         'octane_95'      => $latest->octane_95 ?? 0,
+    //         'diesel'         => $latest->diesel ?? 0,
+    //         'premium_diesel' => $latest->premium_diesel ?? 0,
+    //     ]);
+    // }
+
+    // /**
+    //  * API: History for specific region
+    //  */
+    // public function historyApi($region)
+    // {
+    //     $prices = DB::table('fuel_prices')
+    //         ->where('region', $region)
+    //         ->orderBy('created_at', 'desc')
+    //         ->limit(30)
+    //         ->get()
+    //         ->map(fn($p) => [
+    //             'date' => date('Y-m-d', strtotime($p->created_at)),
+    //             'time' => date('H:i', strtotime($p->created_at)),
+    //             'octane_92' => (int)$p->octane_92,
+    //             'octane_95' => (int)$p->octane_95,
+    //             'diesel' => (int)$p->diesel,
+    //             'premium_diesel' => (int)$p->premium_diesel,
+    //         ]);
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'region' => $region,
+    //         'history' => $prices
+    //     ]);
+    // }
+
+    // /**
+    //  * Guest fuel page
+    //  */
+    // public function guestIndex()
+    // {
+    //     return Inertia::render('Fuel/FuelPrice', [
+    //         'currentPrices' => FuelPrice::latest()->first(),
+    //         'history' => FuelPrice::orderBy('created_at', 'desc')->take(7)->get(),
+    //         'breadcrumbs' => [
+    //             ['label' => 'Home', 'route' => 'welcome'],
+    //             ['label' => 'Fuel', 'route' => 'fuel-prices'],
+    //         ],
+    //     ]);
+    // }
 }

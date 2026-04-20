@@ -398,13 +398,13 @@ const submitMarketForm = async () => {
     marketProcessing.value = true
 
     try {
-        const response = await fetch('/admin/fuel/calibration', {
+        // Step 1: Calibrate
+        const calResponse = await fetch('/admin/fuel/calibration', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
                 'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
             },
             body: JSON.stringify({
                 action: 'market_price',
@@ -413,22 +413,39 @@ const submitMarketForm = async () => {
             })
         })
 
-        const data = await response.json()
+        const calData = await calResponse.json()
 
-        if (response.ok && data.success) {
-            alert(data.message)
-            window.location.reload()
-        } else {
-            alert(data.message || 'Calibration failed')
+        if (!calResponse.ok || !calData.success) {
+            alert(calData.message || 'Calibration failed')
             marketProcessing.value = false
+            return
         }
+
+        // Step 2: Auto-update prices
+        const updateResponse = await fetch('/admin/fuel/update-now', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                'Accept': 'application/json',
+            },
+        })
+
+        const updateData = await updateResponse.json()
+
+        if (updateResponse.ok && updateData.success) {
+            alert(calData.message + '\n✅ Prices updated automatically!')
+        } else {
+            alert(calData.message + '\n⚠️ Click "Update Now" to apply prices.')
+        }
+
+        window.location.reload()
+
     } catch (error) {
         console.error('Error:', error)
         alert('Network error. Please try again.')
         marketProcessing.value = false
     }
 }
-
 const updateNow = async () => {
     updating.value = true
 

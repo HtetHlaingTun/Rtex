@@ -23,13 +23,17 @@ class FuelPriceController extends Controller
 
     public function indexApi()
     {
-        $latest = DB::table('fuel_prices')->orderBy('created_at', 'desc')->first();
+        // ✅ Get the absolute latest record for Yangon
+        $latest = DB::table('fuel_prices')
+            ->where('region', 'yangon')
+            ->orderBy('created_at', 'desc')
+            ->first();
 
         return response()->json([
-            'octane_92'      => $latest?->octane_92,
-            'octane_95'      => $latest?->octane_95,
-            'diesel'         => $latest?->diesel,
-            'premium_diesel' => $latest?->premium_diesel,
+            'octane_92'      => $latest->octane_92 ?? 0,
+            'octane_95'      => $latest->octane_95 ?? 0,
+            'diesel'         => $latest->diesel ?? 0,
+            'premium_diesel' => $latest->premium_diesel ?? 0,
         ]);
     }
 
