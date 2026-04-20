@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Admin/AdminFuelPriceController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -14,6 +13,48 @@ use Inertia\Inertia;
 
 class AdminFuelPriceController extends Controller
 {
+    /**
+     * Get USD/MMK rate from exchange_rates table (same as main site)
+     * This is the SINGLE SOURCE OF TRUTH for all currency rates
+     */
+    private function getUsdMmkRate(): float
+    {
+        // Get USD currency ID
+        $usd = DB::table('currencies')->where('code', 'USD')->first();
+
+        if (!$usd) {
+            return 4157.42; // Fallback
+        }
+
+        // PRIMARY: Get latest verified rate from exchange_rates table
+        $latestRate = DB::table('exchange_rates')
+            ->where('currency_id', $usd->id)
+            ->where('is_verified', 1)
+            ->latest('rate_date')
+            ->first();
+
+        if ($latestRate) {
+            // Use mid_rate if available
+            if ($latestRate->mid_rate && $latestRate->mid_rate > 0) {
+                return (float) $latestRate->mid_rate;
+            }
+
+            // Otherwise average of buy and sell
+            if ($latestRate->buy_rate > 0 && $latestRate->sell_rate > 0) {
+                return ($latestRate->buy_rate + $latestRate->sell_rate) / 2;
+            }
+        }
+
+        // FALLBACK: Use currencies table calculation
+        if ($usd->avg_bank_rate && $usd->avg_bank_rate > 0) {
+            $markup = $usd->bank_markup_percentage ?? 14.00;
+            return $usd->avg_bank_rate * (1 + ($markup / 100));
+        }
+
+        // ABSOLUTE FALLBACK
+        return 4157.42;
+    }
+
     /**
      * Show fuel price dashboard (Vue page)
      */
@@ -46,12 +87,18 @@ class AdminFuelPriceController extends Controller
                 'premium_diesel' => (int) $price->premium_diesel,
                 'change_92' => (float) $price->change_percent_92,
                 'updated_at' => $price->created_at?->toDateTimeString(),
-            ] : null;
+            ] : [
+                'octane_92' => 0,
+                'octane_95' => 210,
+                'diesel' => -300,
+                'premium_diesel' => -150,
+                'change_92' => 0,
+                'updated_at' => null,
+            ];
         }
 
-        // Get USD rate
-        $usd = DB::table('currencies')->where('code', 'USD')->first();
-        $usdRate = $usd ? round($usd->avg_bank_rate * (1 + ($usd->bank_markup_percentage / 100)), 2) : 0;
+        // Get USD rate using unified method
+        $usdRate = $this->getUsdMmkRate();
 
         // Get stats
         $stats = $this->getStats();
@@ -128,9 +175,9 @@ class AdminFuelPriceController extends Controller
             ], 400);
         }
 
-        // ✅ CORRECTED: Get base import values from latest record
+        // Get values from latest record
         $globalPrice = $latest->global_usd_reference ?? 3.07;
-        $usdRate = $latest->market_usd_rate ?? 4214;
+        $usdRate = $this->getUsdMmkRate();
 
         // Calculate base import (MMK per liter before any markup)
         $baseImport = ($globalPrice / 3.785) * $usdRate;
@@ -142,8 +189,7 @@ class AdminFuelPriceController extends Controller
             ], 400);
         }
 
-        // ✅ CORRECTED: Calculate factor directly from base import
-        // Formula: Factor = Target Price / Base Import
+        // Calculate new factor directly from base import
         $newFactor = $request->market_price / $baseImport;
 
         $calibration->update([
@@ -199,24 +245,12 @@ class AdminFuelPriceController extends Controller
     public function preview(Request $request, FuelPriceService $service)
     {
         $factor = (float) $request->input('factor', FuelCalibration::getFactor());
-
-        $usd = DB::table('currencies')->where('code', 'USD')->first();
-        $usdRate = $usd->avg_bank_rate * (1 + ($usd->bank_markup_percentage / 100));
-
+        $usdRate = $this->getUsdMmkRate();
         $globalPrice = $service->fetchGlobalGasPrice();
 
         return response()->json(
             $service->calculatePrices($globalPrice, $usdRate, $factor)
         );
-    }
-
-    /**
-     * Get current global price
-     */
-    private function getCurrentGlobalPrice(): float
-    {
-        $latest = FuelPrice::latest()->first();
-        return $latest->global_usd_reference ?? 3.07;
     }
 
     /**
@@ -277,9 +311,9 @@ class AdminFuelPriceController extends Controller
     //     ]);
     // }
 
-    // /**
-    //  * API: History for specific region
-    //  */
+    /**
+     * API: History for specific region
+     */
     // public function historyApi($region)
     // {
     //     $prices = DB::table('fuel_prices')
