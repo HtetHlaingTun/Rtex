@@ -497,8 +497,16 @@ Route::get('/test-brevo', [TestEmailController::class, 'sendTestEmail']);
 // fuel 
 Route::get('/fuel-prices', [FuelPriceController::class, 'index'])->name('fuel-prices');
 Route::get('/api/fuel-prices', [FuelPriceController::class, 'indexApi'])->name('api.fuel-prices');
-Route::get('/api/fuel-prices/history', [FuelPriceController::class, 'historyApi'])->name('api.fuel-prices.history');
-Route::get('/api/fuel-prices/history/{region}', [FuelPriceController::class, 'historyApi'])->name('api.fuel-prices.history');
+// Route::get('/api/fuel-prices/history', [FuelPriceController::class, 'historyApi'])->name('api.fuel-prices.history');
+// Route::get('/api/fuel-prices/history/{region}', [FuelPriceController::class, 'historyApi'])->name('api.fuel-prices.history');
+
+// History for all regions
+Route::get('/api/fuel-prices/history', [FuelPriceController::class, 'historyAllApi'])
+    ->name('api.fuel-prices.history-all');
+
+// History for specific region
+Route::get('/api/fuel-prices/history/{region}', [FuelPriceController::class, 'historyApi'])
+    ->name('api.fuel-prices.history.region');
 
 
 

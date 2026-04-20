@@ -33,11 +33,13 @@ class FuelPriceController extends Controller
         ]);
     }
 
-    public function historyApi($region)
+    // app/Http/Controllers/Admin/FuelPriceController.php
+
+    public function historyApi($region = 'yangon')
     {
         $prices = DB::table('fuel_prices')
             ->where('region', $region)
-            ->orderBy('created_at', 'asc') // oldest first
+            ->orderBy('created_at', 'asc')
             ->get()
             ->map(fn($p) => [
                 'date' => date('Y-m-d', strtotime($p->created_at)),
@@ -48,7 +50,11 @@ class FuelPriceController extends Controller
                 'premium_diesel' => (int)$p->premium_diesel,
             ]);
 
-        return response()->json(['success' => true, 'region' => $region, 'history' => $prices]);
+        return response()->json([
+            'success' => true,
+            'region' => $region,
+            'history' => $prices
+        ]);
     }
     /**
      * Trend = how this record changed vs the NEXT NEWER record.
