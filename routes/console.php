@@ -11,13 +11,12 @@ Artisan::command('inspire', function () {
 
 // fuel 
 // Keep 6 months (180 days) of fuel price history
-Schedule::command('model:prune --model=App\\Models\\FuelPrice --days=180')->daily();
-
-// Or use months for clarity
-// $schedule->command('model:prune --model=App\\Models\\FuelPrice --days=182')->daily(); // ~6 months
-
-// Your other scheduled tasks...
 Schedule::command('fuel:prices-update')->everyThirtyMinutes();
+Schedule::command('fuel:cleanup-old-records --months=6')->everyThirtyMinutes();
+Schedule::command('fuel:clean-duplicates')->dailyAt('00:05')->withoutOverlapping();
+
+
+
 
 // clean disk --------------------------
 // Daily cleanup at 2 AM

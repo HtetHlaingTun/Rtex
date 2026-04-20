@@ -4,9 +4,10 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 use App\Models\FuelPrice;
+use App\Models\FuelCalibration;
+use App\Services\FuelPriceService;
 use Carbon\Carbon;
 
 class UpdateFuelPrices extends Command
@@ -20,7 +21,6 @@ class UpdateFuelPrices extends Command
 
         // Get USD rate
         $usd = DB::table('currencies')->where('code', 'USD')->first();
-
         if (!$usd) {
             $this->error('USD currency not found!');
             return 1;
@@ -29,113 +29,74 @@ class UpdateFuelPrices extends Command
         $usdMmkRate = $usd->avg_bank_rate * (1 + ($usd->bank_markup_percentage / 100));
         $this->info("USD/MMK Rate: " . round($usdMmkRate, 2));
 
-        // Fetch global gas price with fallback
-        $globalPrice = $this->fetchGlobalGasPrice();
-
-        if (!$globalPrice) {
-            $this->warn('Using fallback gas price');
-            $globalPrice = 3.05; // Fallback value
-        }
-
+        // Fetch global gas price
+        $fuelService = new FuelPriceService();
+        $globalPrice = $fuelService->fetchGlobalGasPrice();
         $this->info("Global Gas Price: \${$globalPrice}/gallon");
 
-        // Calculate for all regions
-        $regions = [
-            'yangon' => 1.171,
-            'mandalay' => 1.185,
-            'naypyidaw' => 1.178,
-            'ayeyarwady' => 1.166,
-            'bago' => 1.175,
-            'magway' => 1.182,
-            'sagaing' => 1.188,
-            'thanintharyi' => 1.192,
-        ];
+        // Get calibration factor
+        $factor = FuelCalibration::getFactor();
+        $this->info("Calibration Factor: {$factor}");
 
-        $usdPerLiter = $globalPrice / 3.785;
-        $baseMmk = $usdPerLiter * $usdMmkRate;
+        // Calculate prices
+        $calculated = $fuelService->calculatePrices($globalPrice, $usdMmkRate, $factor);
 
-        // Get previous prices for trend calculation
+        $this->info("Base Import: " . $calculated['inputs']['base_import'] . " MMK/liter");
+        $this->info("Calibrated Base: " . $calculated['inputs']['calibrated_base'] . " MMK/liter");
+
+        // Get previous prices for trends
         $previousPrices = FuelPrice::whereDate('created_at', '<', Carbon::today())
             ->orderBy('created_at', 'desc')
             ->get()
             ->keyBy('region');
 
         $saved = 0;
-
-        foreach ($regions as $region => $multiplier) {
-            $basePrice = round(($baseMmk * $multiplier) / 5) * 5;
-
-            $octane92 = $basePrice;
-            $octane95 = $basePrice + 210;
-            $diesel = $basePrice - 300;
-
-            // Calculate trends
+        foreach ($calculated['prices'] as $region => $prices) {
             $prev = $previousPrices->get($region);
-            $change92 = 0;
-            $change95 = 0;
-            $changeDiesel = 0;
 
+            $change92 = $change95 = $changeDiesel = $changePremium = 0;
             if ($prev) {
-                $change92 = round((($octane92 - $prev->octane_92) / $prev->octane_92) * 100, 2);
-                $change95 = round((($octane95 - $prev->octane_95) / $prev->octane_95) * 100, 2);
-                $changeDiesel = round((($diesel - $prev->diesel) / $prev->diesel) * 100, 2);
+                $change92 = $this->calcChange($prices['octane_92'], $prev->octane_92);
+                $change95 = $this->calcChange($prices['octane_95'], $prev->octane_95);
+                $changeDiesel = $this->calcChange($prices['diesel'], $prev->diesel);
+                $changePremium = $this->calcChange($prices['premium_diesel'], $prev->premium_diesel ?? $prev->diesel + 150);
             }
 
             FuelPrice::create([
                 'region' => $region,
-                'octane_92' => $octane92,
-                'octane_95' => $octane95,
-                'diesel' => $diesel,
+                'octane_92' => $prices['octane_92'],
+                'octane_95' => $prices['octane_95'],
+                'diesel' => $prices['diesel'],
+                'premium_diesel' => $prices['premium_diesel'],
                 'global_usd_reference' => $globalPrice,
                 'market_usd_rate' => round($usdMmkRate),
                 'change_percent_92' => $change92,
                 'change_percent_95' => $change95,
                 'change_percent_diesel' => $changeDiesel,
+                'change_percent_premium_diesel' => $changePremium,
             ]);
 
             $saved++;
-            $this->info("✓ {$region}: 92={$octane92}, 95={$octane95}, Diesel={$diesel}");
+            $this->info("✓ {$region}: 92={$prices['octane_92']}, 95={$prices['octane_95']}");
         }
+
+        // Update calibration record with current context
+        FuelCalibration::first()?->update([
+            'global_price_at_calibration' => $globalPrice,
+            'usd_mmk_at_calibration' => round($usdMmkRate, 2),
+        ]);
 
         $this->info("✅ Saved {$saved} fuel price records!");
 
-        // Clean up old records (keep last 6 months)
-        $cutoffDate = Carbon::now()->subMonths(6);
-        $deleted = FuelPrice::where('created_at', '<', $cutoffDate)->delete();
+        // Cleanup old records
+        $deleted = FuelPrice::where('created_at', '<', Carbon::now()->subMonths(6))->delete();
         $this->info("🗑️ Deleted {$deleted} old records");
 
         return 0;
     }
 
-    private function fetchGlobalGasPrice()
+    private function calcChange($new, $old): float
     {
-        try {
-            $apiKey = env('COMMODITY_API_KEY');
-
-            if (!$apiKey) {
-                $this->warn('COMMODITY_API_KEY not set in .env');
-                return null;
-            }
-
-            $response = Http::timeout(10)
-                ->retry(3, 100) // Retry 3 times with 100ms delay
-                ->withHeaders(['x-api-key' => $apiKey])
-                ->get('https://api.commoditypriceapi.com/v2/rates/latest', [
-                    'symbols' => 'RB-SPOT'
-                ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                return $data['data']['rates']['RB-SPOT'] ??
-                    $data['rates']['RB-SPOT'] ??
-                    null;
-            }
-
-            $this->warn('API returned status: ' . $response->status());
-            return null;
-        } catch (\Exception $e) {
-            $this->warn('Failed to fetch global gas price: ' . $e->getMessage());
-            return null;
-        }
+        return $old > 0 ? round((($new - $old) / $old) * 100, 2) : 0;
     }
 }

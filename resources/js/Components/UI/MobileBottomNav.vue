@@ -9,11 +9,9 @@
                 class="relative flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all duration-200 group"
                 :class="[route().current('welcome') ? 'text-orange-600' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300']">
 
-                <!-- Active Indicator -->
                 <div v-if="route().current('welcome')" class="absolute -top-0.5 w-8 h-0.5 bg-orange-500 rounded-full">
                 </div>
 
-                <!-- Icon with animation -->
                 <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" fill="none"
                     stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -40,29 +38,40 @@
                 <span class="text-[9px] font-bold uppercase tracking-wide">Rates</span>
             </Link>
 
-            <!-- Gold - Center Prominent -->
+            <!-- Fuel -->
+            <Link :href="route('fuel-prices')"
+                class="relative flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all duration-200 group"
+                :class="[route().current('fuel-prices') ? 'text-amber-600' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300']">
+
+                <div v-if="route().current('fuel-prices')"
+                    class="absolute -top-0.5 w-8 h-0.5 bg-amber-500 rounded-full">
+                </div>
+
+                <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+
+                <span class="text-[9px] font-bold uppercase tracking-wide">Fuel</span>
+            </Link>
+
+            <!-- Gold - NOW CONSISTENT -->
             <Link :href="route('goldPage.index')"
-                class="relative -mt-6 flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all duration-200 group">
+                class="relative flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all duration-200 group"
+                :class="[route().current('goldPage.index') ? 'text-amber-600' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300']">
 
-                <!-- Floating Circle Background -->
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/30 dark:to-amber-800/30 shadow-lg"
-                        :class="[route().current('goldPage.index') ? 'scale-110' : 'group-hover:scale-105']">
-                    </div>
+                <div v-if="route().current('goldPage.index')"
+                    class="absolute -top-0.5 w-8 h-0.5 bg-amber-500 rounded-full">
                 </div>
 
-                <!-- Icon -->
-                <div class="relative z-10">
-                    <svg class="w-6 h-6 transition-all duration-200 group-hover:scale-110"
-                        :class="[route().current('goldPage.index') ? 'text-amber-600' : 'text-amber-500']" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
+                <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
 
-                <span class="relative z-10 text-[9px] font-bold uppercase tracking-wide"
-                    :class="[route().current('goldPage.index') ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500']">Gold</span>
+                <span class="text-[9px] font-bold uppercase tracking-wide">Gold</span>
             </Link>
 
             <!-- Blog -->
@@ -82,14 +91,13 @@
                 <span class="text-[9px] font-bold uppercase tracking-wide">Blog</span>
             </Link>
 
-            <!-- Profile / Login - Dynamic based on auth state -->
-            <Link :href="route('login')"
+            <!-- Profile / Login -->
+            <Link :href="isLoggedIn ? route('profile.edit') : route('login')"
                 class="relative flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all duration-200 group"
-                :class="[$page.props.auth.user ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300']">
+                :class="[isLoggedIn ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300']">
 
-                <div v-if="$page.props.auth.user" class="absolute -top-0.5 w-8 h-0.5 bg-emerald-500 rounded-full"></div>
+                <div v-if="isLoggedIn" class="absolute -top-0.5 w-8 h-0.5 bg-emerald-500 rounded-full"></div>
 
-                <!-- User Avatar or Icon -->
                 <div class="relative">
                     <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
@@ -97,28 +105,27 @@
                             d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
 
-                    <!-- Online Indicator -->
-                    <span v-if="$page.props.auth.user"
+                    <span v-if="isLoggedIn"
                         class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border-2 border-white dark:border-zinc-950"></span>
                 </div>
 
                 <span class="text-[9px] font-bold uppercase tracking-wide">
-                    {{ $page.props.auth.user ? 'Profile' : 'Login' }}
+                    {{ isLoggedIn ? 'Profile' : 'Login' }}
                 </span>
             </Link>
 
         </div>
 
-        <!-- Safe area spacer for iPhone notch -->
         <div class="h-safe-bottom"></div>
     </nav>
 </template>
 
 <script setup>
-import { Link } from '@inertiajs/vue3'
-import { usePage } from '@inertiajs/vue3'
+import { Link, usePage } from '@inertiajs/vue3'
+import { computed } from 'vue'
 
-const $page = usePage()
+const page = usePage()
+const isLoggedIn = computed(() => !!page.props.auth?.user)
 </script>
 
 <style scoped>

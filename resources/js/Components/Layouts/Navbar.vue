@@ -8,6 +8,7 @@ const navItems = [
     { name: 'Gold Prices', href: route('gold.index'), component: 'Gold/Index' },
     { name: 'Feedback', href: route('admin.contacts.index'), component: 'Admin/Contact/Index' },
     { name: 'Blog', href: route('admin.blog.index'), component: 'Admin/Blog/Index' },
+    { name: 'Fuel', href: route('admin.fuel.index'), component: 'Admin/Fuel/Index' },
 ];
 
 const user = computed(() => usePage().props.auth.user);

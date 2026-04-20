@@ -11,12 +11,14 @@ class FuelPrice extends Model
         'octane_92',
         'octane_95',
         'diesel',
+        'premium_diesel', // Add this
         'global_usd_reference',
         'market_usd_rate',
         'region',
         'change_percent_92',
         'change_percent_95',
-        'change_percent_diesel'
+        'change_percent_diesel',
+        'change_percent_premium_diesel' // Add this
     ];
 
     protected $casts = [
@@ -43,6 +45,7 @@ class FuelPrice extends Model
             'octane_92' => $this->change_percent_92,
             'octane_95' => $this->change_percent_95,
             'diesel' => $this->change_percent_diesel,
+            'premium_diesel' => $this->change_percent_premium_diesel ?? 0,
             default => 0
         };
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Helpers\BreadcrumbHelper;
+use App\Http\Controllers\Admin\AdminFuelPriceController;
 use App\Http\Controllers\AdminBlogController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
@@ -19,7 +20,6 @@ use App\Http\Controllers\User\NotificationController;
 use App\Http\Controllers\User\UserAssetController;
 use App\Http\Controllers\User\WatchlistController;
 use App\Models\BlogPost;
-use App\Models\Currency;
 use App\Services\BankAggregatorService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -306,6 +306,16 @@ Route::middleware(['auth', 'verified', 'is_admin', 'session.timeout'])->group(fu
     Route::patch('/admin/blog/{blog}/toggle-publish', [AdminBlogController::class, 'togglePublish'])->name('admin.blog.toggle-publish');
 });
 
+// Add admin prefix to match what Vue expects
+Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+
+    Route::get('/fuel', [AdminFuelPriceController::class, 'index'])->name('fuel.index');
+    Route::post('/fuel/calibration', [AdminFuelPriceController::class, 'updateCalibration'])->name('fuel.calibration.update');
+    Route::post('/fuel/update-now', [AdminFuelPriceController::class, 'updateNow'])->name('fuel.update.now');
+    Route::get('/fuel/api-health', [AdminFuelPriceController::class, 'apiHealth'])->name('fuel.api.health');
+    Route::get('/fuel/preview', [AdminFuelPriceController::class, 'preview'])->name('fuel.preview');
+});
+
 // ============================================
 // DEBUG ROUTES (Development only)
 // ============================================
@@ -485,10 +495,12 @@ Route::get('/test-brevo', [TestEmailController::class, 'sendTestEmail']);
 
 
 // fuel 
+Route::get('/fuel-prices', [FuelPriceController::class, 'index'])->name('fuel-prices');
+Route::get('/api/fuel-prices', [FuelPriceController::class, 'indexApi'])->name('api.fuel-prices');
+Route::get('/api/fuel-prices/history', [FuelPriceController::class, 'historyApi'])->name('api.fuel-prices.history');
+Route::get('/api/fuel-prices/history/{region}', [FuelPriceController::class, 'historyApi'])->name('api.fuel-prices.history');
 
-Route::get('/api/fuel-prices', [FuelPriceController::class, 'index'])->name('api.fuel-prices');
 
-Route::get('/api/fuel-prices/history/{region}', [FuelPriceController::class, 'history'])->name('api.fuel-prices.history');
 
 
 Route::get('/final-fuel-test', function () {

@@ -14,6 +14,7 @@ const navItems = [
     { name: 'Home', href: '/', path: '/' },
     { name: 'Rates', href: '/rates', path: '/rates' },
     { name: 'Gold', href: '/gold/index', path: '/gold/index' },
+    { name: 'Fuel', href: '/fuel-prices', path: '/fuel-prices' },
     { name: 'Blog', href: '/blog', path: '/blog' },
 ];
 
