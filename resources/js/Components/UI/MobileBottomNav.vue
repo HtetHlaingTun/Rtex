@@ -1,6 +1,6 @@
 <template>
-    <nav
-        class="sm:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-zinc-800/50 shadow-lg pb-safe">
+    <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-zinc-800/50 shadow-lg"
+        :style="{ paddingBottom: safeAreaBottom }">
 
         <div class="flex items-center justify-around h-16 px-2">
 
@@ -56,7 +56,7 @@
                 <span class="text-[9px] font-bold uppercase tracking-wide">Fuel</span>
             </Link>
 
-            <!-- Gold - NOW CONSISTENT -->
+            <!-- Gold -->
             <Link :href="route('goldPage.index')"
                 class="relative flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all duration-200 group"
                 :class="[route().current('goldPage.index') ? 'text-amber-600' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300']">
@@ -115,25 +115,37 @@
             </Link>
 
         </div>
-
-        <div class="h-safe-bottom"></div>
     </nav>
 </template>
 
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3'
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 
 const page = usePage()
 const isLoggedIn = computed(() => !!page.props.auth?.user)
+
+// Safe area handling with web fallback
+const safeAreaBottom = ref('env(safe-area-inset-bottom)')
+
+onMounted(async () => {
+    // Check if running in Capacitor native platform
+    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+        try {
+            const { SafeArea } = await import('@capacitor-community/safe-area')
+            const insets = await SafeArea.getSafeAreaInsets()
+            safeAreaBottom.value = `${insets.bottom}px`
+
+            // Listen for changes (orientation, keyboard)
+            SafeArea.addListener('safeAreaChanged', (insets) => {
+                safeAreaBottom.value = `${insets.bottom}px`
+            })
+        } catch (e) {
+            console.log('Safe area plugin not available, using CSS env')
+        }
+    }
+})
 </script>
-
 <style scoped>
-.pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
-}
-
-.h-safe-bottom {
-    height: env(safe-area-inset-bottom);
-}
+/* No additional styles needed - using inline style binding */
 </style>

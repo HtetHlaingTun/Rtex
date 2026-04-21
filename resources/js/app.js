@@ -35,6 +35,14 @@ import FuelPriceWidget from "./Components/FuelPriceWidget.vue";
 import FuelPriceHistory from "./Components/FuelPriceHistory.vue";
 import AdUnit from "./Components/AdUnit.vue";
 
+if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+    import("@capacitor-community/safe-area").then(({ SafeArea }) => {
+        SafeArea.load().catch((err) => {
+            console.log("SafeArea load error:", err);
+        });
+    });
+}
+
 window.Chart = Chart;
 let logoutTimer;
 

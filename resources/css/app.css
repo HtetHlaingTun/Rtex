@@ -29,6 +29,7 @@ body {
 }
 
 
+
 @layer base {
   body {
     @apply transition-colors duration-500 ease-in-out;
@@ -38,4 +39,19 @@ body {
   div, header, nav, section, main, footer, button, span, h1, p, a, input, select, textarea {
     @apply transition-colors duration-300 ease-in-out;
   }
+}
+
+/* Add to the end of your app.css */
+:root {
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+/* For web fallback */
+@supports not (padding-bottom: env(safe-area-inset-bottom)) {
+    .pb-safe {
+        padding-bottom: 0px;
+    }
 }

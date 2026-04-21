@@ -3,7 +3,7 @@
         <!-- Sidebar -->
         <aside
             class="fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-zinc-900 border-r border-slate-200 dark:border-zinc-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0"
-            :class="{ '-translate-x-full': !sidebarOpen }">
+            :class="{ '-translate-x-full': !sidebarOpen }" :style="{ paddingTop: safeAreaTop }">
 
             <!-- Logo -->
             <div class="flex items-center justify-between p-4 border-b border-slate-200 dark:border-zinc-800">
@@ -22,7 +22,7 @@
             </div>
 
             <!-- Navigation -->
-            <nav class="flex-1 p-4 space-y-1">
+            <nav class="flex-1 p-4 space-y-1 overflow-y-auto" :style="{ paddingBottom: safeAreaBottom }">
                 <Link :href="route('user.dashboard')"
                     class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
                     :class="route().current('user.dashboard') ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-zinc-800'">
@@ -103,7 +103,8 @@
         <div class="lg:pl-64">
             <!-- Fixed Header -->
             <header
-                class="fixed top-0 right-0 left-0 lg:left-64 z-20 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-slate-200 dark:border-zinc-800">
+                class="fixed top-0 right-0 left-0 lg:left-64 z-20 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-slate-200 dark:border-zinc-800"
+                :style="{ paddingTop: safeAreaTop }">
                 <div class="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 gap-2">
                     <!-- Left section: Menu button + Breadcrumbs -->
                     <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
@@ -173,11 +174,11 @@
                 </div>
             </header>
 
-            <!-- Spacer to offset fixed header -->
-            <div class="h-[57px] sm:h-[65px] lg:h-[73px]"></div>
+            <!-- Spacer to offset fixed header with safe area -->
+            <div class="h-[57px] sm:h-[65px] lg:h-[73px]" :style="{ marginTop: safeAreaTop }"></div>
 
             <!-- Main Content -->
-            <main class="p-3 sm:p-4 md:p-6 mt-[50px] sm:mt-[10px]">
+            <main class="p-3 sm:p-4 md:p-6" :style="{ paddingBottom: safeAreaBottom }">
                 <div v-if="$slots.header" class="mb-6">
                     <GoogleAnalytics />
                     <slot name="header" />
@@ -185,8 +186,6 @@
                 <slot />
             </main>
         </div>
-
-
     </div>
 </template>
 
@@ -198,6 +197,37 @@ const page = usePage()
 const user = computed(() => page.props.auth.user)
 const sidebarOpen = ref(false)
 const refreshing = ref(false)
+
+// Safe area values
+const safeAreaTop = ref('0px')
+const safeAreaBottom = ref('0px')
+
+// Get safe area values for native platforms
+const getSafeAreaValues = async () => {
+    // Check if running in Capacitor native platform
+    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+        try {
+            const { SafeArea } = await import('@capacitor-community/safe-area')
+            const insets = await SafeArea.getSafeAreaInsets()
+            safeAreaTop.value = `${insets.top}px`
+            safeAreaBottom.value = `${insets.bottom}px`
+
+            // Listen for changes (orientation, keyboard)
+            SafeArea.addListener('safeAreaChanged', (insets) => {
+                safeAreaTop.value = `${insets.top}px`
+                safeAreaBottom.value = `${insets.bottom}px`
+            })
+        } catch (e) {
+            console.log('Safe area plugin not available, using CSS env')
+            safeAreaTop.value = 'env(safe-area-inset-top, 0px)'
+            safeAreaBottom.value = 'env(safe-area-inset-bottom, 0px)'
+        }
+    } else {
+        // Web fallback
+        safeAreaTop.value = 'env(safe-area-inset-top, 0px)'
+        safeAreaBottom.value = 'env(safe-area-inset-bottom, 0px)'
+    }
+}
 
 // Dark Mode State
 const isDarkMode = ref(false)
@@ -368,7 +398,7 @@ const startPolling = () => {
 }
 
 onMounted(() => {
-    // Initialize dark mode
+    getSafeAreaValues()
     initDarkMode()
 
     if (Notification.permission === 'default') {

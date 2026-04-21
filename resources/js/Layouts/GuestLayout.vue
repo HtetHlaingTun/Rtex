@@ -17,10 +17,10 @@
     <div
         class="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 overflow-visible">
 
-        <!-- Flash Messages with Auto-Dismiss - Adjust for safe area -->
+        <!-- Flash Messages with Auto-Dismiss -->
         <div v-if="showSuccessMessage"
-            class="fixed top-[env(safe-area-inset-top,20px)] right-4 z-50 p-4 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl shadow-lg transition-all duration-300 backdrop-blur-sm"
-            :class="{ 'opacity-0': !showSuccessMessage }">
+            class="fixed right-4 z-50 p-4 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl shadow-lg transition-all duration-300 backdrop-blur-sm"
+            :class="{ 'opacity-0': !showSuccessMessage }" :style="{ top: `calc(${safeAreaTop} + 70px)` }">
             <div class="flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -30,8 +30,8 @@
         </div>
 
         <div v-if="showErrorMessage"
-            class="fixed top-[env(safe-area-inset-top,20px)] right-4 z-50 p-4 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 rounded-xl shadow-lg transition-all duration-300 backdrop-blur-sm"
-            :class="{ 'opacity-0': !showErrorMessage }">
+            class="fixed right-4 z-50 p-4 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 rounded-xl shadow-lg transition-all duration-300 backdrop-blur-sm"
+            :class="{ 'opacity-0': !showErrorMessage }" :style="{ top: `calc(${safeAreaTop} + 70px)` }">
             <div class="flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -44,7 +44,7 @@
         <Loader :show="isGlobalLoading" :message="globalLoadingMessage" />
 
         <!-- Header with safe-area padding -->
-        <header class="sticky top-0 z-[100] w-full" :style="{ paddingTop: 'env(safe-area-inset-top)' }">
+        <header class="sticky top-0 z-[100] w-full" :style="{ paddingTop: safeAreaTop }">
             <UserNavbar />
         </header>
 
@@ -61,8 +61,8 @@
         <!-- Main Content -->
         <div class="relative z-10 flex flex-col w-full min-w-0">
             <!-- Breadcrumb Bar - adjust for safe area -->
-            <div
-                class="sticky top-[calc(64px+env(safe-area-inset-top))] z-50 w-full backdrop-blur-md bg-white/70 dark:bg-zinc-900/70 border-b border-slate-200/50 dark:border-zinc-800/50 transition-all duration-300">
+            <div class="sticky z-50 w-full backdrop-blur-md bg-white/70 dark:bg-zinc-900/70 border-b border-slate-200/50 dark:border-zinc-800/50 transition-all duration-300"
+                :style="{ top: `calc(64px + ${safeAreaTop})` }">
                 <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-3">
                     <PublicBreadcrumb :breadcrumbs="breadcrumbs" />
                 </div>
@@ -85,9 +85,8 @@
         <!-- Footer - Enhanced -->
         <footer
             class="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-zinc-900 dark:to-zinc-950 text-white mt-12"
-            :style="{ paddingBottom: 'env(safe-area-inset-bottom)' }">
+            :style="{ paddingBottom: safeAreaBottom }">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <!-- ... rest of footer content remains the same ... -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
                     <!-- Brand Column -->
                     <div>
@@ -185,10 +184,8 @@
             </div>
         </footer>
 
-        <!-- Mobile Bottom Navigation with safe-area -->
-        <div :style="{ paddingBottom: 'env(safe-area-inset-bottom)' }">
-            <MobileBottomNav />
-        </div>
+        <!-- Mobile Bottom Navigation - No wrapper div, let the component handle its own padding -->
+        <MobileBottomNav />
     </div>
 </template>
 
@@ -199,13 +196,16 @@ import { useDarkMode } from '@/Composables/useDarkMode';
 import axios from 'axios';
 import { useGA4 } from '@/Composables/useGA4';
 import GoogleAnalytics from '@/Components/GoogleAnalytics.vue';
-
+import MobileBottomNav from '@/Components/UI/MobileBottomNav.vue';
 
 const { isDark, toggleDark } = useDarkMode()
 const { trackFormStart, trackFormSubmit, trackSubscribe, trackScroll, trackClick } = useGA4();
 const page = usePage()
 
-// --- DEFINE ALL MISSING REACTIVE PROPERTIES ---
+// Safe area values
+const safeAreaTop = ref('env(safe-area-inset-top, 0px)')
+const safeAreaBottom = ref('env(safe-area-inset-bottom, 0px)')
+
 // Flash Message State
 const showSuccessMessage = ref(false)
 const showErrorMessage = ref(false)
@@ -250,6 +250,27 @@ const jsonLd = computed(() => {
     };
     return `<script type="application/ld+json">${JSON.stringify(data)}<\/script>`;
 });
+
+// Get actual safe area values for native platforms
+const getSafeAreaValues = async () => {
+    // Check if running in Capacitor native platform
+    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+        try {
+            const { SafeArea } = await import('@capacitor-community/safe-area')
+            const insets = await SafeArea.getSafeAreaInsets()
+            safeAreaTop.value = `${insets.top}px`
+            safeAreaBottom.value = `${insets.bottom}px`
+
+            // Listen for changes (orientation, keyboard)
+            SafeArea.addListener('safeAreaChanged', (insets) => {
+                safeAreaTop.value = `${insets.top}px`
+                safeAreaBottom.value = `${insets.bottom}px`
+            })
+        } catch (e) {
+            console.log('Safe area plugin not available, using CSS env')
+        }
+    }
+}
 
 // Scroll depth tracking
 const maxScrollDepth = ref(0);
@@ -414,6 +435,7 @@ const trackRateClick = (currency, rateType) => {
 provide('trackRateClick', trackRateClick);
 
 onMounted(() => {
+    getSafeAreaValues();
     window.addEventListener('scroll', handleScroll);
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
@@ -457,35 +479,11 @@ onUnmounted(() => {
     z-index: 100 !important;
 }
 
-/* Safe area support for iOS devices */
-@supports (padding-top: env(safe-area-inset-top)) {
-    .sticky {
-        padding-top: env(safe-area-inset-top);
-    }
-}
-
-/* Ensure content doesn't go under the notch */
-header {
-    padding-top: max(0px, env(safe-area-inset-top));
-}
-
-/* Adjust breadcrumb position for safe area */
-.sticky.top-\[64px\] {
-    top: calc(64px + env(safe-area-inset-top)) !important;
-}
-
 html,
 body,
 #app,
 .relative.min-h-screen {
     overflow: visible !important;
     height: auto !important;
-}
-
-/* Additional safe area for landscape orientation */
-@media (orientation: landscape) {
-    .fixed.top-20 {
-        top: calc(env(safe-area-inset-top, 20px) + 0.5rem) !important;
-    }
 }
 </style>

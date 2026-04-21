@@ -59,10 +59,7 @@ const isAdmin = computed(() => user.value?.role === 'admin');
                         <Link :href="route('currencies.index')"
                             class="flex flex-col items-center justify-center flex-1 py-1"
                             :class="$page.component === 'Currency/Index' ? 'text-indigo-600' : 'text-slate-400'">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                            </svg>
+
                             <span class="text-[10px] font-bold mt-1">Live Rates</span>
                         </Link>
 
