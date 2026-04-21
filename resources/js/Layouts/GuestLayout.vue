@@ -5,20 +5,21 @@
         <meta name="description"
             content="Real-time USD, SGD, EUR, THB exchange rates to MMK. Live gold prices in Myanmar kyat.">
 
+        <!-- Viewport meta for safe-area -->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
         <!-- JSON-LD Structured Data for SEO -->
         <meta v-html="jsonLd" />
-
     </Head>
-
 
     <GoogleAnalytics />
 
     <div
         class="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 overflow-visible">
 
-        <!-- Flash Messages with Auto-Dismiss -->
+        <!-- Flash Messages with Auto-Dismiss - Adjust for safe area -->
         <div v-if="showSuccessMessage"
-            class="fixed top-20 right-4 z-50 p-4 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl shadow-lg transition-all duration-300 backdrop-blur-sm"
+            class="fixed top-[env(safe-area-inset-top,20px)] right-4 z-50 p-4 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl shadow-lg transition-all duration-300 backdrop-blur-sm"
             :class="{ 'opacity-0': !showSuccessMessage }">
             <div class="flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,7 +30,7 @@
         </div>
 
         <div v-if="showErrorMessage"
-            class="fixed top-20 right-4 z-50 p-4 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 rounded-xl shadow-lg transition-all duration-300 backdrop-blur-sm"
+            class="fixed top-[env(safe-area-inset-top,20px)] right-4 z-50 p-4 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 rounded-xl shadow-lg transition-all duration-300 backdrop-blur-sm"
             :class="{ 'opacity-0': !showErrorMessage }">
             <div class="flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,8 +43,8 @@
         <!-- Loader -->
         <Loader :show="isGlobalLoading" :message="globalLoadingMessage" />
 
-        <!-- Header -->
-        <header class="sticky top-0 z-[100] w-full">
+        <!-- Header with safe-area padding -->
+        <header class="sticky top-0 z-[100] w-full" :style="{ paddingTop: 'env(safe-area-inset-top)' }">
             <UserNavbar />
         </header>
 
@@ -59,9 +60,9 @@
 
         <!-- Main Content -->
         <div class="relative z-10 flex flex-col w-full min-w-0">
-            <!-- Breadcrumb Bar -->
+            <!-- Breadcrumb Bar - adjust for safe area -->
             <div
-                class="sticky top-[64px] z-50 w-full backdrop-blur-md bg-white/70 dark:bg-zinc-900/70 border-b border-slate-200/50 dark:border-zinc-800/50 transition-all duration-300">
+                class="sticky top-[calc(64px+env(safe-area-inset-top))] z-50 w-full backdrop-blur-md bg-white/70 dark:bg-zinc-900/70 border-b border-slate-200/50 dark:border-zinc-800/50 transition-all duration-300">
                 <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-3">
                     <PublicBreadcrumb :breadcrumbs="breadcrumbs" />
                 </div>
@@ -83,35 +84,20 @@
 
         <!-- Footer - Enhanced -->
         <footer
-            class="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-zinc-900 dark:to-zinc-950 text-white mt-12">
+            class="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-zinc-900 dark:to-zinc-950 text-white mt-12"
+            :style="{ paddingBottom: 'env(safe-area-inset-bottom)' }">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <!-- ... rest of footer content remains the same ... -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
                     <!-- Brand Column -->
                     <div>
                         <div class="flex items-center gap-2 mb-4">
-
-                            <h3 class="text-lg font-black tracking-tight">MMRatePro </h3>
+                            <h3 class="text-lg font-black tracking-tight">MMRatePro</h3>
                         </div>
                         <p class="text-slate-400 text-sm leading-relaxed">
                             Real-time exchange rates and gold prices for Myanmar. Updated live from local banks and
                             global markets.
                         </p>
-                        <!-- <div class="flex gap-3 mt-4">
-                            <a href="https://facebook.com/mmratepro" target="_blank" rel="noopener noreferrer"
-                                class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center transition-colors">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                    <path
-                                        d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                                </svg>
-                            </a>
-                            <a href="https://twitter.com/mmratepro" target="_blank" rel="noopener noreferrer"
-                                class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center transition-colors">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                    <path
-                                        d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                                </svg>
-                            </a>
-                        </div> -->
                     </div>
 
                     <!-- Quick Links -->
@@ -149,7 +135,6 @@
                             </li>
                         </ul>
                     </div>
-
 
                     <!-- Newsletter -->
                     <div>
@@ -200,8 +185,10 @@
             </div>
         </footer>
 
-        <!-- Mobile Bottom Navigation -->
-        <MobileBottomNav />
+        <!-- Mobile Bottom Navigation with safe-area -->
+        <div :style="{ paddingBottom: 'env(safe-area-inset-bottom)' }">
+            <MobileBottomNav />
+        </div>
     </div>
 </template>
 
@@ -214,13 +201,12 @@ import { useGA4 } from '@/Composables/useGA4';
 import GoogleAnalytics from '@/Components/GoogleAnalytics.vue';
 
 
-
-
 const { isDark, toggleDark } = useDarkMode()
 const { trackFormStart, trackFormSubmit, trackSubscribe, trackScroll, trackClick } = useGA4();
 const page = usePage()
 
-// --- Flash Message State ---
+// --- DEFINE ALL MISSING REACTIVE PROPERTIES ---
+// Flash Message State
 const showSuccessMessage = ref(false)
 const showErrorMessage = ref(false)
 const successMessageText = ref('')
@@ -228,7 +214,44 @@ const errorMessageText = ref('')
 let successTimer = null
 let errorTimer = null
 
-// --- Scroll depth tracking ---
+// Global Loading State
+const isGlobalLoading = ref(false)
+const globalLoadingMessage = ref('Processing...')
+
+// Newsletter State
+const subscriberEmail = ref('')
+const subscribing = ref(false)
+const subscribeSuccess = ref(false)
+const subscribeError = ref('')
+
+// Scroll State
+const isScrolled = ref(false)
+const isOnline = ref(navigator.onLine)
+
+// JSON-LD Structured Data
+const jsonLd = computed(() => {
+    const data = {
+        "@context": "https://schema.org",
+        "@type": "FinancialService",
+        "name": "MMRatePro",
+        "description": "Real-time Myanmar Kyat exchange rates and gold prices from local banks",
+        "url": "https://luckeymm.online",
+        "logo": "https://luckeymm.online/logo.png",
+        "address": {
+            "@type": "PostalAddress",
+            "addressCountry": "MM"
+        },
+        "areaServed": {
+            "@type": "Country",
+            "name": "Myanmar"
+        },
+        "currency": "MMK",
+        "openingHours": "24/7"
+    };
+    return `<script type="application/ld+json">${JSON.stringify(data)}<\/script>`;
+});
+
+// Scroll depth tracking
 const maxScrollDepth = ref(0);
 const scrollThresholds = [25, 50, 75, 90];
 
@@ -246,34 +269,6 @@ const trackScrollDepth = () => {
         }
     }
 };
-
-// JSON-LD Structured Data
-const jsonLd = computed(() => {
-    const data = {
-        "@context": "https://schema.org",
-        "@type": "FinancialService",
-        "name": "MMRatePro",
-        "description": "Real-time Myanmar Kyat exchange rates and gold prices from local banks",
-        "url": "https://luckeymm.online",
-        "logo": "https://luckeymm.online/logo.png",
-        "sameAs": [
-            "https://facebook.com/mmratepro",
-            "https://twitter.com/mmratepro"
-        ],
-        "address": {
-            "@type": "PostalAddress",
-            "addressCountry": "MM"
-        },
-        "areaServed": {
-            "@type": "Country",
-            "name": "Myanmar"
-        },
-        "currency": "MMK",
-        "openingHours": "24/7"
-    };
-
-    return `<script type="application/ld+json">${JSON.stringify(data)}<\/script>`;
-});
 
 // Track form interactions
 const trackFormInteraction = (event, formType) => {
@@ -297,42 +292,17 @@ const trackLinkClicks = (event) => {
     }
 };
 
-// Watch for flash messages
-watch(() => page.props.flash, (flash) => {
-    if (flash?.success) {
-        showSuccessMessage.value = true
-        successMessageText.value = flash.success
-        if (successTimer) clearTimeout(successTimer)
-        successTimer = setTimeout(() => {
-            showSuccessMessage.value = false
-            successMessageText.value = ''
-        }, 5000)
+// Breadcrumbs
+const breadcrumbs = computed(() => {
+    if (page.props.breadcrumbs && page.props.breadcrumbs.length > 0) {
+        return page.props.breadcrumbs
     }
-
-    if (flash?.error) {
-        showErrorMessage.value = true
-        errorMessageText.value = flash.error
-        if (errorTimer) clearTimeout(errorTimer)
-        errorTimer = setTimeout(() => {
-            showErrorMessage.value = false
-            errorMessageText.value = ''
-        }, 5000)
+    const currentUrl = page.url
+    if (currentUrl === '/') {
+        return [{ label: 'Home', route: 'welcome' }]
     }
-}, { deep: true, immediate: true })
-
-// Newsletter State
-const subscriberEmail = ref('')
-const subscribing = ref(false)
-const subscribeSuccess = ref(false)
-const subscribeError = ref('')
-const isScrolled = ref(false)
-const isGlobalLoading = ref(false)
-const globalLoadingMessage = ref('Processing...')
-const isOnline = ref(navigator.onLine);
-
-const updateOnlineStatus = () => {
-    isOnline.value = navigator.onLine;
-};
+    return [{ label: 'Home', route: 'welcome' }, { label: 'Current Page' }]
+});
 
 // Newsletter Subscribe
 const subscribeEmail = async () => {
@@ -384,17 +354,32 @@ const trackPageView = () => {
     }
 };
 
-// Breadcrumbs
-const breadcrumbs = computed(() => {
-    if (page.props.breadcrumbs && page.props.breadcrumbs.length > 0) {
-        return page.props.breadcrumbs
+const updateOnlineStatus = () => {
+    isOnline.value = navigator.onLine;
+};
+
+// Watch for flash messages
+watch(() => page.props.flash, (flash) => {
+    if (flash?.success) {
+        showSuccessMessage.value = true
+        successMessageText.value = flash.success
+        if (successTimer) clearTimeout(successTimer)
+        successTimer = setTimeout(() => {
+            showSuccessMessage.value = false
+            successMessageText.value = ''
+        }, 5000)
     }
-    const currentUrl = page.url
-    if (currentUrl === '/') {
-        return [{ label: 'Home', route: 'welcome' }]
+
+    if (flash?.error) {
+        showErrorMessage.value = true
+        errorMessageText.value = flash.error
+        if (errorTimer) clearTimeout(errorTimer)
+        errorTimer = setTimeout(() => {
+            showErrorMessage.value = false
+            errorMessageText.value = ''
+        }, 5000)
     }
-    return [{ label: 'Home', route: 'welcome' }, { label: 'Current Page' }]
-});
+}, { deep: true, immediate: true })
 
 // Inertia Progress
 router.on('start', (event) => {
@@ -472,11 +457,35 @@ onUnmounted(() => {
     z-index: 100 !important;
 }
 
+/* Safe area support for iOS devices */
+@supports (padding-top: env(safe-area-inset-top)) {
+    .sticky {
+        padding-top: env(safe-area-inset-top);
+    }
+}
+
+/* Ensure content doesn't go under the notch */
+header {
+    padding-top: max(0px, env(safe-area-inset-top));
+}
+
+/* Adjust breadcrumb position for safe area */
+.sticky.top-\[64px\] {
+    top: calc(64px + env(safe-area-inset-top)) !important;
+}
+
 html,
 body,
 #app,
 .relative.min-h-screen {
     overflow: visible !important;
     height: auto !important;
+}
+
+/* Additional safe area for landscape orientation */
+@media (orientation: landscape) {
+    .fixed.top-20 {
+        top: calc(env(safe-area-inset-top, 20px) + 0.5rem) !important;
+    }
 }
 </style>

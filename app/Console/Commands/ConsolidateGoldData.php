@@ -10,7 +10,7 @@ use Carbon\Carbon;
 class ConsolidateGoldData extends Command
 {
     protected $signature = 'gold:consolidate-daily
-                            {--days-to-keep=1 : Keep full records for this many days (default: 1)}
+                            {--days-to-keep=2 : Keep full records for this many days (default: 1)}
                             {--permanent-years=2 : Permanently delete records older than this many years}
                             {--dry-run : Show what would be deleted without actually deleting}
                             {--stats : Show statistics before and after cleanup}';

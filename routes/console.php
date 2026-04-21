@@ -11,9 +11,20 @@ Artisan::command('inspire', function () {
 
 // fuel 
 // Keep 6 months (180 days) of fuel price history
-Schedule::command('fuel:prices-update')->everyThirtyMinutes();
-Schedule::command('fuel:cleanup-old-records --months=6')->everyThirtyMinutes();
-Schedule::command('fuel:clean-duplicates')->dailyAt('00:05')->withoutOverlapping();
+Schedule::command('fuel:prices-update')
+    ->everyThirtyMinutes()
+    ->timezone('Asia/Singapore');
+
+Schedule::command('fuel:cleanup-old-records --months=6')
+    ->everyThirtyMinutes()
+    ->timezone('Asia/Singapore');
+Schedule::command('fuel:clean-duplicates')
+    ->dailyAt('00:05')
+    ->withoutOverlapping()
+    ->timezone('Asia/Singapore');
+
+
+
 
 
 
@@ -23,22 +34,25 @@ Schedule::command('fuel:clean-duplicates')->dailyAt('00:05')->withoutOverlapping
 Schedule::command('system:cleanup --days=7 --releases=3')
     ->dailyAt('02:00')
     ->withoutOverlapping()
+    ->timezone('Asia/Singapore')
     ->appendOutputTo(storage_path('logs/cleanup.log'));
 
 // Weekly deep cleanup (Sundays)
 Schedule::command('system:cleanup --days=30 --releases=2 --force')
     ->weekly()
+    ->timezone('Asia/Singapore')
     ->sundays()
     ->at('03:00');
 
 // Monthly database vacuum
 Schedule::command('db:optimize')
     ->monthly()
+    ->timezone('Asia/Singapore')
     ->at('04:00');
 
 // minitor disk-----------------------
-Schedule::command('monitor:disk --threshold=75')->hourly();
-Schedule::command('monitor:disk --threshold=85')->everyThirtyMinutes();
+Schedule::command('monitor:disk --threshold=75')->hourly()->timezone('Asia/Singapore');
+Schedule::command('monitor:disk --threshold=85')->everyThirtyMinutes()->timezone('Asia/Singapore');
 
 
 
@@ -47,25 +61,24 @@ Schedule::command('monitor:disk --threshold=85')->everyThirtyMinutes();
 
 // --- Gold Rates ---
 Schedule::command('gold:fetch')
-    ->everyTwoMinutes()
+    ->everyTwoMinutes()->timezone('Asia/Singapore')
     ->appendOutputTo(storage_path('logs/gold_sync.log'));
 
 Schedule::command('gold:save-hourly')
-    ->everyTwoMinutes()
+    ->everyTwoMinutes()->timezone('Asia/Singapore')
     ->appendOutputTo(storage_path('logs/gold_sync.log'));
 
-Schedule::command('gold:consolidate-daily --days-to-keep=1')
+Schedule::command('gold:consolidate-daily --days-to-keep=2')
     ->dailyAt('00:05')
-
+    ->timezone('Asia/Singapore')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/gold-consolidation.log'));
 
 // --- Monthly Stats with Permanent Purge ---
-Schedule::command('gold:consolidate-daily --permanent-years=2 --stats')
-    ->monthly()
+Schedule::command('exchange:consolidate-rates --permanent-years=2 --stats')
+    ->monthly()->timezone('Asia/Singapore')
     ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/gold-consolidation-monthly.log'));
-
+    ->appendOutputTo(storage_path('logs/exchange-consolidation-monthly.log'));
 
 
 
@@ -74,7 +87,7 @@ Schedule::command('gold:consolidate-daily --permanent-years=2 --stats')
 // --- CBM Fetching ---
 
 Schedule::command('banks:sync-rates')
-    ->everyThirtyMinutes()
+    ->everyThirtyMinutes()->timezone('Asia/Singapore')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/banks-sync.log'));
 
@@ -82,13 +95,13 @@ Schedule::command('banks:sync-rates')
 
 Schedule::command('cbm:fetch --auto-verify')
     ->dailyAt('08:00')
-    ->withoutOverlapping()
+    ->withoutOverlapping()->timezone('Asia/Singapore')
     ->appendOutputTo(storage_path('logs/cbm-fetch.log'));
 
 
 // Test CBM connection and clear cache
 Schedule::command('cbm:test --clear-cache')
-    ->dailyAt('02:00')
+    ->dailyAt('02:00')->timezone('Asia/Singapore')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/cbm-test.log'));
 
@@ -99,7 +112,7 @@ Schedule::command('cbm:test --clear-cache')
 // --- Cleanup & Maintenance ---
 // monthly
 Schedule::command('exchange:consolidate-rates --permanent-years=2 --stats')
-    ->monthly()
+    ->monthly()->timezone('Asia/Singapore')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/gold-consolidation-monthly.log'));
 
@@ -114,12 +127,12 @@ Schedule::command('exchange:consolidate-rates --days-to-keep=1')
 
 // alert notification
 Schedule::command('watch:alerts-check')
-    ->everyMinute()
+    ->everyMinute()->timezone('Asia/Singapore')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/alerts-check.log'));
 
 Schedule::command('watch:alerts-check --cleanup')
-    ->dailyAt('00:05')
+    ->dailyAt('00:05')->timezone('Asia/Singapore')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/alerts-check-cleanup.log'));
 
@@ -131,16 +144,16 @@ Schedule::command('watch:alerts-check --cleanup')
 //     ->appendOutputTo(storage_path('logs/daily-rates.log'));
 
 Schedule::command('mail:send-daily-rates --batch=1 --batch-size=100')
-    ->dailyAt('10:00')
+    ->dailyAt('10:00')->timezone('Asia/Singapore')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/daily-rates-batch1.log'));
 
 Schedule::command('mail:send-daily-rates --batch=2 --batch-size=100')
-    ->dailyAt('11:00')
+    ->dailyAt('11:00')->timezone('Asia/Singapore')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/daily-rates-batch2.log'));
 
 Schedule::command('mail:send-daily-rates --batch=3 --batch-size=100')
-    ->dailyAt('12:00')
+    ->dailyAt('12:00')->timezone('Asia/Singapore')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/daily-rates-batch3.log'));

@@ -36,101 +36,191 @@
             <p class="mt-2 text-sm text-slate-500">Loading history...</p>
         </div>
 
-        <!-- Table -->
-        <div v-else-if="displayHistory.length" class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800">
-                <thead class="bg-slate-50 dark:bg-zinc-800/50">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-[10px] font-black uppercase tracking-wider text-slate-400">
-                            Date</th>
-                        <th class="px-4 py-3 text-right text-[10px] font-black uppercase tracking-wider text-slate-400">
-                            92 Octane</th>
-                        <th class="px-4 py-3 text-right text-[10px] font-black uppercase tracking-wider text-slate-400">
-                            95 Octane</th>
-                        <th class="px-4 py-3 text-right text-[10px] font-black uppercase tracking-wider text-slate-400">
-                            Diesel</th>
-                        <th class="px-4 py-3 text-right text-[10px] font-black uppercase tracking-wider text-slate-400">
-                            Premium Diesel</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
-                    <tr v-for="record in displayHistory" :key="record.date + record.time"
-                        class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 transition-colors duration-150">
+        <div v-else>
+            <!-- TODAY'S RECORDS DROPDOWN -->
+            <div v-if="todayRecords.length" class="border-b border-slate-200 dark:border-zinc-800">
+                <button @click="showTodayHistory = !showTodayHistory"
+                    class="w-full px-5 py-3 flex items-center justify-between bg-amber-50/30 dark:bg-amber-900/10 hover:bg-amber-50/50 dark:hover:bg-amber-900/20 transition-colors duration-150">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                            Today's Updates ({{ todayRecords.length }})
+                        </span>
+                    </div>
+                    <svg class="w-4 h-4 text-slate-400 transition-transform duration-200"
+                        :class="{ 'rotate-180': showTodayHistory }" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
 
-                        <td class="px-4 py-3">
-                            <div class="flex flex-col">
-                                <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300">{{ record.date
-                                    }}</span>
-                                <span class="text-[8px] text-slate-400">{{ record.time }}</span>
-                            </div>
-                        </td>
+                <transition name="slide-down">
+                    <div v-if="showTodayHistory" class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800">
+                            <thead class="bg-amber-50/20 dark:bg-amber-900/5">
+                                <tr>
+                                    <th
+                                        class="px-4 py-2 text-left text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                        Time
+                                    </th>
+                                    <th
+                                        class="px-4 py-2 text-right text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                        92 Octane
+                                    </th>
+                                    <th
+                                        class="px-4 py-2 text-right text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                        95 Octane
+                                    </th>
+                                    <th
+                                        class="px-4 py-2 text-right text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                        Diesel
+                                    </th>
+                                    <th
+                                        class="px-4 py-2 text-right text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                        Premium Diesel
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+                                <tr v-for="record in todayRecords" :key="record.created_at || record.time"
+                                    class="hover:bg-amber-50/20 dark:hover:bg-amber-900/10 transition-colors duration-150">
+                                    <td class="px-4 py-2">
+                                        <span
+                                            class="text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400">
+                                            {{ formatTimeFromDate(record.created_at) || record.time || '—' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-2 text-right">
+                                        <span
+                                            class="text-[13px] font-mono font-bold text-amber-600 dark:text-amber-400">
+                                            {{ formatNumber(record.octane_92) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-2 text-right">
+                                        <span
+                                            class="text-[13px] font-mono font-bold text-amber-600 dark:text-amber-400">
+                                            {{ formatNumber(record.octane_95) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-2 text-right">
+                                        <span
+                                            class="text-[13px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                            {{ formatNumber(record.diesel) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-2 text-right">
+                                        <span
+                                            class="text-[13px] font-mono font-bold text-purple-600 dark:text-purple-400">
+                                            {{ formatNumber(record.premium_diesel) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </transition>
+            </div>
 
-                        <!-- 92 Octane -->
-                        <td class="px-4 py-3 text-right">
-                            <div class="flex flex-col items-end">
-                                <span class="text-[13px] font-mono font-bold text-amber-600 dark:text-amber-400">
-                                    {{ formatNumber(record.octane_92) }}
-                                </span>
-                                <span v-if="record.trend_92" :class="record.trend_92.color"
-                                    class="text-[9px] font-bold">
-                                    {{ record.trend_92.icon }} {{ formatNumber(record.trend_92.diff) }}
-                                </span>
-                            </div>
-                        </td>
+            <!-- HISTORICAL DATA TABLE -->
+            <div v-if="historicalRecords.length" class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-zinc-800">
+                    <thead class="bg-slate-50 dark:bg-zinc-800/50">
+                        <tr>
+                            <th
+                                class="px-4 py-3 text-left text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                Date
+                            </th>
+                            <th
+                                class="px-4 py-3 text-right text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                92 Octane
+                            </th>
+                            <th
+                                class="px-4 py-3 text-right text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                95 Octane
+                            </th>
+                            <th
+                                class="px-4 py-3 text-right text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                Diesel
+                            </th>
+                            <th
+                                class="px-4 py-3 text-right text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                Premium Diesel
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+                        <tr v-for="record in historicalRecords" :key="record.date + record.time"
+                            class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 transition-colors duration-150">
+                            <td class="px-4 py-3">
+                                <div class="flex flex-col">
+                                    <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300">{{
+                                        record.date }}</span>
+                                    <span class="text-[8px] text-slate-400">{{ record.time }}</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <div class="flex flex-col items-end">
+                                    <span class="text-[13px] font-mono font-bold text-amber-600 dark:text-amber-400">
+                                        {{ formatNumber(record.octane_92) }}
+                                    </span>
+                                    <span v-if="record.trend_92" :class="record.trend_92.color"
+                                        class="text-[9px] font-bold">
+                                        {{ record.trend_92.icon }} {{ formatNumber(record.trend_92.diff) }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <div class="flex flex-col items-end">
+                                    <span class="text-[13px] font-mono font-bold text-amber-600 dark:text-amber-400">
+                                        {{ formatNumber(record.octane_95) }}
+                                    </span>
+                                    <span v-if="record.trend_95" :class="record.trend_95.color"
+                                        class="text-[9px] font-bold">
+                                        {{ record.trend_95.icon }} {{ formatNumber(record.trend_95.diff) }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <div class="flex flex-col items-end">
+                                    <span
+                                        class="text-[13px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                        {{ formatNumber(record.diesel) }}
+                                    </span>
+                                    <span v-if="record.trend_diesel" :class="record.trend_diesel.color"
+                                        class="text-[9px] font-bold">
+                                        {{ record.trend_diesel.icon }} {{ formatNumber(record.trend_diesel.diff) }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <div class="flex flex-col items-end">
+                                    <span class="text-[13px] font-mono font-bold text-purple-600 dark:text-purple-400">
+                                        {{ formatNumber(record.premium_diesel) }}
+                                    </span>
+                                    <span v-if="record.trend_premium_diesel" :class="record.trend_premium_diesel.color"
+                                        class="text-[9px] font-bold">
+                                        {{ record.trend_premium_diesel.icon }} {{
+                                            formatNumber(record.trend_premium_diesel.diff) }}
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                        <!-- 95 Octane -->
-                        <td class="px-4 py-3 text-right">
-                            <div class="flex flex-col items-end">
-                                <span class="text-[13px] font-mono font-bold text-amber-600 dark:text-amber-400">
-                                    {{ formatNumber(record.octane_95) }}
-                                </span>
-                                <span v-if="record.trend_95" :class="record.trend_95.color"
-                                    class="text-[9px] font-bold">
-                                    {{ record.trend_95.icon }} {{ formatNumber(record.trend_95.diff) }}
-                                </span>
-                            </div>
-                        </td>
-
-                        <!-- Diesel -->
-                        <td class="px-4 py-3 text-right">
-                            <div class="flex flex-col items-end">
-                                <span class="text-[13px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                                    {{ formatNumber(record.diesel) }}
-                                </span>
-                                <span v-if="record.trend_diesel" :class="record.trend_diesel.color"
-                                    class="text-[9px] font-bold">
-                                    {{ record.trend_diesel.icon }} {{ formatNumber(record.trend_diesel.diff) }}
-                                </span>
-                            </div>
-                        </td>
-
-                        <!-- Premium Diesel -->
-                        <td class="px-4 py-3 text-right">
-                            <div class="flex flex-col items-end">
-                                <span class="text-[13px] font-mono font-bold text-purple-600 dark:text-purple-400">
-                                    {{ formatNumber(record.premium_diesel) }}
-                                </span>
-                                <span v-if="record.trend_premium_diesel" :class="record.trend_premium_diesel.color"
-                                    class="text-[9px] font-bold">
-                                    {{ record.trend_premium_diesel.icon }} {{
-                                        formatNumber(record.trend_premium_diesel.diff) }}
-                                </span>
-                            </div>
-                        </td>
-
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Empty -->
-        <div v-else class="py-12 text-center">
-            <svg class="w-12 h-12 mx-auto text-slate-300 dark:text-zinc-600" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p class="mt-2 text-slate-500 dark:text-zinc-400">No historical data available</p>
+            <!-- Empty -->
+            <div v-if="!todayRecords.length && !historicalRecords.length" class="py-12 text-center">
+                <svg class="w-12 h-12 mx-auto text-slate-300 dark:text-zinc-600" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="mt-2 text-slate-500 dark:text-zinc-400">No historical data available</p>
+            </div>
         </div>
 
     </div>
@@ -145,15 +235,31 @@ const { addTrendsToHistory } = useFuelTrends()
 const loading = ref(true)
 const history = ref([])
 const selectedRegion = ref('yangon')
+const showTodayHistory = ref(true)
 
 // Add trends to history (API returns newest first)
 const historyWithTrends = computed(() => {
     return addTrendsToHistory(history.value)
 })
 
-// Reverse to show oldest first in table
-const displayHistory = computed(() => {
-    return [...historyWithTrends.value].reverse()
+// Separate today's records from historical
+const todayRecords = computed(() => {
+    const today = new Date().toISOString().split('T')[0]
+    return historyWithTrends.value.filter(record => {
+        // Check both date field and created_at
+        const recordDate = record.date || (record.created_at ? record.created_at.split('T')[0] : null)
+        return recordDate === today
+    })
+})
+
+const historicalRecords = computed(() => {
+    const today = new Date().toISOString().split('T')[0]
+    const historical = historyWithTrends.value.filter(record => {
+        const recordDate = record.date || (record.created_at ? record.created_at.split('T')[0] : null)
+        return recordDate !== today
+    })
+    // Reverse to show oldest first
+    return [...historical].reverse()
 })
 
 const fetchHistory = async () => {
@@ -173,6 +279,21 @@ const fetchHistory = async () => {
 
 const formatNumber = (v) => (v != null ? v.toLocaleString() : '—')
 
+const formatTimeFromDate = (datetime) => {
+    if (!datetime) return null
+    try {
+        const date = new Date(datetime)
+        if (isNaN(date.getTime())) return null
+        return date.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        })
+    } catch (e) {
+        return null
+    }
+}
+
 onMounted(() => {
     fetchHistory()
 })
@@ -181,3 +302,16 @@ watch(selectedRegion, () => {
     fetchHistory()
 })
 </script>
+
+<style scoped>
+.slide-down-enter-active,
+.slide-down-leave-active {
+    transition: all 0.3s ease;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+    transform: translateY(-10px);
+    opacity: 0;
+}
+</style>

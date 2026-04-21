@@ -72,9 +72,9 @@
 
             <!-- TODAY DROPDOWN - Responsive -->
             <transition name="slide-down">
-                <div v-if="showTodayHistory" class="divide-y divide-slate-100 dark:divide-zinc-800">
+                <div v-if="showTodayHistory" class="divide-y divide-slate-100 dark:divide-zinc-800 ">
                     <div v-for="(r, idx) in todayEarlierRecords" :key="r.id"
-                        class="grid grid-cols-[70px_1fr_1fr] sm:grid-cols-[80px_1fr_1fr] gap-3 sm:gap-4 px-4 sm:px-5 py-3 bg-slate-50/50 dark:bg-zinc-800/20 hover:bg-slate-100/60 dark:hover:bg-zinc-800/40 transition-colors duration-150">
+                        class="grid grid-cols-[70px_1fr_1fr] gap-3 sm:gap-4 px-4 sm:px-5 py-3 bg-slate-50/50 dark:bg-zinc-800/20 hover:bg-slate-100/60 dark:hover:bg-zinc-800/40 transition-colors duration-150">
 
                         <!-- Time column -->
                         <div class="flex items-center gap-1.5">
@@ -89,31 +89,28 @@
                             </span>
                         </div>
 
-                        <!-- Price columns - Responsive -->
-                        <div class="grid grid-cols-2 gap-2 sm:gap-4">
-                            <!-- USD -->
-                            <div class="flex flex-col items-end gap-1">
-                                <div class="flex items-center gap-2">
-                                    <span
-                                        class="text-[11px] sm:text-[13px] font-mono font-black text-blue-600 dark:text-blue-400">
-                                        ${{ formatMoney(r.price, 2) }}
-                                    </span>
-                                </div>
-                                <TrendIcon :current="r.price" :previous="getPreviousPrice(r, 'price')"
-                                    :show-percentage="true" class="scale-75" />
+                        <!-- USD Price Column -->
+                        <div class="flex flex-col items-end gap-1">
+                            <div class="flex items-center gap-2">
+                                <span
+                                    class="text-[11px] sm:text-[13px] font-mono font-black text-blue-600 dark:text-blue-400">
+                                    ${{ formatMoney(r.price, 2) }}
+                                </span>
                             </div>
+                            <TrendIcon :current="r.price" :previous="getPreviousPrice(r, 'price')"
+                                :show-percentage="true" class="scale-75" />
+                        </div>
 
-                            <!-- SGD -->
-                            <div v-if="r.sgd_price" class="flex flex-col items-end gap-1">
-                                <div class="flex items-center gap-2">
-                                    <span
-                                        class="text-[11px] sm:text-[13px] font-mono font-black text-blue-600 dark:text-blue-400">
-                                        S${{ formatMoney(r.sgd_price, 2) }}
-                                    </span>
-                                </div>
-                                <TrendIcon :current="r.sgd_price" :previous="getPreviousPrice(r, 'sgd_price')"
-                                    :show-percentage="true" class="scale-75" />
+                        <!-- SGD Price Column -->
+                        <div v-if="r.sgd_price" class="flex flex-col items-end gap-1">
+                            <div class="flex items-center gap-2">
+                                <span
+                                    class="text-[11px] sm:text-[13px] font-mono font-black text-blue-600 dark:text-blue-400">
+                                    S${{ formatMoney(r.sgd_price, 2) }}
+                                </span>
                             </div>
+                            <TrendIcon :current="r.sgd_price" :previous="getPreviousPrice(r, 'sgd_price')"
+                                :show-percentage="true" class="scale-75" />
                         </div>
                     </div>
                 </div>
