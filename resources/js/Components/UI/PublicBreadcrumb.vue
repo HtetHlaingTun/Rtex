@@ -32,7 +32,7 @@
         </nav>
 
         <div
-            class="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3 px-1 sm:px-0 border-t sm:border-none border-slate-100 dark:border-zinc-800 pt-2 sm:pt-0">
+            class="hidden sm:flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3 px-1 sm:px-0 border-t sm:border-none border-slate-100 dark:border-zinc-800 pt-2 sm:pt-0">
 
             <div class="flex items-center gap-4 text-[10px] sm:text-xs font-mono tracking-tight">
                 <div

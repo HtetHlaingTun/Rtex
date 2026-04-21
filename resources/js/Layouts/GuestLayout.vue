@@ -43,8 +43,9 @@
         <!-- Loader -->
         <Loader :show="isGlobalLoading" :message="globalLoadingMessage" />
 
-        <!-- Header with safe-area padding -->
-        <header class="sticky top-0 z-[100] w-full" :style="{ paddingTop: safeAreaTop }">
+        <!-- Header with safe-area padding - ensure sticky works -->
+        <header class="sticky top-0 z-[100] w-full bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md"
+            :style="{ paddingTop: safeAreaTop }">
             <UserNavbar />
         </header>
 
@@ -61,7 +62,7 @@
         <!-- Main Content -->
         <div class="relative z-10 flex flex-col w-full min-w-0">
             <!-- Breadcrumb Bar - adjust for safe area -->
-            <div class="sticky z-50 w-full backdrop-blur-md bg-white/70 dark:bg-zinc-900/70 border-b border-slate-200/50 dark:border-zinc-800/50 transition-all duration-300"
+            <div class="sticky z-40 w-full backdrop-blur-md bg-white/70 dark:bg-zinc-900/70 border-b border-slate-200/50 dark:border-zinc-800/50 transition-all duration-300"
                 :style="{ top: `calc(64px + ${safeAreaTop})` }">
                 <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-3">
                     <PublicBreadcrumb :breadcrumbs="breadcrumbs" />
@@ -184,7 +185,7 @@
             </div>
         </footer>
 
-        <!-- Mobile Bottom Navigation - No wrapper div, let the component handle its own padding -->
+        <!-- Mobile Bottom Navigation -->
         <MobileBottomNav />
     </div>
 </template>
@@ -253,7 +254,6 @@ const jsonLd = computed(() => {
 
 // Get actual safe area values for native platforms
 const getSafeAreaValues = async () => {
-    // Check if running in Capacitor native platform
     if (window.Capacitor && window.Capacitor.isNativePlatform()) {
         try {
             const { SafeArea } = await import('@capacitor-community/safe-area')
@@ -261,7 +261,6 @@ const getSafeAreaValues = async () => {
             safeAreaTop.value = `${insets.top}px`
             safeAreaBottom.value = `${insets.bottom}px`
 
-            // Listen for changes (orientation, keyboard)
             SafeArea.addListener('safeAreaChanged', (insets) => {
                 safeAreaTop.value = `${insets.top}px`
                 safeAreaBottom.value = `${insets.bottom}px`
@@ -291,7 +290,6 @@ const trackScrollDepth = () => {
     }
 };
 
-// Track form interactions
 const trackFormInteraction = (event, formType) => {
     const target = event.target;
     if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'FORM') {
@@ -299,7 +297,6 @@ const trackFormInteraction = (event, formType) => {
     }
 };
 
-// Track all link clicks
 const trackLinkClicks = (event) => {
     const link = event.target.closest('a');
     if (link && link.href && !link.href.startsWith('javascript:')) {
@@ -313,7 +310,6 @@ const trackLinkClicks = (event) => {
     }
 };
 
-// Breadcrumbs
 const breadcrumbs = computed(() => {
     if (page.props.breadcrumbs && page.props.breadcrumbs.length > 0) {
         return page.props.breadcrumbs
@@ -325,7 +321,6 @@ const breadcrumbs = computed(() => {
     return [{ label: 'Home', route: 'welcome' }, { label: 'Current Page' }]
 });
 
-// Newsletter Subscribe
 const subscribeEmail = async () => {
     if (!subscriberEmail.value) return;
     trackFormStart('newsletter_subscribe');
@@ -356,7 +351,6 @@ const subscribeEmail = async () => {
     }
 }
 
-// Scroll handling
 const handleScroll = () => {
     isScrolled.value = window.scrollY > 20
     trackScrollDepth();
@@ -379,7 +373,6 @@ const updateOnlineStatus = () => {
     isOnline.value = navigator.onLine;
 };
 
-// Watch for flash messages
 watch(() => page.props.flash, (flash) => {
     if (flash?.success) {
         showSuccessMessage.value = true
@@ -402,7 +395,6 @@ watch(() => page.props.flash, (flash) => {
     }
 }, { deep: true, immediate: true })
 
-// Inertia Progress
 router.on('start', (event) => {
     isGlobalLoading.value = true;
     const isGet = event.detail.visit.method === 'get';
@@ -421,7 +413,6 @@ router.on('finish', () => {
     setTimeout(() => { trackPageView(); }, 100);
 });
 
-// Rate tracking
 const trackRateClick = (currency, rateType) => {
     if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'view_item', {
@@ -473,10 +464,14 @@ onUnmounted(() => {
     animation: float 12s ease-in-out infinite;
 }
 
-:deep(header) {
+/* Ensure header stays sticky on all devices */
+header {
     position: sticky !important;
     top: 0 !important;
     z-index: 100 !important;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
 }
 
 html,
@@ -485,5 +480,10 @@ body,
 .relative.min-h-screen {
     overflow: visible !important;
     height: auto !important;
+}
+
+/* Ensure proper stacking context */
+.sticky {
+    position: sticky !important;
 }
 </style>
