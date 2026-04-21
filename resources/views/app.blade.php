@@ -11,6 +11,12 @@
 
     <meta property="og:image" content="{{ asset('default-og-image.jpg') }}">
 
+
+    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ asset('icon-512.png') }}">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+
     <!-- Dynamic Open Graph Meta Tags (Facebook will see these) -->
     @php
     $ogTitle = $og_meta['title'] ?? 'MMRatePro - Live Exchange Rates & Gold Prices';
