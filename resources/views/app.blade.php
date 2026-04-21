@@ -12,10 +12,20 @@
     <meta property="og:image" content="{{ asset('default-og-image.jpg') }}">
 
 
-    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json">
 
-    <link rel="icon" type="image/png" sizes="512x512" href="{{ asset('icon-512.png') }}">
-    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <!-- iOS -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.ico">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+
+
+
+
 
     <!-- Dynamic Open Graph Meta Tags (Facebook will see these) -->
     @php
