@@ -68,7 +68,7 @@ Schedule::command('gold:save-hourly')
     ->everyTwoMinutes()->timezone('Asia/Singapore')
     ->appendOutputTo(storage_path('logs/gold_sync.log'));
 
-Schedule::command('gold:consolidate-daily --days-to-keep=2')
+Schedule::command('gold:consolidate-daily --days-to-keep=1')
     ->dailyAt('00:05')
     ->timezone('Asia/Singapore')
     ->withoutOverlapping()
