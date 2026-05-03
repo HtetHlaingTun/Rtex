@@ -60,9 +60,9 @@ Schedule::command('monitor:disk --threshold=85')->everyThirtyMinutes()->timezone
 
 
 // --- Gold Rates ---
-Schedule::command('gold:fetch')
-    ->everyTwoMinutes()->timezone('Asia/Singapore')
-    ->appendOutputTo(storage_path('logs/gold_sync.log'));
+// Schedule::command('gold:fetch')
+//     ->everyTwoMinutes()->timezone('Asia/Singapore')
+//     ->appendOutputTo(storage_path('logs/gold_sync.log'));
 
 
 Schedule::command('gold:sync')
@@ -78,21 +78,21 @@ Schedule::command('gold:sync --consolidate')
     ->appendOutputTo(storage_path('logs/gold-consolidate.log'));
 
 
-Schedule::command('gold:save-hourly')
-    ->everyTwoMinutes()->timezone('Asia/Singapore')
-    ->appendOutputTo(storage_path('logs/gold_sync.log'));
+// Schedule::command('gold:save-hourly')
+//     ->everyTwoMinutes()->timezone('Asia/Singapore')
+//     ->appendOutputTo(storage_path('logs/gold_sync.log'));
 
-Schedule::command('gold:consolidate-daily --days-to-keep=1')
-    ->dailyAt('00:05')
-    ->timezone('Asia/Singapore')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/gold-consolidation.log'));
+// Schedule::command('gold:consolidate-daily --days-to-keep=1')
+//     ->dailyAt('00:05')
+//     ->timezone('Asia/Singapore')
+//     ->withoutOverlapping()
+//     ->appendOutputTo(storage_path('logs/gold-consolidation.log'));
 
-// --- Monthly Stats with Permanent Purge ---
-Schedule::command('exchange:consolidate-rates --permanent-years=2 --stats')
-    ->monthly()->timezone('Asia/Singapore')
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/exchange-consolidation-monthly.log'));
+// // --- Monthly Stats with Permanent Purge ---
+// Schedule::command('exchange:consolidate-rates --permanent-years=2 --stats')
+//     ->monthly()->timezone('Asia/Singapore')
+//     ->withoutOverlapping()
+//     ->appendOutputTo(storage_path('logs/exchange-consolidation-monthly.log'));
 
 
 
