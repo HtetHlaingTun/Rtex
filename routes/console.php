@@ -64,6 +64,20 @@ Schedule::command('gold:fetch')
     ->everyTwoMinutes()->timezone('Asia/Singapore')
     ->appendOutputTo(storage_path('logs/gold_sync.log'));
 
+
+Schedule::command('gold:sync')
+    ->everyTenMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/gold-sync.log'));
+
+Schedule::command('gold:sync --consolidate')
+    ->dailyAt('00:05')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/gold-consolidate.log'));
+
+
 Schedule::command('gold:save-hourly')
     ->everyTwoMinutes()->timezone('Asia/Singapore')
     ->appendOutputTo(storage_path('logs/gold_sync.log'));
